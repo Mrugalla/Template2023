@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="sxi35P" name="Template2023" projectType="audioplug" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" companyName="BeatsBasteln"
+              companyWebsite="https://github.com/Mrugalla" companyEmail="beatsbasteln@web.de"
+              pluginFormats="buildStandalone,buildVST3" pluginCharacteristicsValue="pluginWantsMidiIn"
+              pluginName="Template2023" pluginDesc="Plugin Template" pluginManufacturer="Beats Basteln"
+              pluginManufacturerCode="BBBB" pluginCode="BBBB" pluginVST3Category="Fx"
+              pluginAAXCategory="0" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="20"
+              defines="PPDHasEditor=true">
+  <MAINGROUP id="WYhkvs" name="Template2023">
+    <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
+      <FILE id="X8I21w" name="Math.h" compile="0" resource="0" file="Source/Math.h"/>
+      <FILE id="fRYqez" name="Processor.cpp" compile="1" resource="0" file="Source/Processor.cpp"/>
+      <FILE id="N0tbRV" name="Processor.h" compile="0" resource="0" file="Source/Processor.h"/>
+      <FILE id="dWtROZ" name="Editor.cpp" compile="1" resource="0" file="Source/Editor.cpp"/>
+      <FILE id="bDPCVw" name="Editor.h" compile="0" resource="0" file="Source/Editor.h"/>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
+  <EXPORTFORMATS>
+    <VS2022 targetFolder="Builds/VisualStudio2022">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="Template2023" enablePluginBinaryCopyStep="1"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="Template2023" enablePluginBinaryCopyStep="1"
+                       useRuntimeLibDLL="0"/>
+        <CONFIGURATION isDebug="0" name="DebugRelease" targetName="Template2023" enablePluginBinaryCopyStep="1"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="../../PluginDevelopment/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../../PluginDevelopment/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../../PluginDevelopment/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../PluginDevelopment/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../../PluginDevelopment/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../../PluginDevelopment/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../../PluginDevelopment/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../PluginDevelopment/JUCE/modules"/>
+        <MODULEPATH id="juce_dsp" path="../../PluginDevelopment/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../PluginDevelopment/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../PluginDevelopment/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../PluginDevelopment/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../PluginDevelopment/JUCE/modules"/>
+        <MODULEPATH id="juce_opengl" path="../../PluginDevelopment/JUCE/modules"/>
+      </MODULEPATHS>
+    </VS2022>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_opengl" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+  </MODULES>
+</JUCERPROJECT>
