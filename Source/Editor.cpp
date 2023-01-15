@@ -6,9 +6,10 @@ namespace gui
         AudioProcessorEditor(&p),
         audioProcessor(p),
         // OPENGL
+        arraybuffer(0),
         context(),
         baseTex(),
-        baseShader()
+        baseShader(context)
     {
         context.setOpenGLVersionRequired(OpenGLContext::OpenGLVersion::openGL3_2);
         context.setRenderer(this);
@@ -40,17 +41,27 @@ namespace gui
 
     void Editor::newOpenGLContextCreated()
 	{
+        context.extensions.glGenBuffers(1, &arraybuffer);
 	}
     
     void Editor::renderOpenGL()
     {
+        context.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, arraybuffer);
+        context.extensions.glBufferData(juce::gl::GL_ARRAY_BUFFER, sizeof(float) * 8, square, juce::gl::GL_DYNAMIC_DRAW);
+
+        auto coord = context.extensions.glGetAttribLocation(baseShader.getProgramID(), "aPos");
+
+        context.extensions.glEnableVertexAttribArray(coord);
+        context.extensions.glVertexAttribPointer(coord, 2, juce::gl::GL_FLOAT, juce::gl::GL_FALSE, 0, 0);
     }
     
     void Editor::openGLContextClosing()
     {
+        baseShader.release();
+        baseTex.release();
     }
     
-    void Editor::paint(juce::Graphics& g)
+    void Editor::paint(Graphics&)
     {
         //g.fillAll(juce::Colours::black);
     }

@@ -41,8 +41,16 @@ namespace gui
         AudioProcessor& audioProcessor;
 
         // OPENGL
+        unsigned int arraybuffer;
+        float square[8]
+        {
+            0.f,0.f,
+            1.f,0.f,
+            0.f,1.f,
+            1.f,1.f 
+        };
         OpenGLContext context;
         OpenGLTexture baseTex;
-        std::unique_ptr<OpenGLShaderProgram> baseShader;
+        OpenGLShaderProgram baseShader;
     };
 }
