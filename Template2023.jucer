@@ -7,10 +7,33 @@
               pluginName="Template2023" pluginDesc="Plugin Template" pluginManufacturer="Beats Basteln"
               pluginManufacturerCode="BBBB" pluginCode="BBBB" pluginVST3Category="Fx"
               pluginAAXCategory="0" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="20"
-              defines="PPDHasEditor=true">
+              defines="PPDHasEditor=true&#10;&#10;PPDHasClipper=true&#10;PPDHasGainIn=true&#10;PPDHasUnityGain=true&#10;PPDHasGainWet=true&#10;PPDHasGainOut=true&#10;PPDHasMix=true&#10;PPDHasPolarity=true&#10;PPDHasHQ=true&#10;PPDHasStereoConfig=true&#10;PPDHasLookahead=true&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainUnitDecibels=true&#10;&#10;PPDGainInMin=-12.f&#10;PPDGainInMax=12.f&#10;PPDUnityGainDefault=true&#10;PPDGainWetMin=-12.f&#10;PPDGainWetMax=12.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;&#10;PPDMaxXen=128">
   <MAINGROUP id="WYhkvs" name="Template2023">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
-      <FILE id="X8I21w" name="Math.h" compile="0" resource="0" file="Source/Math.h"/>
+      <GROUP id="{B169108B-53EB-662F-0015-6D2AACD47F84}" name="arch">
+        <FILE id="fMRBCE" name="FormulaParser.cpp" compile="1" resource="0"
+              file="Source/arch/FormulaParser.cpp"/>
+        <FILE id="KUTi7M" name="FormulaParser.h" compile="0" resource="0" file="Source/arch/FormulaParser.h"/>
+        <FILE id="ogBqo8" name="Math.h" compile="0" resource="0" file="Source/arch/Math.h"/>
+        <FILE id="NycMT2" name="Range.cpp" compile="1" resource="0" file="Source/arch/Range.cpp"/>
+        <FILE id="UpRG4O" name="Range.h" compile="0" resource="0" file="Source/arch/Range.h"/>
+        <FILE id="cibuDp" name="State.cpp" compile="1" resource="0" file="Source/arch/State.cpp"/>
+        <FILE id="AUeuNz" name="State.h" compile="0" resource="0" file="Source/arch/State.h"/>
+        <FILE id="ZYHsTL" name="XenManager.cpp" compile="1" resource="0" file="Source/arch/XenManager.cpp"/>
+        <FILE id="QbjbD9" name="XenManager.h" compile="0" resource="0" file="Source/arch/XenManager.h"/>
+      </GROUP>
+      <GROUP id="{40307200-594D-4A49-C512-2C481058424A}" name="audio">
+        <FILE id="xmUROa" name="PluginProcessor.cpp" compile="1" resource="0"
+              file="Source/audio/PluginProcessor.cpp"/>
+        <FILE id="pYDdqz" name="PluginProcessor.h" compile="0" resource="0"
+              file="Source/audio/PluginProcessor.h"/>
+      </GROUP>
+      <GROUP id="{45367AED-60D1-9064-BF94-28FDBCDA5C7E}" name="dsp"/>
+      <GROUP id="{E416B635-2B76-8CBC-C7E8-94B2AFE67445}" name="gui"/>
+      <GROUP id="{48C2ACDD-158F-A70E-4A38-D05AB8BC52C6}" name="param">
+        <FILE id="ZsMYbq" name="Param.cpp" compile="1" resource="0" file="Source/param/Param.cpp"/>
+        <FILE id="VKPjsv" name="Param.h" compile="0" resource="0" file="Source/param/Param.h"/>
+      </GROUP>
       <FILE id="fRYqez" name="Processor.cpp" compile="1" resource="0" file="Source/Processor.cpp"/>
       <FILE id="N0tbRV" name="Processor.h" compile="0" resource="0" file="Source/Processor.h"/>
       <FILE id="dWtROZ" name="Editor.cpp" compile="1" resource="0" file="Source/Editor.cpp"/>

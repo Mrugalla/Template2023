@@ -12,25 +12,21 @@ namespace audio
             .withOutput("Output", juce::AudioChannelSet::stereo(), true)
 #endif
         ),
-        props()
+#if PPDHasTuningEditor
+		xenManager(),
+        params(*this, xenManager),
+#else
+		params(*this),
+#endif
+        state(),
+        
+        pluginProcessor()
     {
-        juce::PropertiesFile::Options options;
-        options.applicationName = JucePlugin_Name;
-        options.filenameSuffix = ".settings";
-        options.folderName = "BeatsBasteln" + juce::File::getSeparatorString() + JucePlugin_Name;
-        options.osxLibrarySubFolder = "Application Support";
-        options.commonToAllUsers = false;
-        options.ignoreCaseOfKeyNames = true;
-        options.doNotSave = false;
-        options.millisecondsBeforeSaving = 100;
-        options.storageFormat = juce::PropertiesFile::storeAsXML;
-
-        props.setStorageParameters(options);
     }
 
     Processor::~Processor()
     {
-        auto user = props.getUserSettings();
+        auto user = state.props.getUserSettings();
         user->setValue("firstTimeUwU", false);
         user->save();
     }
@@ -97,7 +93,7 @@ namespace audio
 
     void Processor::prepareToPlay(double sampleRate, int samplesPerBlock)
     {
-
+		pluginProcessor.prepare(sampleRate, samplesPerBlock);
     }
 
     void Processor::releaseResources()
@@ -128,16 +124,35 @@ namespace audio
 #endif
     }
 
-    void Processor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+    void Processor::processBlock(AudioBuffer& buffer, MidiBuffer& midiMessages)
     {
         juce::ScopedNoDenormals noDenormals;
+        const auto numSamples = buffer.getNumSamples();
         {
             auto totalNumInputChannels = getTotalNumInputChannels();
             auto totalNumOutputChannels = getTotalNumOutputChannels();
 
             for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-                buffer.clear(i, 0, buffer.getNumSamples());
+                buffer.clear(i, 0, numSamples);
         }
+        if (numSamples == 0)
+            return;
+
+		const auto numChannels = buffer.getNumChannels() == 2 ? 2 : 1;
+		auto samples = buffer.getArrayOfWritePointers();
+        
+        pluginProcessor(samples, numChannels, numSamples, midiMessages);
+    }
+
+    void Processor::processBlockBypassed(AudioBuffer& buffer, MidiBuffer& midiMessages)
+    {
+        const auto numSamples = buffer.getNumSamples();
+        if (numSamples == 0)
+            return;
+        const auto numChannels = buffer.getNumChannels() == 2 ? 2 : 1;
+        auto samples = buffer.getArrayOfWritePointers();
+        
+        pluginProcessor.processBlockBypassed(samples, numChannels, numSamples, midiMessages);
     }
 
     bool Processor::hasEditor() const
@@ -152,10 +167,17 @@ namespace audio
 
     void Processor::getStateInformation(juce::MemoryBlock& destData)
     {
+        pluginProcessor.savePatch();
+        params.savePatch(state);
+        state.savePatch(*this, destData);
     }
 
     void Processor::setStateInformation(const void* data, int sizeInBytes)
     {
+        state.loadPatch(*this, data, sizeInBytes);
+        params.loadPatch(state);
+		pluginProcessor.loadPatch();
+        
     }
     
 }

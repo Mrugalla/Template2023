@@ -16,13 +16,33 @@ namespace gui
     // JUCE GRAPHICS
 	using AudioProcessorEditor = juce::AudioProcessorEditor;
     using Graphics = juce::Graphics;
+    using String = juce::String;
+    using Just = juce::Justification;
     // OPENGL
     using OpenGLContext = juce::OpenGLContext;
     using OpenGLTexture = juce::OpenGLTexture;
 	using OpenGLShaderProgram = juce::OpenGLShaderProgram;
 	using OpenGLRenderer = juce::OpenGLRenderer;
+	using OpenGLHelpers = juce::OpenGLHelpers;
     // CUSTOM
     using AudioProcessor = audio::Processor;
+    
+    struct Vertex
+    {
+        enum { X, Y, NumPosDimensions };
+        enum { Red, Green, Blue, Alpha, NumColourDimensions };
+        
+		Vertex(float x = 0.f, float y = 0.f,
+            float r = 0.f, float g = 0.f, float b = 0.f, float a = 0.f) :
+			pos{ x, y },
+			col{ r, g, b, a }
+		{}
+
+        float pos[NumPosDimensions];
+        float col[NumColourDimensions];
+    };
+
+    using namespace juce::gl;
 
     struct Editor :
         public AudioProcessorEditor,
@@ -41,16 +61,12 @@ namespace gui
         AudioProcessor& audioProcessor;
 
         // OPENGL
-        unsigned int arraybuffer;
-        float square[8]
-        {
-            0.f,0.f,
-            1.f,0.f,
-            0.f,1.f,
-            1.f,1.f 
-        };
+        std::vector<Vertex> vertexBuffer;
+        std::vector<GLuint> indexBuffer;
+        
         OpenGLContext context;
-        OpenGLTexture baseTex;
-        OpenGLShaderProgram baseShader;
+        OpenGLShaderProgram shader;
+
+        GLuint vbo, ibo;
     };
 }

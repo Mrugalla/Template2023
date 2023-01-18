@@ -1,10 +1,21 @@
 #pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
+#include "audio/PluginProcessor.h"
+
+#include "arch/XenManager.h"
+#include "param/Param.h"
 
 namespace audio
 {
     using ChannelSet = juce::AudioChannelSet;
-    using Props = juce::ApplicationProperties;
+    using MidiBuffer = juce::MidiBuffer;
+	using AudioBuffer = juce::AudioBuffer<float>;
+
+	using XenManager = arch::XenManager;
+    using State = arch::State;
+    using Param = param::Param;
+    using Params = param::Params;
+    using PID = param::PID;
     
     struct Processor :
         public juce::AudioProcessor
@@ -14,7 +25,8 @@ namespace audio
         void prepareToPlay(double, int) override;
         void releaseResources() override;
         bool isBusesLayoutSupported(const BusesLayout&) const override;
-        void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+        void processBlock(AudioBuffer&, MidiBuffer&) override;
+        void processBlockBypassed(AudioBuffer&, MidiBuffer&) override;
         juce::AudioProcessorEditor* createEditor() override;
         bool hasEditor() const override;
         const juce::String getName() const override;
@@ -30,6 +42,12 @@ namespace audio
         void getStateInformation(juce::MemoryBlock&) override;
         void setStateInformation(const void*, int) override;
 
-        Props props;
+#if PPDHasTuningEditor
+        XenManager xenManager;
+#endif
+        Params params;
+        State state;
+
+        PluginProcessor pluginProcessor;
     };
 }
