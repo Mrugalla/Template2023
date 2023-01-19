@@ -1,7 +1,20 @@
 #include "Editor.h"
+#include "BinaryData.h"
 
 namespace gui
 {
+    static bool createShaders(OpenGLShaderProgram& shader, const String& vertexShader, const String& fragmentShader)
+    {
+        if (!shader.addVertexShader(vertexShader)
+            || !shader.addFragmentShader(fragmentShader)
+            || !shader.link())
+        {
+            jassertfalse;
+            return false;
+        }
+        return true;
+    }
+
     Editor::Editor(AudioProcessor& p) :
         AudioProcessorEditor(&p),
         audioProcessor(p),
@@ -9,7 +22,7 @@ namespace gui
         vertexBuffer(),
         indexBuffer(),
         context(),
-        shader(context),
+        shaderProgram(context),
         vbo(0), ibo(0)
     {
         // OPENGL
@@ -46,6 +59,8 @@ namespace gui
 
     void Editor::newOpenGLContextCreated()
 	{
+        glDisable(GL_DEBUG_OUTPUT);
+        
         // Generate buffers (vertex and index) and store id in vbo and ibo
         glGenBuffers(1, &vbo);
         glGenBuffers(1, &ibo);
@@ -85,59 +100,19 @@ namespace gui
             indexBuffer.data(),
             GL_STATIC_DRAW
         );
-
-        const String vertexShader
-        (R"(
-            #version 330 core
-            
-            // Input attributes.
-            in vec4 position;      
-            in vec4 sourceColour;
-            
-            // Output to fragment shader.
-            out vec4 fragColour;
-            
-            void main()
-            {
-                // Set the position to the attribute we passed in.
-                gl_Position = position;
-                
-                // Set the frag colour to the attribute we passed in.
-                // This value will be interpolated for us before the fragment
-                // shader so the colours we defined ateach vertex will create a
-                // gradient across the shape.
-                fragColour = sourceColour;
-            }
-        )");
-
-        const String fragmentShader
-        (R"(
-            #version 330 core
-            
-            // The value that was output by the vertex shader.
-            // This MUST have the exact same name that we used in the vertex shader.
-            in vec4 fragColour;
-            
-            void main()
-            {
-                // Set the fragment's colour to the attribute passed in by the
-                // vertex shader.
-                gl_FragColor = fragColour;
-            }
-        )");
-
-        if (!shader.addVertexShader(vertexShader)
-            || !shader.addFragmentShader(fragmentShader)
-            || !shader.link())
-        {
-            jassertfalse;
-        }
+        
+        createShaders
+		(
+			shaderProgram,
+			String(BinaryData::vertex_cxx, BinaryData::vertex_cxxSize),
+			String(BinaryData::fragment_cxx, BinaryData::fragment_cxxSize)
+		);
 	}
     
     void Editor::renderOpenGL()
     {
         OpenGLHelpers::clear(juce::Colours::black);
-        shader.use();
+        shaderProgram.use();
         
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);

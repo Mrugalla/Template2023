@@ -10,6 +10,10 @@
               defines="PPDHasEditor=true&#10;&#10;PPDHasClipper=true&#10;PPDHasGainIn=true&#10;PPDHasUnityGain=true&#10;PPDHasGainWet=true&#10;PPDHasGainOut=true&#10;PPDHasMix=true&#10;PPDHasPolarity=true&#10;PPDHasHQ=true&#10;PPDHasStereoConfig=true&#10;PPDHasLookahead=true&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainUnitDecibels=true&#10;&#10;PPDGainInMin=-12.f&#10;PPDGainInMax=12.f&#10;PPDUnityGainDefault=true&#10;PPDGainWetMin=-12.f&#10;PPDGainWetMax=12.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;&#10;PPDMaxXen=128">
   <MAINGROUP id="WYhkvs" name="Template2023">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
+      <GROUP id="{9EAFCC53-E9FB-CAA2-81DE-57CF1A466DA0}" name="shaders">
+        <FILE id="zAlyFz" name="fragment.cxx" compile="0" resource="1" file="Source/shaders/fragment.cxx"/>
+        <FILE id="EE300e" name="vertex.cxx" compile="0" resource="1" file="Source/shaders/vertex.cxx"/>
+      </GROUP>
       <GROUP id="{B169108B-53EB-662F-0015-6D2AACD47F84}" name="arch">
         <FILE id="fMRBCE" name="FormulaParser.cpp" compile="1" resource="0"
               file="Source/arch/FormulaParser.cpp"/>

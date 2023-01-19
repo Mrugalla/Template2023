@@ -65,7 +65,7 @@ namespace gui
         std::vector<GLuint> indexBuffer;
         
         OpenGLContext context;
-        OpenGLShaderProgram shader;
+        OpenGLShaderProgram shaderProgram;
 
         GLuint vbo, ibo;
     };
