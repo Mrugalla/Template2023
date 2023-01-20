@@ -12,18 +12,20 @@
 namespace gui
 {
 	static constexpr double AspectRatio = 16. / 9.;
+    static constexpr int FPS = 60;
 
     // JUCE GRAPHICS
 	using AudioProcessorEditor = juce::AudioProcessorEditor;
+    using Timer = juce::Timer;
     using Graphics = juce::Graphics;
     using String = juce::String;
     using Just = juce::Justification;
     // OPENGL
-    using OpenGLContext = juce::OpenGLContext;
-    using OpenGLTexture = juce::OpenGLTexture;
-	using OpenGLShaderProgram = juce::OpenGLShaderProgram;
-	using OpenGLRenderer = juce::OpenGLRenderer;
-	using OpenGLHelpers = juce::OpenGLHelpers;
+    using GLContext = juce::OpenGLContext;
+    using GLTexture = juce::OpenGLTexture;
+	using GLShaderProgram = juce::OpenGLShaderProgram;
+	using GLRenderer = juce::OpenGLRenderer;
+	using GLHelpers = juce::OpenGLHelpers;
     // CUSTOM
     using AudioProcessor = audio::Processor;
     
@@ -46,17 +48,20 @@ namespace gui
 
     struct Editor :
         public AudioProcessorEditor,
-        public OpenGLRenderer
+        public GLRenderer,
+        public Timer
     {
         Editor(AudioProcessor&);
         ~Editor();
-
+        
         void newOpenGLContextCreated() override;
         void renderOpenGL() override;
         void openGLContextClosing() override;
 
-        void paint(juce::Graphics&) override;
+        void paint(Graphics&) override;
         void resized() override;
+        
+        void timerCallback() override;
 
         AudioProcessor& audioProcessor;
 
@@ -64,8 +69,8 @@ namespace gui
         std::vector<Vertex> vertexBuffer;
         std::vector<GLuint> indexBuffer;
         
-        OpenGLContext context;
-        OpenGLShaderProgram shaderProgram;
+        GLContext context;
+        GLShaderProgram shaderProgram;
 
         GLuint vbo, ibo;
     };

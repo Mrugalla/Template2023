@@ -1,9 +1,28 @@
 #include "Editor.h"
 #include "BinaryData.h"
 
+#define GLCall(x) glClearError();\
+    x;\
+	jassert(glLogCall(#x, __FILE__, __LINE__))
+
 namespace gui
 {
-    static bool createShaders(OpenGLShaderProgram& shader, const String& vertexShader, const String& fragmentShader)
+    extern void glClearError()
+    {
+		while (glGetError() != GL_NO_ERROR);
+    }
+
+    extern bool glLogCall(const char* function, const char* file, int line)
+    {
+        while (auto error = glGetError())
+        {
+            DBG("[OpenGL Error] (" << error << "): " << function << " " << file << ":" << line);
+            return false;
+        }
+        return true;
+    }
+
+    extern bool createShaders(GLShaderProgram& shader, const String& vertexShader, const String& fragmentShader)
     {
         if (!shader.addVertexShader(vertexShader)
             || !shader.addFragmentShader(fragmentShader)
@@ -15,8 +34,46 @@ namespace gui
         return true;
     }
 
+	extern void setRenderer(GLContext& context, GLRenderer& renderer, juce::Component& comp)
+	{
+        context.setRenderer(&renderer);
+        context.attachTo(comp);
+	}
+
+    extern void genBuffer(GLuint* buffer)
+    {
+        GLCall(glGenBuffers(1, buffer));
+    }
+
+	extern void bindBuffer(GLenum target, GLuint buffer)
+	{
+		GLCall(glBindBuffer(target, buffer));
+	}
+
+	extern void bufferData(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage)
+	{
+		GLCall(glBufferData(target, size, data, usage));
+	}
+
+	extern void vertexAttribPointer(GLuint idx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer)
+	{
+		GLCall(glVertexAttribPointer(idx, size, type, normalized, stride, pointer));
+        GLCall(glEnableVertexAttribArray(idx));
+	}
+
+	extern void drawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices = nullptr)
+	{
+		GLCall(glDrawElements(mode, count, type, indices));
+	}
+
+    extern void disableVertexAttribArray(GLuint idx)
+    {
+		GLCall(glDisableVertexAttribArray(idx));
+    }
+
     Editor::Editor(AudioProcessor& p) :
         AudioProcessorEditor(&p),
+        Timer(),
         audioProcessor(p),
         // OPENGL
         vertexBuffer(),
@@ -25,11 +82,7 @@ namespace gui
         shaderProgram(context),
         vbo(0), ibo(0)
     {
-        // OPENGL
-        //context.setOpenGLVersionRequired(OpenGLContext::OpenGLVersion::openGL3_2);
-        context.setRenderer(this);
-        context.attachTo(*this);
-        //context.setContinuousRepainting(true);
+        setRenderer(context, *this, *this);
         
         // COMPONENT CONSTRAINER
         auto& thisConstrainer = *getConstrainer();
@@ -49,6 +102,7 @@ namespace gui
                 static_cast<int>(scale * AspectRatio),
                 static_cast<int>(scale)
             );
+            startTimerHz(FPS);
         }
     }
 
@@ -57,34 +111,36 @@ namespace gui
         context.detach();
     }
 
+    void Editor::timerCallback()
+    {
+        
+    }
+    
     void Editor::newOpenGLContextCreated()
 	{
         glDisable(GL_DEBUG_OUTPUT);
         
-        // Generate buffers (vertex and index) and store id in vbo and ibo
-        glGenBuffers(1, &vbo);
-        glGenBuffers(1, &ibo);
+        genBuffer(&vbo);
+		genBuffer(&ibo);
 
-        // Bind the Buffers
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+        bindBuffer(GL_ARRAY_BUFFER, vbo);
+        bindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
         
-        // Create 3 vertices to form a triangle
         vertexBuffer =
         {
-            Vertex(-.5f, -.5f, 1.f, 0.f, 0.f, 1.f),
-            Vertex(.5f, -.5f, 1.f, 0.f, 0.f, 1.f),
-			Vertex(0.f, .5f, 1.f, 0.f, 1.f, 1.f),
+            Vertex(-.5f, -.5f, 0.f, 1.f, 1.f, 1.f),
+            Vertex(.5f, -.5f, 0.f, 1.f, 1.f, 1.f),
+			Vertex(.5f, .5f, 1.f, 0.f, 1.f, 1.f),
+            Vertex(-.5f, .5f, 1.f, 0.f, 1.f, 1.f),
         };
 
-        // An indice for each corner of the triangle.
         indexBuffer =
         {
-            0, 1, 2
+			0, 1, 2,
+            2, 3, 0
         };
         
-        // Send the vertices data.
-        glBufferData
+        bufferData
         (
             GL_ARRAY_BUFFER,
             sizeof(Vertex) * vertexBuffer.size(),
@@ -92,8 +148,7 @@ namespace gui
             GL_STATIC_DRAW
         );
 
-        // Send the indices data.
-        glBufferData
+        bufferData
         (
             GL_ELEMENT_ARRAY_BUFFER,
             sizeof(GLuint) * indexBuffer.size(),
@@ -111,13 +166,13 @@ namespace gui
     
     void Editor::renderOpenGL()
     {
-        OpenGLHelpers::clear(juce::Colours::black);
+        GLHelpers::clear(juce::Colours::black);
         shaderProgram.use();
         
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+        bindBuffer(GL_ARRAY_BUFFER, vbo);
+        bindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
         
-        glVertexAttribPointer
+        vertexAttribPointer
         (
             0,                        // Attribute Index
             Vertex::NumPosDimensions, // Num Values of this Attribute
@@ -126,10 +181,8 @@ namespace gui
 			sizeof(Vertex), 		  // Stride
 			nullptr				      // Offset
         );
-        glEnableVertexAttribArray(0);
-
-        // Enable to colour attribute.
-        glVertexAttribPointer
+        
+        vertexAttribPointer
         (
             1,
             Vertex::NumColourDimensions,
@@ -138,18 +191,16 @@ namespace gui
             sizeof(Vertex),
             reinterpret_cast<GLvoid*>(sizeof(float) * Vertex::NumPosDimensions)
         );
-        glEnableVertexAttribArray(1);
 
-        glDrawElements
+        drawElements
         (
             GL_TRIANGLES,
-            static_cast<GLsizei>(indexBuffer.size()), // How many indices
-            GL_UNSIGNED_INT,    // type of indices
-            nullptr
+            static_cast<GLsizei>(indexBuffer.size()),
+            GL_UNSIGNED_INT
         );
 
-        glDisableVertexAttribArray(0);
-        glDisableVertexAttribArray(1);
+        disableVertexAttribArray(0);
+        disableVertexAttribArray(1);
     }
     
     void Editor::openGLContextClosing()
