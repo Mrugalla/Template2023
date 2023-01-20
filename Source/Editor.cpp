@@ -1,9 +1,13 @@
 #include "Editor.h"
 #include "BinaryData.h"
 
+#if JUCE_DEBUG
 #define GLCall(x) glClearError();\
     x;\
 	jassert(glLogCall(#x, __FILE__, __LINE__))
+#else
+#define GLCall(x) x
+#endif
 
 namespace gui
 {
