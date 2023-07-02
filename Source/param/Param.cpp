@@ -1225,7 +1225,7 @@ namespace param
 
 	Params::Params(AudioProcessor& audioProcessor
 #if PPDHasTuningEditor
-		, const Xen& xen
+		, const Xen&
 #endif
 	) :
 		params(),

@@ -18,6 +18,9 @@ namespace gui
 
     extern bool glLogCall(const char* function, const char* file, int line)
     {
+        function = function;
+        file = file;
+        line = line;
         while (auto error = glGetError())
         {
             DBG("[OpenGL Error] (" << error << "): " << function << " " << file << ":" << line);
@@ -166,6 +169,10 @@ namespace gui
 			String(BinaryData::vertex_cxx, BinaryData::vertex_cxxSize),
 			String(BinaryData::fragment_cxx, BinaryData::fragment_cxxSize)
 		);
+
+		auto uColourID = shaderProgram.getUniformIDFromName("uColour");
+        glUniform4f(uColourID, 1.f, 0.f, 0.f, 1.f);
+        
 	}
     
     void Editor::renderOpenGL()
