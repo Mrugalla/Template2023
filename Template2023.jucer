@@ -7,12 +7,45 @@
               pluginName="Template2023" pluginDesc="Plugin Template" pluginManufacturer="Beats Basteln"
               pluginManufacturerCode="BBBB" pluginCode="BBBB" pluginVST3Category="Fx"
               pluginAAXCategory="0" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="20"
-              defines="PPDHasEditor=true&#10;&#10;PPDHasClipper=true&#10;PPDHasGainIn=true&#10;PPDHasUnityGain=true&#10;PPDHasGainWet=true&#10;PPDHasGainOut=true&#10;PPDHasMix=true&#10;PPDHasPolarity=true&#10;PPDHasHQ=true&#10;PPDHasStereoConfig=true&#10;PPDHasLookahead=true&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainUnitDecibels=true&#10;&#10;PPDGainInMin=-12.f&#10;PPDGainInMax=12.f&#10;PPDUnityGainDefault=true&#10;PPDGainWetMin=-12.f&#10;PPDGainWetMax=12.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;&#10;PPDMaxXen=128">
+              defines="PPDHasClipper=true&#10;PPDHasGainIn=true&#10;PPDHasUnityGain=true&#10;PPDHasGainWet=true&#10;PPDHasGainOut=true&#10;PPDHasMix=true&#10;PPDHasPolarity=true&#10;PPDHasHQ=true&#10;PPDHasStereoConfig=true&#10;PPDHasLookahead=true&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainUnitDecibels=true&#10;&#10;PPDGainInMin=-12.f&#10;PPDGainInMax=12.f&#10;PPDUnityGainDefault=true&#10;PPDGainWetMin=-12.f&#10;PPDGainWetMax=12.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;&#10;PPDMaxXen=128"
+              includeBinaryInJuceHeader="1">
   <MAINGROUP id="WYhkvs" name="Template2023">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
-      <GROUP id="{9EAFCC53-E9FB-CAA2-81DE-57CF1A466DA0}" name="shaders">
-        <FILE id="zAlyFz" name="fragment.cxx" compile="0" resource="1" file="Source/shaders/fragment.cxx"/>
-        <FILE id="EE300e" name="vertex.cxx" compile="0" resource="1" file="Source/shaders/vertex.cxx"/>
+      <GROUP id="{C0D89064-DEAF-E8FD-023E-D8E4256F7695}" name="fonts">
+        <GROUP id="{4535FC63-197B-D91E-AEE2-0AB9F4CC7620}" name="Dosis">
+          <GROUP id="{4D8831A2-8551-7484-8852-6B5619A5D163}" name="static">
+            <FILE id="z8PYFx" name="Dosis-Bold.ttf" compile="0" resource="1" file="Source/fonts/Dosis/static/Dosis-Bold.ttf"/>
+            <FILE id="QVlaCX" name="Dosis-ExtraBold.ttf" compile="0" resource="1"
+                  file="Source/fonts/Dosis/static/Dosis-ExtraBold.ttf"/>
+            <FILE id="g3KHog" name="Dosis-ExtraLight.ttf" compile="0" resource="1"
+                  file="Source/fonts/Dosis/static/Dosis-ExtraLight.ttf"/>
+            <FILE id="VgbYMK" name="Dosis-Light.ttf" compile="0" resource="1" file="Source/fonts/Dosis/static/Dosis-Light.ttf"/>
+            <FILE id="kAs3Aw" name="Dosis-Medium.ttf" compile="0" resource="1"
+                  file="Source/fonts/Dosis/static/Dosis-Medium.ttf"/>
+            <FILE id="Ezp6M1" name="Dosis-Regular.ttf" compile="0" resource="1"
+                  file="Source/fonts/Dosis/static/Dosis-Regular.ttf"/>
+            <FILE id="ZXzNLg" name="Dosis-SemiBold.ttf" compile="0" resource="1"
+                  file="Source/fonts/Dosis/static/Dosis-SemiBold.ttf"/>
+          </GROUP>
+          <FILE id="XOCkzU" name="Dosis-VariableFont_wght.ttf" compile="0" resource="1"
+                file="Source/fonts/Dosis/Dosis-VariableFont_wght.ttf"/>
+          <FILE id="rQr1eq" name="OFL.txt" compile="0" resource="1" file="Source/fonts/Dosis/OFL.txt"/>
+          <FILE id="WgJPYz" name="README.txt" compile="0" resource="1" file="Source/fonts/Dosis/README.txt"/>
+        </GROUP>
+        <GROUP id="{FC85D0B4-5A27-51E1-72D9-83ABFB4D5842}" name="Lobster">
+          <FILE id="A8SQPT" name="Lobster-Regular.ttf" compile="0" resource="1"
+                file="Source/fonts/Lobster/Lobster-Regular.ttf"/>
+          <FILE id="IsuaXH" name="OFL.txt" compile="0" resource="1" file="Source/fonts/Lobster/OFL.txt"/>
+        </GROUP>
+        <GROUP id="{209BD12D-14C4-4F0F-C044-D3597235242E}" name="Ms_Madi">
+          <FILE id="oDACwF" name="MsMadi-Regular.ttf" compile="0" resource="1"
+                file="Source/fonts/Ms_Madi/MsMadi-Regular.ttf"/>
+          <FILE id="ekLZri" name="OFL.txt" compile="0" resource="1" file="Source/fonts/Ms_Madi/OFL.txt"/>
+        </GROUP>
+        <FILE id="vs2rzo" name="felixhand_02.ttf" compile="0" resource="1"
+              file="Source/fonts/felixhand_02.ttf"/>
+        <FILE id="ApXM1Y" name="license.txt" compile="0" resource="1" file="Source/fonts/license.txt"/>
+        <FILE id="qqLrg0" name="nel19.ttf" compile="0" resource="1" file="Source/fonts/nel19.ttf"/>
       </GROUP>
       <GROUP id="{B169108B-53EB-662F-0015-6D2AACD47F84}" name="arch">
         <FILE id="fMRBCE" name="FormulaParser.cpp" compile="1" resource="0"
@@ -33,7 +66,18 @@
               file="Source/audio/PluginProcessor.h"/>
       </GROUP>
       <GROUP id="{45367AED-60D1-9064-BF94-28FDBCDA5C7E}" name="dsp"/>
-      <GROUP id="{E416B635-2B76-8CBC-C7E8-94B2AFE67445}" name="gui"/>
+      <GROUP id="{E416B635-2B76-8CBC-C7E8-94B2AFE67445}" name="gui">
+        <FILE id="W38ixX" name="Comp.cpp" compile="1" resource="0" file="Source/gui/Comp.cpp"/>
+        <FILE id="HeCvCp" name="Comp.h" compile="0" resource="0" file="Source/gui/Comp.h"/>
+        <FILE id="DxY7bF" name="Events.cpp" compile="1" resource="0" file="Source/gui/Events.cpp"/>
+        <FILE id="sGl3Zw" name="Events.h" compile="0" resource="0" file="Source/gui/Events.h"/>
+        <FILE id="mMfZbm" name="Layout.cpp" compile="1" resource="0" file="Source/gui/Layout.cpp"/>
+        <FILE id="alJFXn" name="Layout.h" compile="0" resource="0" file="Source/gui/Layout.h"/>
+        <FILE id="vWkUYr" name="Using.cpp" compile="1" resource="0" file="Source/gui/Using.cpp"/>
+        <FILE id="QDqVwY" name="Using.h" compile="0" resource="0" file="Source/gui/Using.h"/>
+        <FILE id="DEQaKD" name="Utils.cpp" compile="1" resource="0" file="Source/gui/Utils.cpp"/>
+        <FILE id="VaLRZS" name="Utils.h" compile="0" resource="0" file="Source/gui/Utils.h"/>
+      </GROUP>
       <GROUP id="{48C2ACDD-158F-A70E-4A38-D05AB8BC52C6}" name="param">
         <FILE id="ZsMYbq" name="Param.cpp" compile="1" resource="0" file="Source/param/Param.cpp"/>
         <FILE id="VKPjsv" name="Param.h" compile="0" resource="0" file="Source/param/Param.h"/>

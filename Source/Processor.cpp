@@ -26,9 +26,9 @@ namespace audio
 
     Processor::~Processor()
     {
-        auto user = state.props.getUserSettings();
-        user->setValue("firstTimeUwU", false);
-        user->save();
+        auto& user = *state.props.getUserSettings();
+        user.setValue("firstTimeUwU", false);
+        user.save();
     }
 
     const juce::String Processor::getName() const
@@ -65,7 +65,7 @@ namespace audio
 
     double Processor::getTailLengthSeconds() const
     {
-        return 0.0;
+        return 0.;
     }
 
     int Processor::getNumPrograms()
@@ -157,7 +157,7 @@ namespace audio
 
     bool Processor::hasEditor() const
     {
-        return PPDHasEditor;
+        return true;
     }
 
     juce::AudioProcessorEditor* Processor::createEditor()
@@ -177,7 +177,6 @@ namespace audio
         state.loadPatch(*this, data, sizeInBytes);
         params.loadPatch(state);
 		pluginProcessor.loadPatch();
-        
     }
     
 }
