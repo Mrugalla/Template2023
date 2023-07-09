@@ -1,0 +1,57 @@
+#include "PRM.h"
+
+namespace dsp
+{
+	template<typename Float>
+	PRMInfo<Float>::PRMInfo(Float* _buf, Float _val, bool _smoothing) :
+		buf(_buf),
+		val(_val),
+		smoothing(_smoothing)
+	{}
+
+	template<typename Float>
+	Float PRMInfo<Float>::operator[](int i) const noexcept
+	{
+		return buf[i];
+	}
+
+	template struct PRMInfo<float>;
+	template struct PRMInfo<double>;
+
+	template<typename Float>
+	PRM<Float>::PRM(Float startVal) :
+		smooth(startVal),
+		buf(),
+		value(startVal)
+	{}
+	
+	template<typename Float>
+	void PRM<Float>::prepare(Float sampleRate, Float smoothLenMs) noexcept
+	{
+		smooth.makeFromDecayInMs(smoothLenMs, sampleRate);
+	}
+
+	template<typename Float>
+	PRMInfo<Float> PRM<Float>::operator()(Float val, int numSamples) noexcept
+	{
+		value = val;
+		bool smoothing = smooth(buf.data(), value, numSamples);
+		return { buf.data(), value, smoothing };
+	}
+
+	template<typename Float>
+	PRMInfo<Float> PRM<Float>::operator()(int numSamples) noexcept
+	{
+		bool smoothing = smooth(buf.data(), numSamples);
+		return { buf.data(), value, smoothing };
+	}
+
+	template<typename Float>
+	Float PRM<Float>::operator[](int i) const noexcept
+	{
+		return buf[i];
+	}
+
+	template struct PRM<float>;
+	template struct PRM<double>;
+}

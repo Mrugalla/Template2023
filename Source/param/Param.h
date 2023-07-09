@@ -242,6 +242,11 @@ namespace param
 		Param* operator[](PID) noexcept;
 		const Param* operator[](PID) const noexcept;
 
+		Param& operator()(int) noexcept;
+		const Param& operator()(int) const noexcept;
+		Param& operator()(PID) noexcept;
+		const Param& operator()(PID) const noexcept;
+
 		Parameters& data() noexcept;
 		const Parameters& data() const noexcept;
 	protected:
@@ -309,12 +314,5 @@ namespace param
 		ValToStrFunc filterType();
 	}
 
-	struct MacroProcessor
-	{
-		MacroProcessor(Params&);
-
-		void operator()() noexcept;
-
-		Params& params;
-	};
+	void processMacroMod(Params&) noexcept;
 }

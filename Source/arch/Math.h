@@ -101,19 +101,19 @@ namespace math
     }
 
     template<typename Float>
-    inline Float gainToDecibel(Float gain) noexcept
+    inline Float ampToDecibel(Float x) noexcept
     {
-        return std::log10(gain) * static_cast<Float>(20);
+        return std::log10(x) * static_cast<Float>(20);
     }
 
     template<typename Float>
-    inline Float decibelToGain(Float db) noexcept
+    inline Float decibelToAmp(Float db) noexcept
     {
         return std::pow(static_cast<Float>(10), db * static_cast<Float>(.05));
     }
 
     template<typename Float>
-    inline Float decibelToGain(Float db, Float threshold) noexcept
+    inline Float decibelToAmp(Float db, Float threshold) noexcept
     {
         if (db <= threshold)
             return 0.f;

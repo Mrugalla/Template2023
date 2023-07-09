@@ -253,10 +253,12 @@ namespace gui
 
 	void Layout::paint(Graphics& g)
 	{
+		auto btm = bottom();
+		
 		for (auto x = 0; x < rX.size(); ++x)
-			g.drawVerticalLine(static_cast<int>(rX[x]), rY[0], static_cast<float>(comp.getBottom()));
+			g.drawVerticalLine(static_cast<int>(rX[x]), rY[0], btm.getBottom());
 		for (auto y = 0; y < rY.size(); ++y)
-			g.drawHorizontalLine(static_cast<int>(rY[y]), rX[0], static_cast<float>(comp.getRight()));
+			g.drawHorizontalLine(static_cast<int>(rY[y]), rX[0], btm.getRight());
 	}
 
 	template<typename X, typename Y>

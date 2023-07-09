@@ -1,5 +1,6 @@
 #pragma once
-#include <juce_audio_processors/juce_audio_processors.h>
+#include "../param/Param.h"
+#include "Using.h"
 
 /*
 This is where dsp custom to each individual plugin will be written
@@ -7,20 +8,26 @@ This is where dsp custom to each individual plugin will be written
 
 namespace audio
 {
-	using MidiBuffer = juce::MidiBuffer;
-
 	struct PluginProcessor
 	{
-		PluginProcessor();
-
-		void prepare(double, int);
-
-		void operator()(float* const*, int, int, MidiBuffer&) noexcept;
+		using Params = param::Params;
+		using PID = param::PID;
 		
-		void processBlockBypassed(float* const*, int, int, MidiBuffer&) noexcept;
+		PluginProcessor(Params&);
+
+		/* sampleRate */
+		void prepare(double);
+
+		/* samples, numChannels, numSamples, midiBuffer */
+		void operator()(double* const*, int, int, dsp::MidiBuffer&) noexcept;
+		
+		/* samples, numChannels, numSamples, midiBuffer */
+		void processBlockBypassed(double* const*, int, int, dsp::MidiBuffer&) noexcept;
 
 		void savePatch();
 		
 		void loadPatch();
+
+		Params& params;
 	};
 }

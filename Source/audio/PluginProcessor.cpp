@@ -2,16 +2,17 @@
 
 namespace audio
 {
-	PluginProcessor::PluginProcessor()
+	PluginProcessor::PluginProcessor(Params& _params) :
+		params(_params)
 	{}
 
-	void PluginProcessor::prepare(double, int)
+	void PluginProcessor::prepare(double)
 	{}
 
-	void PluginProcessor::operator()(float* const*, int, int, MidiBuffer&) noexcept
+	void PluginProcessor::operator()(double* const*, int, int, dsp::MidiBuffer&) noexcept
 	{}
 
-	void PluginProcessor::processBlockBypassed(float* const*, int, int, MidiBuffer&) noexcept
+	void PluginProcessor::processBlockBypassed(double* const*, int, int, dsp::MidiBuffer&) noexcept
 	{}
 
 	void PluginProcessor::savePatch()

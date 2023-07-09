@@ -1327,6 +1327,11 @@ namespace param
 	Param* Params::operator[](PID p) noexcept { return params[static_cast<int>(p)]; }
 	const Param* Params::operator[](PID p) const noexcept { return params[static_cast<int>(p)]; }
 
+	Param& Params::operator()(int i) noexcept { return *params[i]; }
+	const Param& Params::operator()(int i) const noexcept { return *params[i]; }
+	Param& Params::operator()(PID p) noexcept { return *params[static_cast<int>(p)]; }
+	const Param& Params::operator()(PID p) const noexcept { return *params[static_cast<int>(p)]; }
+
 	Params::Parameters& Params::data() noexcept { return params; }
 
 	const Params::Parameters& Params::data() const noexcept { return params; }
@@ -1347,15 +1352,10 @@ namespace param
 
 	// MACRO PROCESSOR
 
-	MacroProcessor::MacroProcessor(Params& _params) :
-		params(_params)
+	void processMacroMod(Params& params) noexcept
 	{
-	}
-
-	void MacroProcessor::operator()() noexcept
-	{
-		const auto modDepth = params[PID::Macro]->getValue();
+		const auto macro = params(PID::Macro).getValue();
 		for (auto i = 1; i < NumParams; ++i)
-			params[i]->modulate(modDepth);
+			params(i).modulate(macro);
 	}
 }

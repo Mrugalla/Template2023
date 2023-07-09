@@ -12,9 +12,8 @@ namespace gui
 
 	std::unique_ptr<juce::XmlElement> loadXML(const char*, const int);
 
-	class Layout
+	struct Layout
 	{
-	public:
 		Layout();
 
 		void init(const std::vector<int>& /*xDist*/, const std::vector<int>& /*yDist*/);
@@ -68,7 +67,6 @@ namespace gui
 		void label(Graphics&, String&&, X, Y, X = static_cast<X>(1), Y = static_cast<Y>(1), bool /*isQuad*/ = false) const;
 
 	protected:
-		const Component& comp;
 		std::vector<float> rXRaw, rX;
 		std::vector<float> rYRaw, rY;
 	};
