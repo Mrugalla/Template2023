@@ -39,6 +39,13 @@ namespace dsp
 	*/
 	template<typename Float>
 	Float softclipFiresledge(Float, Float, Float) noexcept;
+
+	/*
+	sample, ceiling, k[0,1]
+	iconic softclipper "heavy" from unplug.red prisma
+	*/
+	template<typename Float>
+	Float softclipPrismaHeavy(Float, Float, Float) noexcept;
 }
 
 /*

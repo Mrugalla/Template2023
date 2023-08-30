@@ -70,6 +70,21 @@ namespace dsp
 		return ceiling * sign * c;
 	}
 
+	template<typename Float>
+	Float softclipPrismaHeavy(Float sample, Float ceiling, Float k) noexcept
+	{
+		static constexpr auto zero = static_cast<Float>(0);
+		static constexpr auto one = static_cast<Float>(1);
+		
+		const auto val = one - k * .99;
+		const auto sign = sample < zero ? -one : one;
+		
+		const auto func = std::pow(std::abs(sample), val) * sign;
+		const auto gain = one - (one - val * val * .92);
+
+		return ceiling * func * gain;
+	}
+
 	// resolving functions for Float types float and double
 
 	template float hardclip(float, float) noexcept;
@@ -92,4 +107,7 @@ namespace dsp
 
 	template float softclipFiresledge(float, float, float) noexcept;
 	template double softclipFiresledge(double, double, double) noexcept;
+
+	template float softclipPrismaHeavy(float, float, float) noexcept;
+	template double softclipPrismaHeavy(double, double, double) noexcept;
 }
