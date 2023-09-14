@@ -11,5 +11,20 @@ namespace dsp
 	using SIMD = juce::FloatVectorOperations;
 	using AudioBuffer = juce::AudioBuffer<double>;
 	
+	enum class OversamplingOrder { x1, x2, x4, NumOrders };
+	inline constexpr int getOversamplingFactor(OversamplingOrder order) noexcept
+	{
+		switch (order)
+		{
+			case OversamplingOrder::x1: return 1;
+			case OversamplingOrder::x2: return 2;
+			case OversamplingOrder::x4: return 4;
+			default: return 1;
+		}
+	}
+
+	static constexpr int NumChannels = PPDHasSidechain ? 4 : 2;
     static constexpr int BlockSize = 32;
+	static constexpr int BlockSize2x = BlockSize * getOversamplingFactor(OversamplingOrder::x2);
+	static constexpr int BlockSize4x = BlockSize * getOversamplingFactor(OversamplingOrder::x4);
 }

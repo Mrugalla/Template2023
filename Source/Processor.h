@@ -4,7 +4,8 @@
 
 #include "arch/XenManager.h"
 #include "param/Param.h"
-#include "audio/dsp/PRM.h"
+#include "audio/dsp/MixProcessor.h"
+#include "audio/dsp/Oversampler.h"
 
 namespace audio
 {
@@ -36,10 +37,14 @@ namespace audio
         void prepareToPlay(double, int) override;
         void releaseResources() override;
         bool isBusesLayoutSupported(const BusesLayout&) const override;
+        
         void processBlock(AudioBufferF&, MidiBuffer&) override;
         void processBlockBypassed(AudioBufferF&, MidiBuffer&) override;
         void processBlock(AudioBufferD&, MidiBuffer&) override;
         void processBlockBypassed(AudioBufferD&, MidiBuffer&) override;
+
+        void processBlockOversampler(double* const*, MidiBuffer&, int, int) noexcept;
+        
         juce::AudioProcessorEditor* createEditor() override;
         bool hasEditor() const override;
         const juce::String getName() const override;
@@ -56,6 +61,7 @@ namespace audio
         void setStateInformation(const void*, int) override;
         void timerCallback() override;
         bool supportsDoublePrecisionProcessing() const override;
+        void forcePrepare();
 
 #if PPDHasTuningEditor
         XenManager xenManager;
@@ -66,11 +72,9 @@ namespace audio
         PluginProcessor pluginProcessor;
         AudioBufferD audioBufferD;
 
-#if PPDHasGainIn
-        PRM gainInParam;
-#endif
-#if PPDHasGainWet
-        PRM gainWetParam;
-#endif
+        dsp::MixProcessor mixProcessor;
+        dsp::Oversampler oversampler;
+        double sampleRateUp;
+        int blockSizeUp;
     };
 }

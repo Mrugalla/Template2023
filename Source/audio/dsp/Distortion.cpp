@@ -76,11 +76,11 @@ namespace dsp
 		static constexpr auto zero = static_cast<Float>(0);
 		static constexpr auto one = static_cast<Float>(1);
 		
-		const auto val = one - k * .99;
+		const auto val = one - k * static_cast<Float>(.99);
 		const auto sign = sample < zero ? -one : one;
 		
 		const auto func = std::pow(std::abs(sample), val) * sign;
-		const auto gain = one - (one - val * val * .92);
+		const auto gain = one - (one - val * val * static_cast<Float>(.92));
 
 		return ceiling * func * gain;
 	}

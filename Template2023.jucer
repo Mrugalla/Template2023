@@ -7,7 +7,7 @@
               pluginName="Template2023" pluginDesc="Plugin Template" pluginManufacturer="Beats Basteln"
               pluginManufacturerCode="BBBB" pluginCode="BBBB" pluginVST3Category="Fx"
               pluginAAXCategory="0" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="20"
-              defines="PPDHasSidechain=false&#10;PPDHasClipper=true&#10;PPDHasGainIn=true&#10;PPDHasUnityGain=true&#10;PPDHasGainWet=true&#10;PPDHasGainOut=true&#10;PPDHasMix=true&#10;PPDHasPolarity=true&#10;PPDHasHQ=true&#10;PPDHasStereoConfig=true&#10;PPDHasLookahead=true&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainUnitDecibels=true&#10;&#10;PPDGainInMin=-12.f&#10;PPDGainInMax=12.f&#10;PPDUnityGainDefault=true&#10;PPDGainWetMin=-12.f&#10;PPDGainWetMax=12.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;PPDMaxXen=128"
+              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=true&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=true&#10;PPDHasSidechain=false&#10;PPDHasHQ=true&#10;PPDHasLookahead=true&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-12.f&#10;PPDGainDryMax=12.f&#10;PPDGainWetMin=-12.f&#10;PPDGainWetMax=12.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;PPDMaxXen=128"
               includeBinaryInJuceHeader="1">
   <MAINGROUP id="WYhkvs" name="Template2023">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
@@ -61,10 +61,21 @@
       </GROUP>
       <GROUP id="{40307200-594D-4A49-C512-2C481058424A}" name="audio">
         <GROUP id="{59EAA807-50FE-F7F8-0D20-F8E7A0503840}" name="dsp">
+          <FILE id="IJRXRu" name="Oversampler.cpp" compile="1" resource="0" file="Source/audio/dsp/Oversampler.cpp"/>
+          <FILE id="cJq9wX" name="Oversampler.h" compile="0" resource="0" file="Source/audio/dsp/Oversampler.h"/>
+          <FILE id="v4AfAR" name="MidSide.cpp" compile="1" resource="0" file="Source/audio/dsp/MidSide.cpp"/>
+          <FILE id="vkm6Z4" name="MidSide.h" compile="0" resource="0" file="Source/audio/dsp/MidSide.h"/>
+          <FILE id="pmlVdP" name="ParallelProcessor.cpp" compile="1" resource="0"
+                file="Source/audio/dsp/ParallelProcessor.cpp"/>
+          <FILE id="C0s0uG" name="ParallelProcessor.h" compile="0" resource="0"
+                file="Source/audio/dsp/ParallelProcessor.h"/>
           <FILE id="pG1F7i" name="Distortion.cpp" compile="1" resource="0" file="Source/audio/dsp/Distortion.cpp"/>
           <FILE id="M09pHj" name="Distortion.h" compile="0" resource="0" file="Source/audio/dsp/Distortion.h"/>
-          <FILE id="kxyBcx" name="DryWetMix.cpp" compile="1" resource="0" file="Source/audio/dsp/DryWetMix.cpp"/>
-          <FILE id="YFFTvB" name="DryWetMix.h" compile="0" resource="0" file="Source/audio/dsp/DryWetMix.h"/>
+          <FILE id="kxyBcx" name="MixProcessor.cpp" compile="1" resource="0"
+                file="Source/audio/dsp/MixProcessor.cpp"/>
+          <FILE id="YFFTvB" name="MixProcessor.h" compile="0" resource="0" file="Source/audio/dsp/MixProcessor.h"/>
+          <FILE id="nBvgWV" name="Gain.cpp" compile="1" resource="0" file="Source/audio/dsp/Gain.cpp"/>
+          <FILE id="KGCtmY" name="Gain.h" compile="0" resource="0" file="Source/audio/dsp/Gain.h"/>
           <FILE id="gXz9v4" name="Phasor.cpp" compile="1" resource="0" file="Source/audio/dsp/Phasor.cpp"/>
           <FILE id="rcVAk3" name="Phasor.h" compile="0" resource="0" file="Source/audio/dsp/Phasor.h"/>
           <FILE id="rEJYSa" name="PRM.cpp" compile="1" resource="0" file="Source/audio/dsp/PRM.cpp"/>

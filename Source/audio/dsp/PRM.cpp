@@ -15,6 +15,13 @@ namespace dsp
 		return buf[i];
 	}
 
+	template<typename Float>
+	void PRMInfo<Float>::copyToBuffer(int numSamples) noexcept
+	{
+		if (!smoothing)
+			SIMD::fill(buf, val, numSamples);
+	}
+
 	template struct PRMInfo<float>;
 	template struct PRMInfo<double>;
 

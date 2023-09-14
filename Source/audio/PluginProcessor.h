@@ -18,11 +18,11 @@ namespace audio
 		/* sampleRate */
 		void prepare(double);
 
-		/* samples, numChannels, numSamples, midiBuffer */
-		void operator()(double* const*, int, int, dsp::MidiBuffer&) noexcept;
+		/* samples, midiBuffer, numChannels, numSamples */
+		void operator()(double**, dsp::MidiBuffer&, int, int) noexcept;
 		
-		/* samples, numChannels, numSamples, midiBuffer */
-		void processBlockBypassed(double* const*, int, int, dsp::MidiBuffer&) noexcept;
+		/* samples, midiBuffer, numChannels, numSamples */
+		void processBlockBypassed(double**, dsp::MidiBuffer&, int, int) noexcept;
 
 		void savePatch();
 		

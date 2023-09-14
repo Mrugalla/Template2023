@@ -12,6 +12,8 @@ namespace dsp
 		/* idx */
 		Float operator[](int) const noexcept;
 
+		void copyToBuffer(int) noexcept;
+
 		Float* buf;
 		Float val;
 		bool smoothing;

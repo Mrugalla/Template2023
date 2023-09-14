@@ -210,7 +210,7 @@ namespace dsp
 
 			smoothing = true;
 
-			block(bufferOut, numSamples);
+			block(bufferOut, dest, numSamples);
 			lowpass(bufferOut, numSamples);
 
 			cur = bufferOut[numSamples - 1];

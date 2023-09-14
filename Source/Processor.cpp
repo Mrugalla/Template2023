@@ -1,5 +1,10 @@
 #include "Processor.h"
 #include "Editor.h"
+
+#if PPDHasStereoConfig
+#include "audio/dsp/MidSide.h"
+#endif
+
 #include "audio/dsp/Distortion.h"
 #include "arch/Math.h"
 
@@ -33,15 +38,13 @@ namespace audio
         state(),
         
         pluginProcessor(params),
-        audioBufferD()
-#if PPDHasGainIn
-        ,gainInParam()
-#endif
-#if PPDHasGainWet
-        ,gainWetParam()
-#endif
+        audioBufferD(),
+
+        mixProcessor(),
+        oversampler(),
+        sampleRateUp(0.),
+        blockSizeUp(dsp::BlockSize)
     {
-        startTimerHz(4);
     }
 
     Processor::~Processor()
@@ -126,10 +129,20 @@ namespace audio
 
     void Processor::prepareToPlay(double sampleRate, int maxBlockSize)
     {
+        auto latency = 0;
+
         audioBufferD.setSize(2, maxBlockSize, false, true, false);
-        gainInParam.prepare(sampleRate, 10.);
-        gainWetParam.prepare(sampleRate, 10.);
 		pluginProcessor.prepare(sampleRate);
+        mixProcessor.prepare(sampleRate);
+
+        const auto hqEnabled = params(PID::HQ).getValMod() > .5f;
+        oversampler.prepare(sampleRate, hqEnabled);
+        latency += oversampler.getLatency();
+        sampleRateUp = oversampler.sampleRateUp;
+        blockSizeUp = oversampler.enabled ? dsp::BlockSize2x : dsp::BlockSize;
+
+        setLatencySamples(latency);
+        startTimerHz(4);
     }
 
     void Processor::releaseResources()
@@ -197,20 +210,20 @@ namespace audio
 		
         param::processMacroMod(params);
 		
-        const auto numSamples = buffer.getNumSamples();
-        if (numSamples == 0)
+        const auto numSamplesMain = buffer.getNumSamples();
+        if (numSamplesMain == 0)
             return;
 		
         const auto numChannels = buffer.getNumChannels() == 2 ? 2 : 1;
-        auto samples = buffer.getArrayOfWritePointers();
+        auto samplesMain = buffer.getArrayOfWritePointers();
 
-        for (auto s = 0; s < numSamples; s += dsp::BlockSize)
+        for (auto s = 0; s < numSamplesMain; s += dsp::BlockSize)
         {
-            double* block[] = { &samples[0][s], &samples[1][s] };
-            const auto dif = numSamples - s;
-            const auto bNumSamples = dif < dsp::BlockSize ? dif : dsp::BlockSize;
+            double* samples[] = { &samplesMain[0][s], &samplesMain[1][s] };
+            const auto dif = numSamplesMain - s;
+            const auto numSamples = dif < dsp::BlockSize ? dif : dsp::BlockSize;
 
-            pluginProcessor.processBlockBypassed(block, numChannels, bNumSamples, midiMessages);
+            pluginProcessor.processBlockBypassed(samples, midiMessages, numChannels, numSamples);
         }
     }
 
@@ -255,72 +268,135 @@ namespace audio
 		
         param::processMacroMod(params);
 
-        const auto numSamples = buffer.getNumSamples();
+        const auto numSamplesMain = buffer.getNumSamples();
         {
             const auto totalNumInputChannels = getTotalNumInputChannels();
             const auto totalNumOutputChannels = getTotalNumOutputChannels();
 
             for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-                buffer.clear(i, 0, numSamples);
+                buffer.clear(i, 0, numSamplesMain);
         }
-        if (numSamples == 0)
+        if (numSamplesMain == 0)
             return;
 		
-		const auto numChannels = buffer.getNumChannels();
-		auto samples = buffer.getArrayOfWritePointers();
-        
-#if PPDHasGainIn
-        const auto gainInDb = params(PID::GainIn).getValModDenorm();
-        const auto gainInAmp = math::decibelToAmp(gainInDb);
-#if PPDHasUnityGain
-        const auto unityGainEnabled = params(PID::UnityGain).getValMod() > .5;
-#endif
-#endif
-#if PPDHasClipper
-        const bool shallClip = params(PID::Clipper).getValMod() > .5f;
-#endif
-#if PPDHasGainWet
-        const auto gainWetDb = params(PID::GainWet).getValModDenorm();
-        const auto gainWetAmp = math::decibelToAmp(gainWetDb);
-#endif
+        const auto numChannels = buffer.getNumChannels();
+		auto samplesMain = buffer.getArrayOfWritePointers();
 
-        for (auto s = 0; s < numSamples; s += dsp::BlockSize)
+#if PPDHasStereoConfig
+        bool midSide = false;
+        if (numChannels == 2)
         {
-            double* block[] = { &samples[0][s], &samples[1][s] };
-            const auto dif = numSamples - s;
-            const auto bNumSamples = dif < dsp::BlockSize ? dif : dsp::BlockSize;
-
-			// process mix input
-			
-            pluginProcessor(block, numChannels, bNumSamples, midiMessages);
-#if PPDHasClipper
-            if (shallClip)
-                for (auto ch = 0; ch < numChannels; ++ch)
-                {
-                    auto smpls = block[ch];
-                    for (auto i = 0; i < bNumSamples; ++i)
-                        smpls[i] = dsp::softclipSigmoid(smpls[i], 1., dsp::Pi);
-                }
-#endif
-            // process mix output
-#if PPDHasGainWet
-            const auto gainWetInfo = gainWetParam(gainWetAmp, bNumSamples);
-            if (!gainWetInfo.smoothing)
-            {
-                if (gainWetInfo.val != 1.)
-                    for (auto ch = 0; ch < numChannels; ++ch)
-                        SIMD::multiply(block[ch], gainWetInfo.val, bNumSamples);
-            }
-            else
-                for (auto ch = 0; ch < numChannels; ++ch)
-                    SIMD::multiply(block[ch], gainWetInfo.buf, bNumSamples);
-#endif
+            midSide = params(PID::StereoConfig).getValue() > .5f;
+            if(midSide)
+                dsp::midSideEncode(samplesMain, numSamplesMain);
         }
+#endif
+
+#if PPDIsNonlinear
+        const auto gainInDb = static_cast<double>(params(PID::GainIn).getValModDenorm());
+        const auto unityGain = params(PID::UnityGain).getValMod() > .5f;
+#endif
+#if PPDIO == PPDIODryWet
+        const auto gainDryDb = static_cast<double>(params(PID::GainDry).getValModDenorm());
+        const auto gainWetDb = static_cast<double>(params(PID::GainWet).getValModDenorm());
+#elif PPDIO == PPDIOWetMix
+        const auto gainWetDb = static_cast<double>(params(PID::GainWet).getValModDenorm());
+        const auto mix = static_cast<double>(params(PID::Mix).getValMod());
+        const auto delta = params(PID::Delta).getValMod() > .5f;
+#endif
+        const auto gainOutDb = static_cast<double>(params(PID::GainOut).getValModDenorm());
+
+        for (auto s = 0; s < numSamplesMain; s += dsp::BlockSize)
+        {
+            double* samples[] = { &samplesMain[0][s], &samplesMain[1][s] };
+            const auto dif = numSamplesMain - s;
+            const auto numSamples = dif < dsp::BlockSize ? dif : dsp::BlockSize;
+
+#if PPDIO == PPDIOOut
+	#if PPDIsNonlinear
+			mixProcessor.split
+			(
+				samples, gainInDb, numChannels, numSamples
+			);
+	#endif
+#elif PPDIO == PPDIODryWet
+    #if PPDIsNonlinear
+            mixProcessor.split
+            (
+                samples, gainDryDb, gainInDb, numChannels, numSamples
+            );
+    #else
+            mixProcessor.split
+            (
+                samples, gainDryDb, numChannels, numSamples
+            );
+    #endif
+#else
+    #if PPDIsNonlinear
+            mixProcessor.split
+            (
+                samples, gainInDb, numChannels, numSamples
+            );
+    #else
+            mixProcessor.split
+            (
+                samples, numChannels, numSamples
+            );
+    #endif
+#endif
+
+            processBlockOversampler(samples, midiMessages, numChannels, numSamples);
+            
+#if PPDIO == PPDIOOut
+    #if PPDIsNonlinear
+			mixProcessor.join
+			(
+				samples, gainOutDb, numChannels, numSamples, unityGain
+			);
+	#else
+            mixProcessor.join
+			(
+				samples, gainOutDb, numChannels, numSamples
+			);
+    #endif
+#elif PPDIO == PPDIODryWet
+    #if PPDIsNonlinear
+            mixProcessor.join
+            (
+                samples, gainWetDb, gainOutDb, numChannels, numSamples, unityGain
+            );
+    #else
+            mixProcessor.join
+            (
+                samples, gainWetDb, gainOutDb, numChannels, numSamples
+            );
+    #endif
+#else
+    #if PPDIsNonlinear
+            mixProcessor.join
+            (
+                samples, mix, gainWetDb, gainOutDb, numChannels, numSamples, unityGain, delta
+            );
+    #else
+            mixProcessor.join
+            (
+                samples, mix, gainWetDb, gainOutDb, numChannels, numSamples, delta
+            );
+    #endif
+#endif
+            
+        }
+
+#if PPDHasStereoConfig
+		if (midSide)
+			dsp::midSideDecode(samplesMain, numSamplesMain);
+#endif
+
 #if JUCE_DEBUG
         for (auto ch = 0; ch < numChannels; ++ch)
         {
-            auto smpls = samples[ch];
-            for (auto s = 0; s < numSamples; ++s)
+            auto smpls = samplesMain[ch];
+            for (auto s = 0; s < numSamplesMain; ++s)
                 smpls[s] = dsp::hardclip(smpls[s], 1.);
         }
 #endif
@@ -357,9 +433,35 @@ namespace audio
         }
     }
 
+    void Processor::processBlockOversampler(double* const* samples, MidiBuffer& midi,
+        int numChannels, int numSamples) noexcept
+    {
+        auto bufferInfo = oversampler.upsample(samples, numChannels, numSamples);
+        const auto numSamplesUp = bufferInfo.numSamples;
+        double* samplesUp[] = { bufferInfo.smplsL, bufferInfo.smplsR };
+
+        pluginProcessor(samplesUp, midi, numChannels, numSamplesUp);
+
+        oversampler.downsample(samples, numSamples);
+    }
+
     void Processor::timerCallback()
     {
-		
+        bool needForcePrepare = false;
+
+		const auto hqEnabled = params(PID::HQ).getValMod() > .5f;
+        if (oversampler.enabled != hqEnabled)
+            needForcePrepare = true;
+
+        if(needForcePrepare)
+            forcePrepare();
+    }
+
+    void Processor::forcePrepare()
+    {
+        suspendProcessing(true);
+        prepareToPlay(getSampleRate(), getBlockSize());
+        suspendProcessing(false);
     }
 }
 

@@ -27,37 +27,28 @@ namespace param
 		switch (pID)
 		{
 		case PID::Macro: return "Macro";
-#if PPDHasClipper
-		case PID::Clipper: return "Clipper";
-#endif
-#if PPDHasGainIn
+#if PPDIsNonlinear
 		case PID::GainIn: return "Gain In";
-#if PPDHasUnityGain
 		case PID::UnityGain: return "Unity Gain";
 #endif
-#endif
-#if PPDHasGainWet
+#if PPDIO == PPDIODryWet
+		case PID::GainDry: return "Gain Dry";
 		case PID::GainWet: return "Gain Wet";
-#endif
-#if PPDHasMix
+#elif PPDIO == PPDIOWetMix
+		case PID::GainWet: return "Gain Wet";
 		case PID::Mix: return "Mix";
+		case PID::Delta: return "Delta";
 #endif
-#if PPDHasGainOut
 		case PID::GainOut: return "Gain Out";
-#endif
-#if PPDHasPolarity
-		case PID::Polarity: return "Polarity";
+#if PPDHasStereoConfig
+		case PID::StereoConfig: return "Stereo Config";
 #endif
 #if PPDHasHQ
 		case PID::HQ: return "HQ";
 #endif
-#if PPDHasStereoConfig
-		case PID::StereoConfig: return "Stereo Config";
-#endif
 #if PPDHasLookahead
 		case PID::Lookahead: return "Lookahead";
 #endif
-
 #if PPDHasTuningEditor
 			// TUNING PARAM:
 		case PID::Xen: return "Xen";
@@ -65,10 +56,9 @@ namespace param
 		case PID::BaseNote: return "Base Note";
 		case PID::PitchbendRange: return "Pitchbend Range";
 #endif
-
 		case PID::Power: return "Power";
 
-			// LOW LEVEL PARAMS:
+		// LOW LEVEL PARAMS:
 
 		default: return "Invalid Parameter Name";
 		}
@@ -102,48 +92,39 @@ namespace param
 		switch (pID)
 		{
 		case PID::Macro: return "Dial in the desired amount of macro modulation depth.";
-#if PPDHasClipper
-		case PID::Clipper: return "A soft clipper on the wet signal.";
-#endif
-#if PPDHasGainIn
-		case PID::GainIn: return "Apply input gain to the wet signal.";
-#if PPDHasUnityGain
+#if PPDIsNonlinear
+		case PID::GainIn: return "Apply gain to the input signal.";
 		case PID::UnityGain: return "Compensates for the added input gain.";
 #endif
+#if PPDIO == PPDIODryWet
+		case PID::GainDry: return "Apply gain to the dry signal.";
+		case PID::GainWet: return "Apply gain to the wet signal.";
+#elif PPDIO == PPDIOWetMix
+		case PID::GainWet: return "Apply gain to the wet signal.";
+		case PID::Mix: return "Mix the dry with the wet signal.";
+		case PID::Delta: return "Listen to the difference between the dry and the wet signal.";
 #endif
-#if PPDHasGainWet
-		case PID::GainWet: return "Apply output gain to the wet signal.";
-#endif
-#if PPDHasMix
-		case PID::Mix: return "Mix the dry with the wet output signal.";
-#endif
-#if PPDHasGainOut
-		case PID::GainOut: return "Apply output gain to the entire output signal.";
-#endif
-#if PPDHasPolarity
-		case PID::Polarity: return "Flip the wet signal's polarity.";
+		case PID::GainOut: return "Apply gain to the output signal.";
+#if PPDHasStereoConfig
+		case PID::StereoConfig: return "Switch between L/R and M/S mode.";
 #endif
 #if PPDHasHQ
-		case PID::HQ: return "Turn on HQ to apply oversampling to the signal.";
-#endif
-#if PPDHasStereoConfig
-		case PID::StereoConfig: return "Define the stereo-configuration. L/R or M/S.";
-#endif
-#if PPDHasLookahead
-		case PID::Lookahead: return "Switch on or off lookahead-related features.";
+		case PID::HQ: return "Apply oversampling to the signal.";
 #endif
 
+#if PPDHasLookahead
+		case PID::Lookahead: return "Dis/Enabled lookahead.";
+#endif
 #if PPDHasTuningEditor
-			// TUNING PARAMS:
+		// TUNING PARAMS:
 		case PID::Xen: return "Define the xenharmonic scale.";
-		case PID::MasterTune: return "Retune the entire plugin to a different chamber pitch.";
+		case PID::MasterTune: return "Define the master tune / chamber pitch.";
 		case PID::BaseNote: return "Define the base note of the scale.";
 		case PID::PitchbendRange: return "Define the pitchbend range in semitones.";
 #endif
+		case PID::Power: return "Dis/Enable the plugin.";
 
-		case PID::Power: return "Bypass the plugin with this parameter.";
-
-			// LOW LEVEL PARAMS:
+		// LOW LEVEL PARAMS:
 
 		default: return "Invalid Tooltip.";
 		}
@@ -1232,44 +1213,35 @@ namespace param
 		modDepthLocked(false)
 	{
 		{ // HIGH LEVEL PARAMS:
-			const auto gainUnit = PPDGainUnitDecibels ? Unit::Decibel : Unit::Percent;
-			const auto gainDefaultVal = PPDGainUnitDecibels ? 0.f : 1.f;
-			const auto gainInRange = PPDGainUnitDecibels ? makeRange::withCentre(PPDGainInMin, PPDGainInMax, 0.f) : makeRange::lin(0.f, 1.f);
-			const auto gainWetRange = PPDGainUnitDecibels ? makeRange::withCentre(PPDGainWetMin, PPDGainWetMax, 0.f) : makeRange::lin(0.f, 1.f);
-			const auto gainOutRange = PPDGainUnitDecibels ? makeRange::withCentre(PPDGainOutMin, PPDGainOutMax, 0.f) : makeRange::lin(0.f, 1.f);
-
 			params.push_back(makeParam(PID::Macro, 0.f));
-#if PPDHasClipper
-			params.push_back(makeParam(PID::Clipper, 0.f, makeRange::toggle(), Unit::Power));
+			
+#if PPDIsNonlinear
+			const auto gainInRange = makeRange::withCentre(PPDGainInMin, PPDGainInMax, 0.f);
+			params.push_back(makeParam(PID::GainIn, 0.f, gainInRange, Unit::Decibel));
+			params.push_back(makeParam(PID::UnityGain, 1.f, makeRange::toggle(), Unit::Polarity));
 #endif
-#if PPDHasGainIn
-			params.push_back(makeParam(PID::GainIn, gainDefaultVal, gainInRange, gainUnit));
-#if PPDHasUnityGain
-			params.push_back(makeParam(PID::UnityGain, (PPDUnityGainDefault ? 1.f : 0.f), makeRange::toggle(), Unit::Polarity));
-#endif
-#endif
-#if PPDHasGainWet
-			params.push_back(makeParam(PID::GainWet, gainDefaultVal, gainWetRange, gainUnit));
-#endif
-#if PPDHasMix
+#if PPDIO == PPDIODryWet
+			const auto gainDryRange = makeRange::withCentre(PPDGainDryMin, PPDGainDryMax, 0.f);
+			const auto gainWetRange = makeRange::withCentre(PPDGainWetMin, PPDGainWetMax, 0.f);
+			params.push_back(makeParam(PID::GainDry, 0.f, gainDryRange, Unit::Decibel));
+			params.push_back(makeParam(PID::GainWet, 0.f, gainWetRange, Unit::Decibel));
+#elif PPDIO == PPDIOWetMix
+			const auto gainWetRange = makeRange::withCentre(PPDGainWetMin, PPDGainWetMax, 0.f);
+			params.push_back(makeParam(PID::GainWet, 0.f, gainWetRange, Unit::Decibel));
 			params.push_back(makeParam(PID::Mix, 1.f));
+			params.push_back(makeParam(PID::Delta, 0.f, makeRange::toggle(), Unit::Power));
 #endif
-#if PPDHasGainOut
-			params.push_back(makeParam(PID::GainOut, gainDefaultVal, gainOutRange, gainUnit));
-#endif
-#if PPDHasPolarity
-			params.push_back(makeParam(PID::Polarity, 0.f, makeRange::toggle(), Unit::Polarity));
-#endif
-#if PPDHasHQ
-			params.push_back(makeParam(PID::HQ, 0.f, makeRange::toggle()));
-#endif
+			const auto gainOutRange = makeRange::withCentre(PPDGainOutMin, PPDGainOutMax, 0.f);
+			params.push_back(makeParam(PID::GainOut, 0.f, gainOutRange, Unit::Decibel));
 #if PPDHasStereoConfig
 			params.push_back(makeParam(PID::StereoConfig, 1.f, makeRange::toggle(), Unit::StereoConfig));
+#endif
+#if PPDHasHQ
+			params.push_back(makeParam(PID::HQ, 0.f, makeRange::toggle(), Unit::Power));
 #endif
 #if PPDHasLookahead
 			params.push_back(makeParam(PID::Lookahead, 0.f, makeRange::toggle(), Unit::Power));
 #endif
-
 #if PPDHasTuningEditor
 			// TUNING PARAMS:
 			params.push_back(makeParam(PID::Xen, 12.f, makeRange::withCentre(2.f, PPDMaxXen, 12.f), Unit::Xen));
@@ -1277,7 +1249,6 @@ namespace param
 			params.push_back(makeParam(PID::BaseNote, 69.f, makeRange::withCentre(0.f, 127.f, 69.f), Unit::Note));
 			params.push_back(makeParam(PID::PitchbendRange, 2.f, makeRange::stepped(0.f, 48.f, 1.f), Unit::Semi));
 #endif
-
 			params.push_back(makeParam(PID::Power, 1.f, makeRange::toggle(), Unit::Power));
 		}
 

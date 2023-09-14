@@ -14,32 +14,24 @@ namespace param
 	{
 		// high level parameters
 		Macro,
-#if PPDHasClipper
-		Clipper,
-#endif
-#if PPDHasGainIn
+#if PPDIsNonlinear
 		GainIn,
-#if PPDHasUnityGain
 		UnityGain,
 #endif
-#endif
-#if PPDHasGainWet
+#if PPDIO == PPDIODryWet
+		GainDry,
 		GainWet,
-#endif
-#if PPDHasMix
+#elif PPDIO == PPDIOWetMix
+		GainWet,
 		Mix,
+		Delta,
 #endif
-#if PPDHasGainOut
 		GainOut,
-#endif
-#if PPDHasPolarity
-		Polarity,
+#if PPDHasStereoConfig
+		StereoConfig,
 #endif
 #if PPDHasHQ
 		HQ,
-#endif
-#if PPDHasStereoConfig
-		StereoConfig,
 #endif
 #if PPDHasLookahead
 		Lookahead,
@@ -51,7 +43,6 @@ namespace param
 		BaseNote,
 		PitchbendRange,
 #endif
-
 		Power,
 
 		// low level parameters
