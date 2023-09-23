@@ -5,8 +5,8 @@
 #include "audio/dsp/MidSide.h"
 #endif
 
-#include "audio/dsp/Distortion.h"
 #include "arch/Math.h"
+#include "audio/dsp/Distortion.h"
 
 namespace audio
 {
@@ -41,7 +41,9 @@ namespace audio
         audioBufferD(),
 
         mixProcessor(),
+#if PPDHasHQ
         oversampler(),
+#endif
         sampleRateUp(0.),
         blockSizeUp(dsp::BlockSize)
     {
@@ -135,12 +137,16 @@ namespace audio
 		pluginProcessor.prepare(sampleRate);
         mixProcessor.prepare(sampleRate);
 
+#if PPDHasHQ
         const auto hqEnabled = params(PID::HQ).getValMod() > .5f;
         oversampler.prepare(sampleRate, hqEnabled);
         latency += oversampler.getLatency();
         sampleRateUp = oversampler.sampleRateUp;
         blockSizeUp = oversampler.enabled ? dsp::BlockSize2x : dsp::BlockSize;
-
+#else
+        sampleRateUp = sampleRate;
+		blockSizeUp = dsp::BlockSize;
+#endif
         setLatencySamples(latency);
         startTimerHz(4);
     }
@@ -436,23 +442,29 @@ namespace audio
     void Processor::processBlockOversampler(double* const* samples, MidiBuffer& midi,
         int numChannels, int numSamples) noexcept
     {
+#if PPDHasHQ
         auto bufferInfo = oversampler.upsample(samples, numChannels, numSamples);
         const auto numSamplesUp = bufferInfo.numSamples;
         double* samplesUp[] = { bufferInfo.smplsL, bufferInfo.smplsR };
-
+#else
+        double* samplesUp[] = { samples[0], samples[1] };
+        const auto numSamplesUp = numSamples;
+#endif
         pluginProcessor(samplesUp, midi, numChannels, numSamplesUp);
 
+#if PPDHasHQ
         oversampler.downsample(samples, numSamples);
+#endif
     }
 
     void Processor::timerCallback()
     {
         bool needForcePrepare = false;
-
+#if PPDHasHQ
 		const auto hqEnabled = params(PID::HQ).getValMod() > .5f;
         if (oversampler.enabled != hqEnabled)
             needForcePrepare = true;
-
+#endif
         if(needForcePrepare)
             forcePrepare();
     }

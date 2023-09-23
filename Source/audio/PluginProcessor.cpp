@@ -5,7 +5,8 @@ namespace audio
 {
 	PluginProcessor::PluginProcessor(Params& _params) :
 		params(_params)
-	{}
+	{
+	}
 
 	void PluginProcessor::prepare(double)
 	{}

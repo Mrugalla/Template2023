@@ -2,13 +2,18 @@
 -----------------------------------------------------------------------------------------
 ~~~ todo ~~~
 
+xenmanager
+    xen
+    master tune
+    base note
+    pitchbend range
+    temperament
+FFT
+    test if works
+    improve performance
 Oversampler
     make convolver FFT based
     implement 4x
-xen
-master tune
-base note
-pitchbend range
 sidechain
     envfol on macro
 MixProcessor

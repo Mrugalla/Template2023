@@ -89,6 +89,26 @@ namespace math
     }
 
     template<typename Float>
+    Float closestFreq(Float freq, Float xen = static_cast<Float>(12), Float basePitch = static_cast<Float>(69), Float masterTune = static_cast<Float>(440)) noexcept
+    {
+        auto closestFreq = static_cast<Float>(0);
+        auto closestDist = std::numeric_limits<Float>::max();
+
+        for (auto note = 0; note < 128; ++note)
+        {
+            const auto nFreq = noteInFreqHz(static_cast<Float>(note), xen, basePitch, masterTune);
+            const auto nDist = std::abs(freq - nFreq);
+            if (nDist < closestDist)
+            {
+                closestDist = nDist;
+                closestFreq = nFreq;
+            }
+        }
+
+        return closestFreq;
+    }
+
+    template<typename Float>
     inline Float freqHzInFc(Float freq, Float Fs) noexcept
     {
         return freq / Fs;

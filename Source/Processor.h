@@ -73,7 +73,9 @@ namespace audio
         AudioBufferD audioBufferD;
 
         dsp::MixProcessor mixProcessor;
+#if PPDHasHQ
         dsp::Oversampler oversampler;
+#endif
         double sampleRateUp;
         int blockSizeUp;
     };
