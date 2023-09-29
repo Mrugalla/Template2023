@@ -53,7 +53,7 @@ namespace param
 			// TUNING PARAM:
 		case PID::Xen: return "Xen";
 		case PID::MasterTune: return "Master Tune";
-		case PID::BaseNote: return "Base Note";
+		case PID::ReferencePitch: return "Reference Pitch";
 		case PID::PitchbendRange: return "Pitchbend Range";
 #endif
 		case PID::Power: return "Power";
@@ -119,7 +119,7 @@ namespace param
 		// TUNING PARAMS:
 		case PID::Xen: return "Define the xenharmonic scale.";
 		case PID::MasterTune: return "Define the master tune / chamber pitch.";
-		case PID::BaseNote: return "Define the base note of the scale.";
+		case PID::ReferencePitch: return "This pitch has the same frequency in all xen scales.";
 		case PID::PitchbendRange: return "Define the pitchbend range in semitones.";
 #endif
 		case PID::Power: return "Dis/Enable the plugin.";
@@ -1244,10 +1244,11 @@ namespace param
 #endif
 #if PPDHasTuningEditor
 			// TUNING PARAMS:
-			params.push_back(makeParam(PID::Xen, 12.f, makeRange::withCentre(2.f, PPDMaxXen, 12.f), Unit::Xen));
+			const auto maxXen = static_cast<float>(PPDMaxXen);
+			params.push_back(makeParam(PID::Xen, 12.f, makeRange::withCentre(3.f, maxXen, 12.f), Unit::Xen));
 			params.push_back(makeParam(PID::MasterTune, 440.f, makeRange::withCentre(420.f, 460.f, 440.f), Unit::Hz));
-			params.push_back(makeParam(PID::BaseNote, 69.f, makeRange::withCentre(0.f, 127.f, 69.f), Unit::Note));
-			params.push_back(makeParam(PID::PitchbendRange, 2.f, makeRange::stepped(0.f, 48.f, 1.f), Unit::Semi));
+			params.push_back(makeParam(PID::ReferencePitch, 69.f, makeRange::stepped(0.f, 127.f), Unit::Note));
+			params.push_back(makeParam(PID::PitchbendRange, 2.f, makeRange::stepped(0.f, 48.f), Unit::Semi));
 #endif
 			params.push_back(makeParam(PID::Power, 1.f, makeRange::toggle(), Unit::Power));
 		}

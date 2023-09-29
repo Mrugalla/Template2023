@@ -11,7 +11,7 @@ namespace dsp
 	AutoMPE::AutoMPE() :
 		buffer(),
 		voices(),
-		idx(0)
+		channelIdx(0)
 	{}
 
 	void AutoMPE::operator()(MidiBuffer& midiMessages)
@@ -33,49 +33,54 @@ namespace dsp
 		midiMessages.swapWith(buffer);
 	}
 
+	void AutoMPE::incChannel() noexcept
+	{
+		channelIdx = (channelIdx + 1) & NumMPEChannels;
+	}
+
 	void AutoMPE::processNoteOn(MidiMessage& msg, int ts)
 	{
-		for (auto ch = 0; ch < NumChannels; ++ch)
+		for (auto ch = 0; ch < NumMPEChannels; ++ch)
 		{
-			idx = (idx + 1) & MaxMIDIChannel;
-			auto& voice = voices[idx];
+			incChannel();
+			auto& voice = voices[channelIdx];
 			if (!voice.noteOn)
-			{
-				const auto note = msg.getNoteNumber();
-				voice.note = note;
-				voice.channel = idx + 1;
-				voice.noteOn = true;
-				msg.setChannel(voice.channel);
-				return;
-			}
+				return processNoteOn(voice, msg);
 		}
-		idx = (idx + 1) & MaxMIDIChannel;
-		auto& voice = voices[idx];
+		incChannel();
+		auto& voice = voices[channelIdx];
 		buffer.addEvent(MidiMessage::noteOff(voice.channel, voice.note), ts);
+		processNoteOn(voice, msg);
+	}
+
+	void AutoMPE::processNoteOn(Voice& voice, MidiMessage& msg) noexcept
+	{
 		const auto note = msg.getNoteNumber();
 		voice.note = note;
-		voice.channel = idx + 1;
+		voice.channel = channelIdx + 2;
 		voice.noteOn = true;
 		msg.setChannel(voice.channel);
 	}
 
 	void AutoMPE::processNoteOff(MidiMessage& msg) noexcept
 	{
-		for (auto ch = 0; ch < NumChannels; ++ch)
+		for (auto ch = 0; ch < NumMPEChannels; ++ch)
 		{
-			auto i = idx - ch;
+			auto i = channelIdx - ch;
 			if (i < 0)
 				i += NumChannels;
 
 			auto& voice = voices[i];
 
 			if (voice.noteOn && voice.note == msg.getNoteNumber())
-			{
-				msg.setChannel(voice.channel);
-				voice.note = 0;
-				voice.noteOn = false;
-				return;
-			}
+				return processNoteOff(msg);
 		}
+	}
+
+	void AutoMPE::processNoteOff(Voice& voice, MidiMessage& msg) noexcept
+	{
+		msg.setChannel(voice.channel);
+		voice.note = 0;
+		voice.noteOn = false;
 	}
 }

@@ -16,8 +16,7 @@ namespace dsp
 	using Uint8 = uint8_t;
 	
 	static constexpr int NumMIDIChannels = 16;
-	static constexpr int MaxMIDIChannel = NumMIDIChannels - 1;
-	using MidiBuffersMPE = std::array<MidiBuffer, NumMIDIChannels + 1>;
+	static constexpr int NumMPEChannels = NumMIDIChannels - 1;
 	static constexpr double PitchbendRange = 16383.;
 	static constexpr double PitchbendRangeHalf = PitchbendRange * .5;
 	

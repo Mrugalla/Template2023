@@ -13,7 +13,7 @@ namespace dsp
 			bool noteOn;
 		};
 
-		using Voices = std::array<Voice, NumMIDIChannels>;
+		using Voices = std::array<Voice, NumMPEChannels>;
 
 		AutoMPE();
 
@@ -22,10 +22,18 @@ namespace dsp
 	private:
 		MidiBuffer buffer;
 		Voices voices;
-		int idx;
+		int channelIdx;
 
+		void incChannel() noexcept;
+
+		/* msg, ts */
 		void processNoteOn(MidiMessage&, int);
 
+		void processNoteOn(Voice&, MidiMessage&) noexcept;
+
 		void processNoteOff(MidiMessage&) noexcept;
+
+		void processNoteOff(Voice&, MidiMessage&) noexcept;
+
 	};
 }

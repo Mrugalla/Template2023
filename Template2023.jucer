@@ -7,7 +7,7 @@
               pluginName="Template2023" pluginDesc="Plugin Template" pluginManufacturer="Beats Basteln"
               pluginManufacturerCode="BBBB" pluginCode="BBBB" pluginVST3Category="Fx"
               pluginAAXCategory="0" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="20"
-              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=true&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=false&#10;PPDHasSidechain=false&#10;PPDHasHQ=false&#10;PPDHasLookahead=false&#10;PPDHasTuningEditor=false&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-12.f&#10;PPDGainDryMax=12.f&#10;PPDGainWetMin=-12.f&#10;PPDGainWetMax=12.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;PPDMaxXen=48"
+              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOOut&#10;&#10;PPDHasStereoConfig=false&#10;PPDHasSidechain=false&#10;PPDHasHQ=false&#10;PPDHasLookahead=false&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-12.f&#10;PPDGainDryMax=12.f&#10;PPDGainWetMin=-12.f&#10;PPDGainWetMax=12.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;PPDMaxXen=96"
               includeBinaryInJuceHeader="1">
   <MAINGROUP id="WYhkvs" name="Template2023">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">

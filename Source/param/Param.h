@@ -40,7 +40,7 @@ namespace param
 #if PPDHasTuningEditor
 		Xen,
 		MasterTune,
-		BaseNote,
+		ReferencePitch,
 		PitchbendRange,
 #endif
 		Power,

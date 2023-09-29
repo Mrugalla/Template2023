@@ -5,6 +5,8 @@ namespace dsp
 {
 	struct MPESplit
 	{
+		static constexpr int Size = NumMIDIChannels + 1;
+		using Buffers = std::array<MidiBuffer, Size>;
 		static constexpr int Sysex = 0;
 
 		MPESplit();
@@ -16,6 +18,6 @@ namespace dsp
 		const MidiBuffer& operator[](int ch) const noexcept;
 
 	protected:
-		MidiBuffersMPE buffers;
+		Buffers buffers;
 	};
 }

@@ -86,11 +86,11 @@ namespace dsp
 	{
 		buffer.clear();
 
-		for (auto ch = 1; ch <= NumChannels; ++ch)
+		for (auto ch = 0; ch < NumMPEChannels; ++ch)
 		{
-			auto& midi = mpe[ch];
-
-			auto& rescaler = xenRescaler[ch - 1];
+			auto& rescaler = xenRescaler[ch];
+			auto& midi = mpe[ch + 2];
+			
 			rescaler(midi, buffer, xen, basePitch, masterTune, pitchbendRange, type);
 		}
 

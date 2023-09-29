@@ -42,9 +42,7 @@ namespace dsp
 
 	struct XenSynthMPE
 	{
-		using MPE = dsp::MPESplit;
-
-		XenSynthMPE(MPE&);
+		XenSynthMPE(MPESplit&);
 
 		void prepare(double);
 
@@ -53,7 +51,7 @@ namespace dsp
 			int, int, bool) noexcept;
 
 	private:
-		std::array<XenDemoSynth, NumMIDIChannels> voices;
-		MPE& mpe;
+		std::array<XenDemoSynth, NumMPEChannels> voices;
+		MPESplit& mpe;
 	};
 }

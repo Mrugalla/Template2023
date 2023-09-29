@@ -8,11 +8,8 @@ namespace arch
 	{
 		XenManager();
 
-		/* tmprVal, noteVal */
-		void setTemperament(float, int) noexcept;
-
-		/* xen, masterTune, baseNote */
-		void operator()(float, float, float) noexcept;
+		/* xen, masterTune, referencePitch, pitchbendRange */
+		void operator()(double, double, double, double) noexcept;
 
 		template<typename Float>
 		Float noteToFreqHz(Float) const noexcept;
@@ -24,10 +21,9 @@ namespace arch
 		template<typename Float>
 		Float freqHzToNote(Float) noexcept;
 
-		float getXen() const noexcept;
+		double getXen() const noexcept;
 
 	protected:
-		float xen, masterTune, baseNote;
-		std::array<std::atomic<float>, PPDMaxXen + 1> temperaments;
+		double xen, masterTune, referencePitch, pitchbendRange;
 	};
 }

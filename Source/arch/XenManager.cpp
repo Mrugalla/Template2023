@@ -5,41 +5,32 @@
 namespace arch
 {
 	XenManager::XenManager() :
-		xen(12.f),
-		masterTune(440.f),
-		baseNote(69.f),
-		temperaments()
+		xen(12.),
+		masterTune(440.),
+		referencePitch(69.),
+		pitchbendRange(2.)
 	{
-		for (auto& t : temperaments)
-			t = 0.f;
 	}
 
-	void XenManager::setTemperament(float tmprVal, int noteVal) noexcept
-	{
-		temperaments[noteVal] = tmprVal;
-		const auto idx2 = noteVal + PPDMaxXen;
-		if (idx2 >= temperaments.size())
-			temperaments[idx2] = tmprVal;
-	}
-
-	void XenManager::operator()(float _xen, float _masterTune, float _baseNote) noexcept
+	void XenManager::operator()(double _xen, double _masterTune,
+		double _referencePitch, double _pitchbendRange) noexcept
 	{
 		xen = _xen;
 		masterTune = _masterTune;
-		baseNote = _baseNote;
+		referencePitch = _referencePitch;
+		pitchbendRange = _pitchbendRange;
 	}
 
 	template<typename Float>
 	Float XenManager::noteToFreqHz(Float note) const noexcept
 	{
-		if (note < static_cast<Float>(0))
-			note = static_cast<Float>(0);
-		else if (note > static_cast<Float>(PPDMaxXen))
-			note = static_cast<Float>(PPDMaxXen);
-		
-		const auto tmprmt = static_cast<Float>(temperaments[static_cast<int>(std::round(note))].load());
-
-		return math::noteInFreqHz(note + tmprmt, static_cast<Float>(baseNote), static_cast<Float>(xen), static_cast<Float>(masterTune));
+		return math::noteInFreqHz
+		(
+			note,
+			static_cast<Float>(referencePitch),
+			static_cast<Float>(xen),
+			static_cast<Float>(masterTune)
+		);
 	}
 
 	template<typename Float>
@@ -56,10 +47,16 @@ namespace arch
 	template<typename Float>
 	Float XenManager::freqHzToNote(Float hz) noexcept
 	{
-		return math::freqHzInNote(hz, static_cast<Float>(baseNote), static_cast<Float>(xen), static_cast<Float>(masterTune));
+		return math::freqHzInNote
+		(
+			hz,
+			static_cast<Float>(referencePitch),
+			static_cast<Float>(xen),
+			static_cast<Float>(masterTune)
+		);
 	}
 
-	float XenManager::getXen() const noexcept
+	double XenManager::getXen() const noexcept
 	{
 		return xen;
 	}

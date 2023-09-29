@@ -48,7 +48,7 @@ namespace dsp
 
 	private:
 		MidiBuffer buffer;
-		std::array<XenRescaler, NumMIDIChannels> xenRescaler;
+		std::array<XenRescaler, NumMPEChannels> xenRescaler;
 		MPESplit& mpe;
 	};
 }

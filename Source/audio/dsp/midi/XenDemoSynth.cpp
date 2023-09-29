@@ -129,7 +129,7 @@ namespace dsp
 	}
 
 
-	XenSynthMPE::XenSynthMPE(MPE& _mpe) :
+	XenSynthMPE::XenSynthMPE(MPESplit& _mpe) :
 		voices(),
 		mpe(_mpe)
 	{}
@@ -146,18 +146,18 @@ namespace dsp
 		bool playModeVal) noexcept
 	{
 		if (playModeVal)
-			for (auto ch = 1; ch <= NumMIDIChannels; ++ch)
+			for (auto ch = 0; ch < NumMPEChannels; ++ch)
 			{
-				const auto& midi = mpe[ch];
-				auto& voice = voices[ch - 1];
+				auto& voice = voices[ch];
+				const auto& midi = mpe[ch + 2];
 
 				voice.synthesizeNearest(samples[0], midi, xen, basePitch, masterTune, numSamples);
 			}
 		else
-			for (auto ch = 1; ch <= NumMIDIChannels; ++ch)
+			for (auto ch = 0; ch < NumMPEChannels; ++ch)
 			{
-				const auto& midi = mpe[ch];
-				auto& voice = voices[ch - 1];
+				auto& voice = voices[ch];
+				const auto& midi = mpe[ch + 2];
 
 				voice.synthesizeRescale(samples[0], midi, xen, basePitch, masterTune, numSamples);
 			}
