@@ -2,10 +2,22 @@
 -----------------------------------------------------------------------------------------
 ~~~ todo ~~~
 
+GUI
+    Check or Implement
+        Editor
+            add procedural bg image
+        Callback
+            Teste hinzufügen/löschen dynamisch
+        Comp
+        Label
+            Editable
+        BuildDateCompButton
+            Test Eventsys
+        Knob
 FFT
-    remove by 3rd party lib for performance
+    replace by 3rd party lib for performance (kiss fft or pffft)
 Oversampler
-    make convolver FFT based
+    make convolver FFT-based
     implement 4x
 sidechain
     envfol on macro

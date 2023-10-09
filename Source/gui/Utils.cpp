@@ -4,6 +4,7 @@ namespace gui
 {
 	Utils::Utils(Component& _pluginTop, Processor& _audioProcessor) :
 		eventSystem(),
+		callbacks(),
 		pluginTop(_pluginTop),
 		audioProcessor(_audioProcessor),
 		params(audioProcessor.params),
@@ -25,21 +26,6 @@ namespace gui
 	{
 		return audioProcessor.state.state;
 	}
-
-	//void Utils::assignMIDILearn(PID pID) noexcept
-	//{
-	//	audioProcessor.midiManager.midiLearn.assignParam(params[pID]);
-	//}
-
-	//void Utils::removeMIDILearn(PID pID) noexcept
-	//{
-	//	audioProcessor.midiManager.midiLearn.removeParam(params[pID]);
-	//}
-
-	//const audio::MIDILearn& Utils::getMIDILearn() const noexcept
-	//{
-	//	return audioProcessor.midiManager.midiLearn;
-	//}
 
 	void Utils::resized()
 	{
@@ -90,35 +76,5 @@ namespace gui
 	Point Utils::getScreenPosition() const noexcept
 	{
 		return pluginTop.getScreenPosition();
-	}
-
-	void hideCursor()
-	{
-		auto mms = juce::Desktop::getInstance().getMainMouseSource();
-		mms.enableUnboundedMouseMovement(true, false);
-	}
-
-	void showCursor(const Component& comp)
-	{
-		auto mms = juce::Desktop::getInstance().getMainMouseSource();
-		centreCursor(comp, mms);
-		mms.enableUnboundedMouseMovement(false, true);
-	}
-
-	void centreCursor(const Component& comp, juce::MouseInputSource& mms)
-	{
-		const Point centre(comp.getWidth() / 2, comp.getHeight() / 2);
-		mms.setScreenPosition((comp.getScreenPosition() + centre).toFloat());
-	}
-
-	void appendRandomString(String& str, Random& rand, int length, const String& legalChars)
-	{
-		const auto max = static_cast<float>(legalChars.length() - 1);
-
-		for (auto i = 0; i < length; ++i)
-		{
-			auto idx = static_cast<int>(rand.nextFloat() * max);
-			str += legalChars[idx];
-		}
 	}
 }

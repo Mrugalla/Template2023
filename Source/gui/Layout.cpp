@@ -2,6 +2,36 @@
 
 namespace gui
 {
+	void hideCursor()
+	{
+		auto mms = juce::Desktop::getInstance().getMainMouseSource();
+		mms.enableUnboundedMouseMovement(true, false);
+	}
+
+	void showCursor(const Component& comp)
+	{
+		auto mms = juce::Desktop::getInstance().getMainMouseSource();
+		centreCursor(comp, mms);
+		mms.enableUnboundedMouseMovement(false, true);
+	}
+
+	void centreCursor(const Component& comp, juce::MouseInputSource& mms)
+	{
+		const Point centre(comp.getWidth() / 2, comp.getHeight() / 2);
+		mms.setScreenPosition((comp.getScreenPosition() + centre).toFloat());
+	}
+
+	void appendRandomString(String& str, Random& rand, int length, const String& legalChars)
+	{
+		const auto max = static_cast<float>(legalChars.length() - 1);
+
+		for (auto i = 0; i < length; ++i)
+		{
+			auto idx = static_cast<int>(rand.nextFloat() * max);
+			str += legalChars[idx];
+		}
+	}
+
 	BoundsF smallestBoundsIn(const LineF& line) noexcept
 	{
 		return { line.getStart(), line.getEnd() };
@@ -110,6 +140,11 @@ namespace gui
 		yDist.push_back(yStr.substring(sIdx).getIntValue());
 
 		init(xDist, yDist);
+	}
+
+	void Layout::resized(Bounds bounds) noexcept
+	{
+		resized(bounds.toFloat());
 	}
 
 	void Layout::resized(BoundsF bounds) noexcept
@@ -253,12 +288,18 @@ namespace gui
 
 	void Layout::paint(Graphics& g)
 	{
-		auto btm = bottom();
+		const auto btm = bottom();
 		
-		for (auto x = 0; x < rX.size(); ++x)
+		for (auto x = 1; x < rX.size() - 1; ++x)
 			g.drawVerticalLine(static_cast<int>(rX[x]), rY[0], btm.getBottom());
-		for (auto y = 0; y < rY.size(); ++y)
+		for (auto y = 1; y < rY.size() - 1; ++y)
 			g.drawHorizontalLine(static_cast<int>(rY[y]), rX[0], btm.getRight());
+	}
+
+	void Layout::paint(Graphics& g, Colour c)
+	{
+		g.setColour(c);
+		paint(g);
 	}
 
 	template<typename X, typename Y>

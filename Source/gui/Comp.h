@@ -10,28 +10,24 @@ namespace gui
 		/* utils, tooltip */
 		Comp(Utils&, const String & = "");
 
+		~Comp();
+
 		/* xL, yL */
 		void initLayout(const std::vector<int>&, const std::vector<int>&);
 
 		/* xL, yL */
 		void initLayout(const String&, const String&);
 
-		//void notify(EvtType, const void* = nullptr);
-
 		Utils& utils;
 		Layout layout;
 		String tooltip;
-	protected:
-		//std::vector<Evt> evts;
+		std::vector<evt::Member> members;
+		Callbacks callbacks;
 
 		void paint(Graphics&) override;
 
 		void mouseEnter(const Mouse&) override;
 
 		void mouseUp(const Mouse&) override;
-
-	private:
-		//Notify makeNotifyBasic(Comp*);
-
 	};
 }

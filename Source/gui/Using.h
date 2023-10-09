@@ -8,10 +8,6 @@
 #include <BinaryData.h>
 
 #include "../Processor.h"
-#include "../param/Param.h"
-#include "../arch/State.h"
-
-#include <array>
 #include <functional>
 
 namespace gui
@@ -66,6 +62,13 @@ namespace gui
     static constexpr float Pi = Tau * .5f;;
     static constexpr float PiHalf = Tau * .25f;
     static constexpr float PiQuart = Tau * .125f;
+
+    static constexpr double EditorWidth = 690.;
+    static constexpr double EditorHeight = 420.;
+    static constexpr int FPS = 60;
+
+    static constexpr double FPSD = static_cast<double>(FPS);
+    static constexpr double FPSInv = 1. / FPSD;
 
     namespace font
     {

@@ -1,7 +1,7 @@
 #pragma once
 #include "Using.h"
 #include "Events.h"
-//#include "../audio/MIDILearn.h"
+#include "TimerCallback.h"
 
 namespace gui
 {
@@ -12,14 +12,20 @@ namespace gui
 		/* pluginTop, processor */
 		Utils(Component&, Processor&);
 
+		void addCallback(Callback* cb, cbFPS fps)
+		{
+			callbacks.add(cb, fps);
+		}
+
+		void removeCallback(Callback* cb)
+		{
+			callbacks.remove(cb);
+		}
+
 		std::vector<Param*>& getAllParams() noexcept;
 		const std::vector<Param*>& getAllParams() const noexcept;
 
 		juce::ValueTree getState() const noexcept;
-
-		//void assignMIDILearn(PID pID) noexcept;
-		//void removeMIDILearn(PID pID) noexcept;
-		//const audio::MIDILearn& getMIDILearn() const noexcept;
 
 		float getDragSpeed() const noexcept;
 
@@ -38,16 +44,10 @@ namespace gui
 		void giveDAWKeyboardFocus();
 
 		evt::System eventSystem;
+		TimerCallbacks callbacks;
 		Component& pluginTop;
 		Processor& audioProcessor;
 		Params& params;
 		float thicc;
 	};
-
-	void hideCursor();
-	void showCursor(const Component&);
-	void centreCursor(const Component&, juce::MouseInputSource&);
-
-	void appendRandomString(String&, Random&, int/*length*/,
-		const String & /*legalChars*/ = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
 }

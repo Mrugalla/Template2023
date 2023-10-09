@@ -8,45 +8,51 @@ namespace gui
     {
         enum class Type
         {
+            ColourSchemeChanged,
             TooltipUpdated,
+            ClickedEmpty,
             NumTypes
         };
 
-		/* type, stuff */
-        using Notify = std::function<void(const Type, const void*)>;
+        /* type, stuff */
+        using Evt = std::function<void(const Type, const void*)>;
 
         struct System
         {
-            struct Evt
+            struct Member
             {
-                Evt(System&);
+                Member(System&);
 
-                Evt(System&, const Notify&);
+                Member(System&, const Evt&);
 
-                Evt(System&, Notify&&);
+                Member(System&, Evt&&);
 
-                Evt(const Evt&);
+                Member(const Member&);
 
-                ~Evt();
+                ~Member();
 
                 void operator()(const Type, const void* = nullptr) const;
 
-                Notify notifier;
-            protected:
                 System& sys;
+                Evt evt;
             };
+
+            using Members = std::vector<Member*>;
 
             System();
 
-			/* type, stuff */
+            /* type, stuff */
             void notify(const Type, const void* = nullptr);
 
         protected:
-            std::vector<Evt*> evts;
+            Members members;
 
-            void add(Evt*);
+            void add(Member*);
 
-            void remove(const Evt*);
+            void remove(const Member*);
         };
+
+        using Member = System::Member;
+        using Members = System::Members;
     }
 }

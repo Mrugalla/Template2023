@@ -9,6 +9,9 @@ namespace dsp
 	static constexpr double E = 2.7182818284590452353602874713527;
 	static constexpr double TauInv = 1. / Tau;
 
+	static constexpr float PiF = 3.1415926535897932384626433832795f;
+	static constexpr float TauF = PiF * 2.f;
+
 	using MidiBuffer = juce::MidiBuffer;
 	using MidiMessage = juce::MidiMessage;
 	using SIMD = juce::FloatVectorOperations;
@@ -36,4 +39,32 @@ namespace dsp
     static constexpr int BlockSize = 32;
 	static constexpr int BlockSize2x = BlockSize * getOversamplingFactor(OversamplingOrder::x2);
 	static constexpr int BlockSize4x = BlockSize * getOversamplingFactor(OversamplingOrder::x4);
+
+	template<typename Float>
+	inline void copy(Float* dest, Float* src, int numSamples) noexcept
+	{
+		SIMD::copy(dest, src, numSamples);
+	}
+
+	template<typename Float>
+	inline void add(Float* dest, Float* src, int numSamples) noexcept
+	{
+		SIMD::add(dest, src, numSamples);
+	}
+
+	template<typename Float>
+	inline void copy(Float** dest, Float** src,
+		int numChannels, int numSamples) noexcept
+	{
+		for(auto ch = 0; ch < numChannels; ++ch)
+			copy(dest[ch], src[ch], numSamples);
+	}
+
+	template<typename Float>
+	inline void add(Float** dest, Float** src,
+		int numChannels, int numSamples) noexcept
+	{
+		for (auto ch = 0; ch < numChannels; ++ch)
+			add(dest[ch], src[ch], numSamples);
+	}
 }

@@ -8,7 +8,7 @@
               pluginManufacturerCode="BBBB" pluginCode="BBBB" pluginVST3Category="Fx"
               pluginAAXCategory="0" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="20"
               defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOOut&#10;&#10;PPDHasStereoConfig=false&#10;PPDHasSidechain=false&#10;PPDHasHQ=false&#10;PPDHasLookahead=false&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-12.f&#10;PPDGainDryMax=12.f&#10;PPDGainWetMin=-12.f&#10;PPDGainWetMax=12.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;PPDMaxXen=96"
-              includeBinaryInJuceHeader="1">
+              includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'">
   <MAINGROUP id="WYhkvs" name="Template2023">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
       <GROUP id="{C0D89064-DEAF-E8FD-023E-D8E4256F7695}" name="fonts">
@@ -113,6 +113,9 @@
         <FILE id="sGl3Zw" name="Events.h" compile="0" resource="0" file="Source/gui/Events.h"/>
         <FILE id="mMfZbm" name="Layout.cpp" compile="1" resource="0" file="Source/gui/Layout.cpp"/>
         <FILE id="alJFXn" name="Layout.h" compile="0" resource="0" file="Source/gui/Layout.h"/>
+        <FILE id="zsuacq" name="TimerCallback.cpp" compile="1" resource="0"
+              file="Source/gui/TimerCallback.cpp"/>
+        <FILE id="FrNNxD" name="TimerCallback.h" compile="0" resource="0" file="Source/gui/TimerCallback.h"/>
         <FILE id="vWkUYr" name="Using.cpp" compile="1" resource="0" file="Source/gui/Using.cpp"/>
         <FILE id="QDqVwY" name="Using.h" compile="0" resource="0" file="Source/gui/Using.h"/>
         <FILE id="DEQaKD" name="Utils.cpp" compile="1" resource="0" file="Source/gui/Utils.cpp"/>

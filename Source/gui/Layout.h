@@ -3,7 +3,14 @@
 
 namespace gui
 {
-	
+	void hideCursor();
+	void showCursor(const Component&);
+	void centreCursor(const Component&, juce::MouseInputSource&);
+
+	/* text, randomizer, length, legalChars*/
+	void appendRandomString(String&, Random&, int,
+		const String& = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+
 	BoundsF smallestBoundsIn(const LineF& line) noexcept;
 
 	BoundsF maxQuadIn(const BoundsF&) noexcept;
@@ -19,6 +26,8 @@ namespace gui
 		void init(const std::vector<int>& /*xDist*/, const std::vector<int>& /*yDist*/);
 
 		void fromStrings(const String& /*xDist*/, const String& /*yDist*/);
+
+		void resized(Bounds) noexcept;
 
 		void resized(BoundsF) noexcept;
 
@@ -62,6 +71,8 @@ namespace gui
 		void place(Component*, X, Y, X = static_cast<X>(1), Y = static_cast<Y>(1), bool /*isQuad*/ = false) const noexcept;
 
 		void paint(Graphics&);
+
+		void paint(Graphics&, Colour);
 
 		template<typename X, typename Y>
 		void label(Graphics&, String&&, X, Y, X = static_cast<X>(1), Y = static_cast<Y>(1), bool /*isQuad*/ = false) const;

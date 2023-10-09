@@ -4,39 +4,39 @@ namespace gui
 {
     namespace evt
     {
-        System::Evt::Evt(System& _sys) :
+        System::Member::Member(System& _sys) :
             sys(_sys),
-            notifier(nullptr)
+            evt(nullptr)
         {
         }
 
-        System::Evt::Evt(System& _sys, const Notify& _notifier) :
+        System::Member::Member(System& _sys, const Evt& _evt) :
             sys(_sys),
-            notifier(_notifier)
+            evt(_evt)
         {
             sys.add(this);
         }
 
-        System::Evt::Evt(System& _sys, Notify&& _notifier) :
+        System::Member::Member(System& _sys, Evt&& _evt) :
             sys(_sys),
-            notifier(_notifier)
+            evt(_evt)
         {
             sys.add(this);
         }
 
-        System::Evt::Evt(const Evt& other) :
-            notifier(other.notifier),
-            sys(other.sys)
+        System::Member::Member(const Member& other) :
+            sys(other.sys),
+            evt(other.evt)
         {
             sys.add(this);
         }
 
-        System::Evt::~Evt()
+        System::Member::~Member()
         {
             sys.remove(this);
         }
 
-        void System::Evt::operator()(const Type type, const void* stuff) const
+        void System::Member::operator()(const Type type, const void* stuff) const
         {
             sys.notify(type, stuff);
         }
@@ -44,26 +44,26 @@ namespace gui
         //SYSTEM
 
         System::System() :
-            evts()
+            members()
         {}
 
         void System::notify(const Type type, const void* stuff)
         {
-            for (const auto e : evts)
-                e->notifier(type, stuff);
+            for (const auto member : members)
+                member->evt(type, stuff);
         }
 
-        void System::add(Evt* e)
+        void System::add(Member* m)
         {
-            evts.push_back(e);
+            members.push_back(m);
         }
 
-        void System::remove(const Evt* e)
+        void System::remove(const Member* m)
         {
-            for (auto i = 0; i < evts.size(); ++i)
-                if (e == evts[i])
+            for (auto i = 0; i < members.size(); ++i)
+                if (m == members[i])
                 {
-                    evts.erase(evts.begin() + i);
+                    members.erase(members.begin() + i);
                     return;
                 }
         }
