@@ -4,14 +4,16 @@
 namespace gui
 {
 	void hideCursor();
+
 	void showCursor(const Component&);
+
 	void centreCursor(const Component&, juce::MouseInputSource&);
 
 	/* text, randomizer, length, legalChars*/
 	void appendRandomString(String&, Random&, int,
 		const String& = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
 
-	BoundsF smallestBoundsIn(const LineF& line) noexcept;
+	BoundsF smallestBoundsIn(const LineF&) noexcept;
 
 	BoundsF maxQuadIn(const BoundsF&) noexcept;
 
@@ -84,9 +86,11 @@ namespace gui
 
 	void make(Path&, const Layout&, std::vector<Point>&&);
 
-	void drawHorizontalLine(Graphics&, int /*y*/, float /*left*/, float /*right*/, int /*thicc*/ = 1);
+	/* g, y, left, right, thicc */
+	void drawHorizontalLine(Graphics&, int, float, float, int = 1);
 
-	void drawVerticalLine(Graphics&, int /*x*/, float /*top*/, float /*bottom*/, int /*thicc*/ = 1);
+	/* g, x, top, bottom, thicc */
+	void drawVerticalLine(Graphics&, int, float, float, int = 1);
 
 	/* graphics, bounds, edgeWidth, edgeHeight, stroke */
 	void drawRectEdges(Graphics&, const BoundsF&, float, float, const Stroke&);
@@ -134,7 +138,9 @@ namespace gui
 		}
 	}
 
-	BoundsF boundsOf(const Font&, const String&) noexcept;
+	PointF boundsOf(const Font&, const String&) noexcept;
+
+	float findMaxHeight(const Font&, const String&, float, float) noexcept;
 
 	namespace imgPP
 	{

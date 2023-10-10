@@ -7,7 +7,7 @@ namespace arch
 		juce::PropertiesFile::Options options;
 		options.applicationName = JucePlugin_Name;
 		options.filenameSuffix = ".settings";
-		options.folderName = "BeatsBasteln" + juce::File::getSeparatorString() + JucePlugin_Name;
+		options.folderName = JucePlugin_Manufacturer + juce::File::getSeparatorString() + JucePlugin_Name;
 		options.osxLibrarySubFolder = "Application Support";
 		options.commonToAllUsers = false;
 		options.ignoreCaseOfKeyNames = true;

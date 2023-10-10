@@ -107,10 +107,14 @@
         <FILE id="BThon6" name="Using.h" compile="0" resource="0" file="Source/audio/Using.h"/>
       </GROUP>
       <GROUP id="{E416B635-2B76-8CBC-C7E8-94B2AFE67445}" name="gui">
+        <FILE id="rYjSBg" name="BgImage.cpp" compile="1" resource="0" file="Source/gui/BgImage.cpp"/>
+        <FILE id="XnUFHl" name="BgImage.h" compile="0" resource="0" file="Source/gui/BgImage.h"/>
         <FILE id="W38ixX" name="Comp.cpp" compile="1" resource="0" file="Source/gui/Comp.cpp"/>
         <FILE id="HeCvCp" name="Comp.h" compile="0" resource="0" file="Source/gui/Comp.h"/>
         <FILE id="DxY7bF" name="Events.cpp" compile="1" resource="0" file="Source/gui/Events.cpp"/>
         <FILE id="sGl3Zw" name="Events.h" compile="0" resource="0" file="Source/gui/Events.h"/>
+        <FILE id="rOzncV" name="Label.cpp" compile="1" resource="0" file="Source/gui/Label.cpp"/>
+        <FILE id="sajJqr" name="Label.h" compile="0" resource="0" file="Source/gui/Label.h"/>
         <FILE id="mMfZbm" name="Layout.cpp" compile="1" resource="0" file="Source/gui/Layout.cpp"/>
         <FILE id="alJFXn" name="Layout.h" compile="0" resource="0" file="Source/gui/Layout.h"/>
         <FILE id="zsuacq" name="TimerCallback.cpp" compile="1" resource="0"

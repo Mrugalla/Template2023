@@ -4,7 +4,7 @@ namespace gui
 {
     evt::Evt makeEvt(Component& comp)
     {
-        return [&c = comp](evt::Type type, const void* stuff)
+        return [&c = comp](evt::Type type, const void*)
         {
             if (type == evt::Type::ColourSchemeChanged)
             {
@@ -22,16 +22,25 @@ namespace gui
         audioProcessor(p),
         utils(*this, p),
         layout(),
-        evtMember(utils.eventSystem, makeEvt(*this))
+        evtMember(utils.eventSystem, makeEvt(*this)),
+        bgImage(utils),
+        labels
+        {
+            Label(utils, JucePlugin_Name, "This is the name of my plugin."),
+            Label(utils, JucePlugin_Manufacturer, "Hi :) I'm the developer of this plugin.")
+        }
     {
         layout.init
         (
             { 1, 3, 5, 8 },
-            { 8, 5, 3, 1 }
+            { 1, 3, 5, 8 }
         );
 
+        addAndMakeVisible(bgImage);
+        for (auto& label : labels)
+            addAndMakeVisible(label);
+
         const auto& user = *audioProcessor.state.props.getUserSettings();
-        
         const auto editorWidth = user.getDoubleValue("EditorWidth", EditorWidth);
         const auto editorHeight = user.getDoubleValue("EditorHeight", EditorHeight);
         setOpaque(true);
@@ -43,23 +52,38 @@ namespace gui
         );
     }
     
-    void Editor::paint(Graphics& g)
+    void Editor::paintOverChildren(Graphics& g)
     {
-        g.fillAll(juce::Colours::black);
         layout.paint(g, juce::Colours::limegreen);
     }
 
     void Editor::resized()
     {
+        if (getWidth() < EditorMinWidth)
+            return setSize(EditorMinWidth, getHeight());
+        if (getHeight() < EditorMinHeight)
+            return setSize(getWidth(), EditorMinHeight);
+
+        utils.resized();
         layout.resized(getLocalBounds());
 
-        auto& user = *audioProcessor.state.props.getUserSettings();
+        bgImage.setBounds(getLocalBounds());
 
+        layout.place(labels[kTitle], 1, 1, 1, 1);
+        layout.place(labels[kDev], 2, 1, 1, 1);
+        setMaxCommonHeight(labels.data(), kNumLabels);
+
+        auto& user = *audioProcessor.state.props.getUserSettings();
 		const auto editorWidth = static_cast<double>(getWidth());
 		const auto editorHeight = static_cast<double>(getHeight());
 		user.setValue("EditorWidth", editorWidth);
 		user.setValue("EditorHeight", editorHeight);
 	}
+
+    void Editor::mouseEnter(const Mouse&)
+    {
+        evtMember(evt::Type::TooltipUpdated);
+    }
 
     void Editor::mouseUp(const Mouse&)
     {

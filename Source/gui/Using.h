@@ -51,6 +51,9 @@ namespace gui
     using Component = juce::Component;
     using SystemClipboard = juce::SystemClipboard;
     using SIMD = juce::FloatVectorOperations;
+    using ImageFileFormat = juce::ImageFileFormat;
+    using PNGImageFormat = juce::PNGImageFormat;
+    using FileOutputStream = juce::FileOutputStream;
 
     using Processor = audio::Processor;
 
@@ -65,6 +68,8 @@ namespace gui
 
     static constexpr double EditorWidth = 690.;
     static constexpr double EditorHeight = 420.;
+    static constexpr int EditorMinWidth = 100;
+    static constexpr int EditorMinHeight = 100;
     static constexpr int FPS = 60;
 
     static constexpr double FPSD = static_cast<double>(FPS);

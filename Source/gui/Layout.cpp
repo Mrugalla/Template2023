@@ -381,7 +381,7 @@ namespace gui
 		g.drawFittedText(txt, bounds.toNearestInt(), Just::centredTop, 1);
 	}
 
-	BoundsF boundsOf(const Font& font, const String& text) noexcept
+	PointF boundsOf(const Font& font, const String& text) noexcept
 	{
 		auto maxStrWidth = 0.f;
 		auto numLines = 1.f;
@@ -407,7 +407,19 @@ namespace gui
 		const auto fontHeight = font.getHeight();
 		const auto strHeight = fontHeight * numLines;
 
-		return { 0.f, 0.f, maxStrWidth, strHeight };
+		return { maxStrWidth, strHeight };
+	}
+
+	float findMaxHeight(const Font& font, const String& text,
+		float width, float height) noexcept
+	{
+		if(text.isEmpty())
+			return 0.f;
+		const auto fontBounds = boundsOf(font, text);
+		const auto ratio = std::min(width / fontBounds.x, height / fontBounds.y);
+		const auto oHeight = font.getHeight();
+		const auto nHeight = oHeight * ratio;
+		return nHeight;
 	}
 
 	void imgPP::blur(Image& img, Graphics& g, int its) noexcept

@@ -4,13 +4,12 @@
 
 GUI
     Check or Implement
-        Editor
-            add procedural bg image
-        Callback
-            Teste hinzufügen/löschen dynamisch
-        Comp
         Label
             Editable
+            Check Best performing drawText method
+            cpp
+        Editor
+            makeToast (firstTimeUwu)
         BuildDateCompButton
             Test Eventsys
         Knob
