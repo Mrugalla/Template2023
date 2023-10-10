@@ -5,13 +5,15 @@
 GUI
     Check or Implement
         Label
-            Editable
             Check Best performing drawText method
-            cpp
+        Tooltip
+            align text correctly
+            check for edgecase of empty texts
+        Button
+            has label
+            is editable (texteditor)
         Editor
             makeToast (firstTimeUwu)
-        BuildDateCompButton
-            Test Eventsys
         Knob
 FFT
     replace by 3rd party lib for performance (kiss fft or pffft)

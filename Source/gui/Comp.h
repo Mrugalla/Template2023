@@ -18,6 +18,8 @@ namespace gui
 		/* xL, yL */
 		void initLayout(const String&, const String&);
 
+		void addEvt(const evt::Evt&);
+
 		Utils& utils;
 		Layout layout;
 		String tooltip;

@@ -24,6 +24,7 @@ namespace gui
         layout(),
         evtMember(utils.eventSystem, makeEvt(*this)),
         bgImage(utils),
+        tooltip(utils),
         labels
         {
             Label(utils, JucePlugin_Name, "This is the name of my plugin."),
@@ -32,11 +33,12 @@ namespace gui
     {
         layout.init
         (
-            { 1, 3, 5, 8 },
-            { 1, 3, 5, 8 }
+            { 1, 3, 5, 13 },
+            { 1, 2, 13, 1 }
         );
 
         addAndMakeVisible(bgImage);
+        addAndMakeVisible(tooltip);
         for (auto& label : labels)
             addAndMakeVisible(label);
 
@@ -69,8 +71,10 @@ namespace gui
 
         bgImage.setBounds(getLocalBounds());
 
-        layout.place(labels[kTitle], 1, 1, 1, 1);
-        layout.place(labels[kDev], 2, 1, 1, 1);
+        tooltip.setBounds(layout.bottom().toNearestInt());
+
+        layout.place(labels[kDev], 1, 1, 1, 1);
+        layout.place(labels[kTitle], 2, 1, 1, 1);
         setMaxCommonHeight(labels.data(), kNumLabels);
 
         auto& user = *audioProcessor.state.props.getUserSettings();

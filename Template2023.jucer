@@ -120,6 +120,8 @@
         <FILE id="zsuacq" name="TimerCallback.cpp" compile="1" resource="0"
               file="Source/gui/TimerCallback.cpp"/>
         <FILE id="FrNNxD" name="TimerCallback.h" compile="0" resource="0" file="Source/gui/TimerCallback.h"/>
+        <FILE id="W5rk5N" name="Tooltip.cpp" compile="1" resource="0" file="Source/gui/Tooltip.cpp"/>
+        <FILE id="H92VUG" name="Tooltip.h" compile="0" resource="0" file="Source/gui/Tooltip.h"/>
         <FILE id="vWkUYr" name="Using.cpp" compile="1" resource="0" file="Source/gui/Using.cpp"/>
         <FILE id="QDqVwY" name="Using.h" compile="0" resource="0" file="Source/gui/Using.h"/>
         <FILE id="DEQaKD" name="Utils.cpp" compile="1" resource="0" file="Source/gui/Utils.cpp"/>

@@ -1,5 +1,5 @@
 #pragma once
-#include "gui/Label.h"
+#include "gui/Tooltip.h"
 #include "gui/BgImage.h"
 
 namespace gui
@@ -20,7 +20,9 @@ namespace gui
         Utils utils;
         Layout layout;
         evt::Member evtMember;
+        
         BgImage bgImage;
+        Tooltip tooltip;
 
         enum { kTitle, kDev, kNumLabels };
         std::array<Label, kNumLabels> labels;

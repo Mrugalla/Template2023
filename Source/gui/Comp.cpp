@@ -27,6 +27,11 @@ namespace gui
 		layout.fromStrings(xL, yL);
 	}
 
+	void Comp::addEvt(const evt::Evt& evt)
+	{
+		members.push_back({ utils.eventSystem, evt });
+	}
+
 	void Comp::paint(Graphics& g)
 	{
 		g.setColour(juce::Colour(0xffff0099));
