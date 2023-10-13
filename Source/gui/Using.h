@@ -9,6 +9,7 @@
 
 #include "../Processor.h"
 #include <functional>
+#include <optional>
 
 namespace gui
 {

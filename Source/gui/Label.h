@@ -21,6 +21,8 @@ namespace gui
 
 		float getMaxHeight() const noexcept;
 
+		void setMaxHeight() noexcept;
+
 		Just just;
 		Font font;
 		String text;

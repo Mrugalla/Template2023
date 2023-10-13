@@ -1,22 +1,23 @@
 #pragma once
-#include "Comp.h"
+#include "Button.h"
 
 namespace gui
 {
 	struct BgImage :
 		public Comp
 	{
+		enum { kUpdateBoundsCB, kNumCallbacks };
+
         BgImage(Utils&);
 
         void paint(Graphics&);
 
         void resized() override;
 
-		/* forced */
+		/* forcedLoad */
 		void updateBgImage(bool);
 
-	protected:
 		Image img;
-		//img refresh button
+		Button refreshButton;
 	};
 }

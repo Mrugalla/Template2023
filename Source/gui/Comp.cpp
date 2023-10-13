@@ -32,12 +32,6 @@ namespace gui
 		members.push_back({ utils.eventSystem, evt });
 	}
 
-	void Comp::paint(Graphics& g)
-	{
-		g.setColour(juce::Colour(0xffff0099));
-		g.drawRect(getLocalBounds().toFloat(), 1.f);
-	}
-
 	void Comp::mouseEnter(const Mouse&)
 	{
 		utils.eventSystem.notify(evt::Type::TooltipUpdated, &tooltip);
@@ -46,5 +40,29 @@ namespace gui
 	void Comp::mouseUp(const Mouse&)
 	{
 		utils.eventSystem.notify(evt::Type::ClickedEmpty, this);
+	}
+
+	void Comp::addCallback(const Callback& callback, cbFPS fps)
+	{
+		removeCallbacks(callback.id);
+		callbacks.push_back(callback);
+		utils.addCallback(&callbacks.back(), fps);
+	}
+
+	void Comp::popCallback()
+	{
+		utils.removeCallback(&callbacks.back());
+		callbacks.pop_back();
+	}
+
+	void Comp::removeCallbacks(int id)
+	{
+		for (auto i = 0; i < callbacks.size(); ++i)
+			if (callbacks[i].id == id)
+			{
+				utils.removeCallback(&callbacks[i]);
+				callbacks.erase(callbacks.begin() + i);
+				return removeCallbacks(id);
+			}
 	}
 }

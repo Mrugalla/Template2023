@@ -39,22 +39,27 @@ namespace gui
     {
         void pulsar(Image& img, float thicc, int w, int h)
 		{
+            Random rand;
+
             img = Image(Image::ARGB, w, h, true);
 			Graphics g(img);
 			g.setColour(juce::Colours::turquoise);
 			
             const auto wF = static_cast<float>(w);
             const auto hF = static_cast<float>(h);
-            const auto numLines = 64;
+            const auto numLines = rand.nextInt() & 63 + 32;
             const auto numLinesF = static_cast<float>(numLines);
             const auto h333 = hF / 3.f;
 
             Path path;
 
+            auto iNormRand = rand.nextFloat();
+            auto iSined3Rand = rand.nextFloat() * 2.8f;
+
             for (auto i = 0; i < numLines; ++i)
             {
                 const auto iF = static_cast<float>(i);
-                const auto iNorm = iF / numLinesF;
+                const auto iNorm = iF / numLinesF * iNormRand;
                 const auto iSined = .5f * std::cos(iNorm * Pi + Pi) + .5f;
 
                 const auto xStart = 0.f;
@@ -62,7 +67,7 @@ namespace gui
                 const auto xEnd = wF;
                 const auto yEnd = hF - iSined * h333;
 
-                const auto iSined3 = .5f * std::cos(1.8f * iNorm * Pi + Pi) + .5f;
+                const auto iSined3 = .5f * std::cos(iSined3Rand * iNorm * Pi + Pi) + .5f;
                 const auto cA = h333 + iSined3 * h333;
                 const auto cB = hF - iSined3 * h333;
 
@@ -114,22 +119,21 @@ namespace gui
 
     BgImage::BgImage(Utils& u) :
         Comp(u),
-        img()
-        //imgRefresh(utils, "Click here to request a new background image."),
+        img(),
+        refreshButton(utils, "Refresh", "Click here to request a new background image.")
     {
         setInterceptsMouseClicks(false, true);
 
-        /*
-        addAndMakeVisible(imgRefresh);
-        makeSymbolButton(imgRefresh, ButtonSymbol::Img, false);
-        imgRefresh.onClick.push_back([&](Button&, const Mouse&)
+        refreshButton.onClick = [&](const Mouse&)
         {
-            updateBgImage(true);
+            updateBgImage(false);
             repaint();
-        });
-        */
+        };
 
-        callbacks.push_back([&]()
+        updateBgImage(false);
+        setOpaque(true);
+
+        addCallback(Callback([&]()
         {
             if (!img.isValid())
                 return;
@@ -140,11 +144,7 @@ namespace gui
 
             updateBgImage(false);
             repaint();
-        });
-
-        updateBgImage(false);
-        setOpaque(true);
-        utils.addCallback(&callbacks[0], cbFPS::k3_75);
+        }, kUpdateBoundsCB), cbFPS::k3_75);
     }
 
     void BgImage::paint(Graphics& g)
@@ -155,16 +155,18 @@ namespace gui
 
     void BgImage::resized()
     {
+        layout.resized(getLocalBounds());
+
         if (!img.isValid())
             updateBgImage(true);
     }
 
-    void BgImage::updateBgImage(bool forced)
+    void BgImage::updateBgImage(bool forcedLoad)
     {
         auto& props = utils.audioProcessor.state.props;
         auto& user = *props.getUserSettings();
         const auto& file = user.getFile();
-        if (!forced)
+        if (!forcedLoad)
             loadImage(file, img);
 
         if (componentOk(*this))
@@ -179,7 +181,6 @@ namespace gui
 * 
 todo:
 
-BgImage still needs updateImage buton
 fx::vignette is very edge-orientated
 create::pulsar doesn't look like a pulsar but like a generic lines bg and has no randomization yet
 

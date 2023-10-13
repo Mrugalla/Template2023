@@ -20,16 +20,20 @@ namespace gui
 
 		void addEvt(const evt::Evt&);
 
+		void addCallback(const Callback&, cbFPS);
+
+		void popCallback();
+
+		void removeCallbacks(int id);
+
+		void mouseEnter(const Mouse&) override;
+
+		void mouseUp(const Mouse&) override;
+
 		Utils& utils;
 		Layout layout;
 		String tooltip;
 		std::vector<evt::Member> members;
 		Callbacks callbacks;
-
-		void paint(Graphics&) override;
-
-		void mouseEnter(const Mouse&) override;
-
-		void mouseUp(const Mouse&) override;
 	};
 }

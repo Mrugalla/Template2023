@@ -413,7 +413,7 @@ namespace gui
 	float findMaxHeight(const Font& font, const String& text,
 		float width, float height) noexcept
 	{
-		if(text.isEmpty())
+		if (text.isEmpty())
 			return 0.f;
 		const auto fontBounds = boundsOf(font, text);
 		const auto ratio = std::min(width / fontBounds.x, height / fontBounds.y);

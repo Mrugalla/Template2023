@@ -33,11 +33,12 @@ namespace gui
     {
         layout.init
         (
-            { 1, 3, 5, 13 },
-            { 1, 2, 13, 1 }
+            { 1, 5, 5, 21, 2 },
+            { 1, 3, 21, 1 }
         );
 
         addAndMakeVisible(bgImage);
+        addAndMakeVisible(bgImage.refreshButton);
         addAndMakeVisible(tooltip);
         for (auto& label : labels)
             addAndMakeVisible(label);
@@ -70,6 +71,7 @@ namespace gui
         layout.resized(getLocalBounds());
 
         bgImage.setBounds(getLocalBounds());
+        layout.place(bgImage.refreshButton, 4, 0, 1, 1, false);
 
         tooltip.setBounds(layout.bottom().toNearestInt());
 

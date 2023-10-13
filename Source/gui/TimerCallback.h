@@ -6,7 +6,6 @@ namespace gui
 	struct TimerCallbacks :
 		public Timer
 	{
-		using CB = std::function<void()>;
 		enum class kFPS
 		{
 			k60,
@@ -18,59 +17,31 @@ namespace gui
 		};
 		static constexpr int NumFPSs = static_cast<int>(kFPS::NumFPSs);
 
-		TimerCallbacks() :
-			Timer(),
-			callbacks(),
-			idx(0)
+		struct CB
 		{
-			startTimerHz(FPS);
-		}
+			std::function<void()> cb;
+			int id;
+		};
 
-		void add(CB *cb, kFPS fps)
-		{
-			auto& cbs = callbacks[static_cast<int>(fps)];
-			cbs.push_back(cb);
-		}
+		TimerCallbacks();
 
-		void remove(CB* cb)
-		{
-			for (auto i = 0; i < NumFPSs; ++i)
-			{
-				auto& cbs = callbacks[i];
-				const auto it = std::find(cbs.begin(), cbs.end(), cb);
-				if (it != cbs.end())
-				{
-					cbs.erase(it);
-					return;
-				}
-			}
-		}
+		void add(CB*, kFPS);
+
+		void remove(CB*);
 
 	protected:
 		using Callbacks = std::array<std::vector<CB*>, NumFPSs>;
 		Callbacks callbacks;
 		int idx;
 
-		void timerCallback() override
-		{
-			++idx;
-
-			for (auto i = 0; i < NumFPSs; ++i)
-			{
-				auto& cbs = callbacks[i];
-				const auto fps = static_cast<kFPS>(i);
-				const auto fpsOrder = 1 << static_cast<int>(fps);
-
-				if (idx % fpsOrder == 0)
-					for (auto cb : cbs)
-						cb->operator()();
-			}
-
-			idx &= 15;
-		}
+		void timerCallback() override;
 	};
 
 	using Callback = TimerCallbacks::CB;
 	using cbFPS = TimerCallbacks::kFPS;
 	using Callbacks = std::vector<Callback>;
+
+	float secsToInc(float secs, cbFPS fps) noexcept;
+
+	float msToInc(float ms, cbFPS fps) noexcept;
 }

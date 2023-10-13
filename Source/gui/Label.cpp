@@ -50,15 +50,16 @@ namespace gui
 		return findMaxHeight(font, text, w, h);
 	}
 
+	void Label::setMaxHeight() noexcept
+	{
+		setHeight(getMaxHeight());
+	}
+
 	float findMaxCommonHeight(const Label* labels, int size) noexcept
 	{
 		auto maxHeight = labels[0].getMaxHeight();
 		for (auto i = 1; i < size; ++i)
-		{
-			const auto h = labels[i].getMaxHeight();
-			if (h < maxHeight)
-				maxHeight = h;
-		}
+			maxHeight = std::min(labels[i].getMaxHeight(), maxHeight);
 		return maxHeight;
 	}
 
