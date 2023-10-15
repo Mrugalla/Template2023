@@ -2,15 +2,18 @@
 
 namespace gui
 {
-	Label::Label(Utils& u, const String& txt, const String& _tooltip) :
-		Comp(u, _tooltip),
+	Label::Label(Utils& u) :
+		Comp(u),
+		text(""),
+		font(),
 		just(Just::centred),
-		font(font::flx()),
-		text(txt),
-		col(juce::Colours::white)
+		path(),
+		stroke(utils.thicc),
+		img(),
+		col(juce::Colours::white),
+		type(Type::NumTypes)
 	{
-		if (tooltip.isEmpty())
-			setInterceptsMouseClicks(false, true);
+		setInterceptsMouseClicks(false, false);
 	}
 
 	bool Label::isEmpty() const noexcept
@@ -33,13 +36,27 @@ namespace gui
 
 	void Label::paint(Graphics& g)
 	{
-		g.setFont(font);
 		g.setColour(col);
-		g.drawText(text, getLocalBounds().toFloat(), just, false);
+
+		switch (type)
+		{
+		case Type::Text:
+			g.setFont(font);
+			g.drawText(text, getLocalBounds().toFloat(), just, false);
+			break;
+		case Type::Path:
+			g.strokePath(path, stroke);
+			break;
+		case Type::Image:
+			g.drawImage(img, getLocalBounds().toFloat(), RectPlacement::Flags::centred, true);
+			break;
+		}
 	}
 
-	void Label::setHeight(float h)
+	void Label::setHeight(float h) noexcept
 	{
+		if (h == 0.f)
+			return;
 		font.setHeight(h);
 	}
 
@@ -54,6 +71,44 @@ namespace gui
 	{
 		setHeight(getMaxHeight());
 	}
+
+	void Label::resized()
+	{
+		stroke.setStrokeThickness(utils.thicc);
+	}
+
+	//////
+
+	void makeTextLabel(Label& label, const String& text, const Font& font, Just just, Colour col, const String& tooltip)
+	{
+		label.type = Label::Type::Text;
+		label.setText(text);
+		label.font = font;
+		label.just = just;
+		label.col = col;
+		label.setTooltip(tooltip);
+	}
+
+	void makePathLabel(Label& label, const Path& path, Stroke::JointStyle joint, Stroke::EndCapStyle end, Colour col, const String& tooltip)
+	{
+		label.type = Label::Type::Path;
+		label.path = path;
+		label.stroke.setStrokeThickness(label.utils.thicc);
+		label.stroke.setJointStyle(joint);
+		label.stroke.setEndStyle(end);
+		label.col = col;
+		label.setTooltip(tooltip);
+	}
+
+	void makeImageLabel(Label& label, const Image& img, Colour col, const String& tooltip)
+	{
+		label.type = Label::Type::Image;
+		label.img = img;
+		label.col = col;
+		label.setTooltip(tooltip);
+	}
+
+	//////
 
 	float findMaxCommonHeight(const Label* labels, int size) noexcept
 	{

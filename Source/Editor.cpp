@@ -27,8 +27,8 @@ namespace gui
         tooltip(utils),
         labels
         {
-            Label(utils, JucePlugin_Name, "This is the name of my plugin."),
-            Label(utils, JucePlugin_Manufacturer, "Hi :) I'm the developer of this plugin.")
+            Label(utils),
+            Label(utils)
         }
     {
         layout.init
@@ -40,6 +40,9 @@ namespace gui
         addAndMakeVisible(bgImage);
         addAndMakeVisible(bgImage.refreshButton);
         addAndMakeVisible(tooltip);
+
+        makeTextLabel(labels[kDev], JucePlugin_Manufacturer, font::flx(), Just::centred, juce::Colours::white);
+        makeTextLabel(labels[kTitle], JucePlugin_Name, font::flx(), Just::centred, juce::Colours::white);
         for (auto& label : labels)
             addAndMakeVisible(label);
 

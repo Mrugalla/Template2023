@@ -65,4 +65,11 @@ namespace gui
 				return removeCallbacks(id);
 			}
 	}
+
+	void Comp::setTooltip(const String& t)
+	{
+		tooltip = t;
+		if(tooltip.isNotEmpty())
+			setInterceptsMouseClicks(true, true);
+	}
 }

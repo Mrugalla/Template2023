@@ -8,6 +8,10 @@ ToThink
     should a button know its togglestate?
 
 GUI
+    SharedPluginState
+        colours?
+        thickness?
+        drag sensitivity?
     Label
         can also draw images or paths (so buttons have easier time)
             setMaxHeight then doesn't do stuff

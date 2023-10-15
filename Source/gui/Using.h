@@ -37,6 +37,7 @@ namespace gui
     using LineF = juce::Line<float>;
     using LineD = juce::Line<double>;
     using Image = juce::Image;
+    using RectPlacement = juce::RectanglePlacement;
     using Stroke = juce::PathStrokeType;
     using Affine = juce::AffineTransform;
     using Random = juce::Random;

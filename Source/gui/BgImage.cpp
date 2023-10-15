@@ -120,11 +120,11 @@ namespace gui
     BgImage::BgImage(Utils& u) :
         Comp(u),
         img(),
-        refreshButton(utils, "Refresh", "Click here to request a new background image.")
+        refreshButton(u)
     {
         setInterceptsMouseClicks(false, true);
 
-        makeTextButton(refreshButton, juce::Colours::limegreen);
+        makeTextButton(refreshButton, "Refresh", "Click here to request a new background image.", juce::Colours::limegreen);
         refreshButton.onClick = [&](const Mouse&)
         {
             updateBgImage(false);

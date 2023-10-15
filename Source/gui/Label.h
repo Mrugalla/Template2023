@@ -6,8 +6,11 @@ namespace gui
 	struct Label :
 		public Comp
 	{
-		/* u, text, tooltip */
-		Label(Utils&, const String & = "", const String & = "");
+		enum class Type { Text, Path, Image, NumTypes };
+		static constexpr int NumTypes = static_cast<int>(Type::NumTypes);
+
+		/* u */
+		Label(Utils&);
 
 		bool isEmpty() const noexcept;
 
@@ -17,17 +20,36 @@ namespace gui
 
 		void paint(Graphics&) override;
 
-		void setHeight(float);
+		void setHeight(float) noexcept;
 
 		float getMaxHeight() const noexcept;
 
 		void setMaxHeight() noexcept;
 
-		Just just;
-		Font font;
+		void resized() override;
+
 		String text;
+		Font font;
+		Just just;
+		Path path;
+		Stroke stroke;
+		Image img;
 		Colour col;
+		Type type;
 	};
+
+	//////
+
+	/* label, text, font, just, col, tooltip */
+	void makeTextLabel(Label&, const String&, const Font&, Just, Colour, const String& = "");
+
+	/* label, path, jointStyle, endStyle, col, tooltip */
+	void makePathLabel(Label&, const Path&, Stroke::JointStyle, Stroke::EndCapStyle, Colour, const String& = "");
+
+	/* label, image, col, tooltip */
+	void makeImageLabel(Label&, const Image&, Colour, const String& = "");
+
+	//////
 
 	/* labels, size */
 	float findMaxCommonHeight(const Label*, int) noexcept;

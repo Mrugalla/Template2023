@@ -2,16 +2,15 @@
 
 namespace gui
 {
-	Button::Button(Utils& u, const String& text, const String& _tooltip) :
-		Comp(u, _tooltip),
-		label(u, text, ""),
+	Button::Button(Utils& u) :
+		Comp(u),
+		label(u),
 		onPaint([](Graphics&, const Button&) {}),
 		onClick([](const Mouse&) {}),
 		onWheel([](const Mouse&, const MouseWheel&) {}),
 		clickAniPhase(0.f),
-		toggleState(0)
+		value(0.f)
 	{
-		label.font = font::nel();
 		addAndMakeVisible(label);
 	}
 
@@ -33,7 +32,8 @@ namespace gui
 	void Button::resized()
 	{
 		label.setBounds(getLocalBounds().toFloat().reduced(utils.thicc).toNearestInt());
-		label.setMaxHeight();
+		if(label.type == Label::Type::Text)
+			label.setMaxHeight();
 	}
 
 	void Button::mouseEnter(const Mouse& mouse)
@@ -83,7 +83,7 @@ namespace gui
 		onWheel(mouse, wheel);
 	}
 
-	//
+	//////
 
 	Button::OnPaint makeButtonOnPaint(Colour col) noexcept
 	{
@@ -104,9 +104,12 @@ namespace gui
 			};
 	}
 
-	void makeTextButton(Button& btn, Colour col) noexcept
+	//////
+
+	void makeTextButton(Button& btn, const String& txt, const String& tooltip, Colour col)
 	{
-		btn.label.col = col;
+		makeTextLabel(btn.label, txt, font::nel(), Just::centred, col);
+		btn.tooltip = tooltip;
 		btn.onPaint = makeButtonOnPaint(col);
 	}
 }

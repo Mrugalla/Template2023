@@ -30,6 +30,8 @@ namespace gui
 
 		void mouseUp(const Mouse&) override;
 
+		void setTooltip(const String&);
+
 		Utils& utils;
 		Layout layout;
 		String tooltip;

@@ -11,8 +11,8 @@ namespace gui
 		Comp(u),
 		labels
 		{
-			Label(u, "", "Read the tooltips while hovering GUI elements to find out more about them!"),
-			Label(u, getBuildDate(), "The version of this plugin is defined by the time it was built.")
+			Label(u),
+			Label(u)
 		}
 	{
 		layout.init
@@ -21,14 +21,11 @@ namespace gui
 			{ 1 }
 		);
 
-		labels[kTooltip].font = font::dosisLight();
-		labels[kBuildDate].font = font::dosisLight();
+		makeTextLabel(labels[kTooltip], "", font::dosisLight(), Just::bottomLeft, juce::Colours::white, "Read the tooltips while hovering GUI elements to find out more about them!");
+		makeTextLabel(labels[kBuildDate], getBuildDate(), font::dosisLight(), Just::bottomRight, juce::Colours::white, "The version of this plugin is defined by the time it was built.");
 
 		for (auto& label : labels)
 			addAndMakeVisible(label);
-
-		labels[kTooltip].just = Just::bottomLeft;
-		labels[kBuildDate].just = Just::bottomRight;
 
 		addEvt([&tt = labels[kTooltip]](evt::Type type, const void* stuff)
 		{

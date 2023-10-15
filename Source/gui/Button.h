@@ -13,8 +13,8 @@ namespace gui
 		using OnWheel = std::function<void(const Mouse&, const MouseWheel&)>;
 		enum { kClickAniCB, numCallbacks };
 
-		/* u, text, tooltip */
-		Button(Utils&, const String & = "", const String & = "");
+		/* u */
+		Button(Utils&);
 
 		void paint(Graphics&) override;
 
@@ -39,12 +39,14 @@ namespace gui
 		OnClick onClick;
 		OnWheel onWheel;
 		float clickAniPhase;
-		int toggleState;
+		float value;
 	};
 
 	/* bgCol */
 	Button::OnPaint makeButtonOnPaint(Colour) noexcept;
 
-	/* btn, col */
-	void makeTextButton(Button&, Colour) noexcept;
+	//////
+
+	/* btn, text, tooltip, col */
+	void makeTextButton(Button&, const String&, const String&, Colour);
 }
