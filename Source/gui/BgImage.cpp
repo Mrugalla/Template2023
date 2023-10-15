@@ -117,6 +117,48 @@ namespace gui
         pngWriter.writeImageToStream(img, stream);
     }
 
+    void makeImageRefreshButton(Button& btn, Colour col, const String& tooltip)
+    {
+        const auto onPaint = [col](Graphics& g, const Label& label)
+            {
+                const auto& utils = label.utils;
+                const auto thicc = utils.thicc;
+                const auto jointStyle = Stroke::JointStyle::curved;
+                const auto endStyle = Stroke::EndCapStyle::butt;
+                Stroke stroke(thicc, jointStyle, endStyle);
+
+                const auto bounds = maxQuadIn(label.getLocalBounds()).reduced(thicc);
+
+                auto w = bounds.getWidth();
+                auto h = bounds.getHeight();
+                auto x = bounds.getX();
+                auto y = bounds.getY();
+
+                auto pt0 = bounds.getBottomLeft();
+                auto x1 = x + w * .25f;
+                auto y1 = y + h * .4f;
+                PointF pt1(x1, y1);
+                g.drawLine({ pt0, pt1 }, thicc);
+
+                auto x2 = x + w * .5f;
+                auto y2 = y + h * .8f;
+                PointF pt2(x2, y2);
+                g.drawLine({ pt1, pt2 }, thicc);
+
+                auto x3 = x + w * .75f;
+                auto y3 = y + h * .1f;
+                PointF pt3(x3, y3);
+                g.drawLine({ pt2, pt3 }, thicc);
+
+                auto x4 = x + w;
+                auto y4 = y + h;
+                PointF pt4(x4, y4);
+                g.drawLine({ pt3, pt4 }, thicc);
+            };
+
+        makePaintButton(btn, onPaint, tooltip, col);
+    }
+
     BgImage::BgImage(Utils& u) :
         Comp(u),
         img(),
@@ -124,7 +166,7 @@ namespace gui
     {
         setInterceptsMouseClicks(false, true);
 
-        makeTextButton(refreshButton, "Refresh", "Click here to request a new background image.", juce::Colours::limegreen);
+        makeImageRefreshButton(refreshButton, juce::Colours::limegreen, "Click here to request a new background image.");
         refreshButton.onClick = [&](const Mouse&)
         {
             updateBgImage(false);

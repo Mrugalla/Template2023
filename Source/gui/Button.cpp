@@ -112,4 +112,11 @@ namespace gui
 		btn.tooltip = tooltip;
 		btn.onPaint = makeButtonOnPaint(col);
 	}
+
+	void makePaintButton(Button& btn, const Label::OnPaint& onPaint, const String& tooltip, Colour col)
+	{
+		makePaintLabel(btn.label, onPaint);
+		btn.tooltip = tooltip;
+		btn.onPaint = makeButtonOnPaint(col);
+	}
 }

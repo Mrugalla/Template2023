@@ -45,6 +45,11 @@ namespace gui
 		return { x, y, minDimen, minDimen };
 	}
 
+	BoundsF maxQuadIn(const Bounds& b) noexcept
+	{
+		return maxQuadIn(b.toFloat());
+	}
+
 	void repaintWithChildren(Component* comp)
 	{
 		if (comp == nullptr)

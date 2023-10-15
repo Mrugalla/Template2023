@@ -11,7 +11,7 @@ namespace gui
 		using OnPaint = std::function<void(Graphics&, const Button&)>;
 		using OnClick = std::function<void(const Mouse&)>;
 		using OnWheel = std::function<void(const Mouse&, const MouseWheel&)>;
-		enum { kClickAniCB, numCallbacks };
+		enum { kClickAniCB, kNumCallbacks };
 
 		/* u */
 		Button(Utils&);
@@ -49,4 +49,7 @@ namespace gui
 
 	/* btn, text, tooltip, col */
 	void makeTextButton(Button&, const String&, const String&, Colour);
+
+	/* btn, onPaint, tooltip, col */
+	void makePaintButton(Button&, const Label::OnPaint&, const String&, Colour);
 }

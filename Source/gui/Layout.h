@@ -17,6 +17,8 @@ namespace gui
 
 	BoundsF maxQuadIn(const BoundsF&) noexcept;
 
+	BoundsF maxQuadIn(const Bounds&) noexcept;
+
 	void repaintWithChildren(Component*);
 
 	std::unique_ptr<juce::XmlElement> loadXML(const char*, const int);

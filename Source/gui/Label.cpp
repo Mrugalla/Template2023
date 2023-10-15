@@ -7,8 +7,7 @@ namespace gui
 		text(""),
 		font(),
 		just(Just::centred),
-		path(),
-		stroke(utils.thicc),
+		onPaint([](Graphics&, const Label&) {}),
 		img(),
 		col(juce::Colours::white),
 		type(Type::NumTypes)
@@ -44,8 +43,8 @@ namespace gui
 			g.setFont(font);
 			g.drawText(text, getLocalBounds().toFloat(), just, false);
 			break;
-		case Type::Path:
-			g.strokePath(path, stroke);
+		case Type::Paint:
+			onPaint(g, *this);
 			break;
 		case Type::Image:
 			g.drawImage(img, getLocalBounds().toFloat(), RectPlacement::Flags::centred, true);
@@ -74,7 +73,6 @@ namespace gui
 
 	void Label::resized()
 	{
-		stroke.setStrokeThickness(utils.thicc);
 	}
 
 	//////
@@ -89,14 +87,10 @@ namespace gui
 		label.setTooltip(tooltip);
 	}
 
-	void makePathLabel(Label& label, const Path& path, Stroke::JointStyle joint, Stroke::EndCapStyle end, Colour col, const String& tooltip)
+	void makePaintLabel(Label& label, const Label::OnPaint& onPaint, const String& tooltip)
 	{
-		label.type = Label::Type::Path;
-		label.path = path;
-		label.stroke.setStrokeThickness(label.utils.thicc);
-		label.stroke.setJointStyle(joint);
-		label.stroke.setEndStyle(end);
-		label.col = col;
+		label.type = Label::Type::Paint;
+		label.onPaint = onPaint;
 		label.setTooltip(tooltip);
 	}
 
