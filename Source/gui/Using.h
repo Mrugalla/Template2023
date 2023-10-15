@@ -16,6 +16,7 @@ namespace gui
     using Colour = juce::Colour;
     using Gradient = juce::ColourGradient;
     using String = juce::String;
+    using WChar = juce::juce_wchar;
     using Font = juce::Font;
     using Props = juce::PropertiesFile;
     using AppProps = juce::ApplicationProperties;
@@ -76,6 +77,8 @@ namespace gui
 
     static constexpr double FPSD = static_cast<double>(FPS);
     static constexpr double FPSInv = 1. / FPSD;
+
+    bool isLineBreak(WChar) noexcept;
 
     namespace font
     {

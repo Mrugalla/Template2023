@@ -394,7 +394,7 @@ namespace gui
 			auto sIdx = 0;
 			for (auto i = 1; i < text.length(); ++i)
 			{
-				if (text[i] == '\n' || text[i] == '\r')
+				if (isLineBreak(text[i]))
 				{
 					const auto lineWidth = font.getStringWidthFloat(text.substring(sIdx, i));
 					if (maxStrWidth < lineWidth)

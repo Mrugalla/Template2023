@@ -5,22 +5,17 @@
 ToThink
     how to handle different components being lockable?
     how to handle different components being parameterized?
-    should a button know its togglestate?
 
 GUI
     SharedPluginState
-        colours?
-        thickness?
-        drag sensitivity?
+        Colours?
+        Thickness?
+        Drag sensitivity?
     Label
-        can also draw images or paths (so buttons have easier time)
-            setMaxHeight then doesn't do stuff
         Find or make best performing drawText method
-            improve current one with suggestions from JUCE forum:
-                https://forum.juce.com/t/drawing-text-without-clipping-label-bounds/58325/11
     Button
         cancel click on opposite mouse button
-        OnPaint, Wheel
+        OnWheel
     TextEditor
         button that edits its label
     Editor

@@ -2,6 +2,11 @@
 
 namespace gui
 {
+	bool isLineBreak(WChar wChar) noexcept
+	{
+		return wChar == '\n' || wChar == '\r' || wChar == '\r\n';
+	}
+
 	namespace font
 	{
 		Font getFont(const char* ttf, size_t size)

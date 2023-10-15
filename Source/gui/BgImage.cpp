@@ -198,8 +198,6 @@ namespace gui
 
     void BgImage::resized()
     {
-        layout.resized(getLocalBounds());
-
         if (!img.isValid())
             updateBgImage(true);
     }
