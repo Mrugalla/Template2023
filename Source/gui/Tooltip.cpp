@@ -11,7 +11,7 @@ namespace gui
 		Comp(u),
 		labels
 		{
-			Label(u, "", "Yes, I am the tooltip text. Read me while hovering parameters and stuff!"),
+			Label(u, "", "Read the tooltips while hovering GUI elements to find out more about them!"),
 			Label(u, getBuildDate(), "The version of this plugin is defined by the time it was built.")
 		}
 	{
@@ -53,3 +53,5 @@ namespace gui
 			label.setMaxHeight();
 	}
 }
+
+//

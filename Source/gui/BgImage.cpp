@@ -124,6 +124,7 @@ namespace gui
     {
         setInterceptsMouseClicks(false, true);
 
+        makeTextButton(refreshButton, juce::Colours::limegreen);
         refreshButton.onClick = [&](const Mouse&)
         {
             updateBgImage(false);

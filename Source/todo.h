@@ -9,13 +9,18 @@ ToThink
 
 GUI
     Label
+        can also draw images or paths (so buttons have easier time)
+            setMaxHeight then doesn't do stuff
         Find or make best performing drawText method
+            improve current one with suggestions from JUCE forum:
+                https://forum.juce.com/t/drawing-text-without-clipping-label-bounds/58325/11
     Button
+        cancel click on opposite mouse button
         OnPaint, Wheel
-        has label
-        is editable? (texteditor)
+    TextEditor
+        button that edits its label
     Editor
-        makeToast (firstTimeUwu)
+        makeToast (firstTimeUwU)
     Knob
         OnPaint, Click, Wheel, Drag
 AUDIO

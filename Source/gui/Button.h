@@ -6,84 +6,45 @@ namespace gui
 	struct Button :
 		public Comp
 	{
+		static constexpr float ClickAniLengthMs = 400.f;
+
+		using OnPaint = std::function<void(Graphics&, const Button&)>;
 		using OnClick = std::function<void(const Mouse&)>;
 		using OnWheel = std::function<void(const Mouse&, const MouseWheel&)>;
 		enum { kClickAniCB, numCallbacks };
 
-		Button(Utils& u, const String& text = "", const String& _tooltip = "") :
-			Comp(u, _tooltip),
-			label(u, text, ""),
-			onClick([](const Mouse&) {}),
-			onWheel([](const Mouse&, const MouseWheel&) {}),
-			clickAnimationPhase(0.f),
-			toggleState(0)
-		{
-			addAndMakeVisible(label);
-		}
+		/* u, text, tooltip */
+		Button(Utils&, const String & = "", const String & = "");
 
-		void paint(Graphics& g) override
-		{
-			g.fillAll(juce::Colours::white.withAlpha(clickAnimationPhase));
-		}
+		void paint(Graphics&) override;
 
-		const String& getText() const noexcept
-		{
-			return label.text;
-		}
+		const String& getText() const noexcept;
 
-		String& getText() noexcept
-		{
-			return label.text;
-		}
+		String& getText() noexcept;
 
-		void resized() override
-		{
-			label.setBounds(getLocalBounds());
-		}
+		void resized() override;
 
-		void mouseEnter(const Mouse& mouse) override
-		{
-			Comp::mouseEnter(mouse);
-			repaint();
-		}
+		void mouseEnter(const Mouse&) override;
 
-		void mouseExit(const Mouse&) override
-		{
-			repaint();
-		}
+		void mouseExit(const Mouse&) override;
 
-		void mouseUp(const Mouse& mouse) override
-		{
-			utils.giveDAWKeyboardFocus();
+		void mouseDown(const Mouse&) override;
 
-			if (mouse.mouseWasDraggedSinceMouseDown())
-				return;
+		void mouseUp(const Mouse&) override;
 
-			const auto fps = cbFPS::k30;
-			clickAnimationPhase = 1.f;
-			addCallback(Callback([&, fps]()
-			{
-				clickAnimationPhase -= msToInc(200.f, fps);
-				if (clickAnimationPhase <= 0.f)
-				{
-					clickAnimationPhase = 0.f;
-					removeCallbacks(kClickAniCB);
-				}
-				repaint();
-			}, kClickAniCB), fps);
-			
-			onClick(mouse);
-		}
-
-		void mouseWheelMove(const Mouse& mouse, const MouseWheel& wheel) override
-		{
-			onWheel(mouse, wheel);
-		}
+		void mouseWheelMove(const Mouse&, const MouseWheel&) override;
 
 		Label label;
+		OnPaint onPaint;
 		OnClick onClick;
 		OnWheel onWheel;
-		float clickAnimationPhase;
+		float clickAniPhase;
 		int toggleState;
 	};
+
+	/* bgCol */
+	Button::OnPaint makeButtonOnPaint(Colour) noexcept;
+
+	/* btn, col */
+	void makeTextButton(Button&, Colour) noexcept;
 }
