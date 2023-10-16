@@ -10,6 +10,7 @@ namespace gui
 		params(audioProcessor.params),
 		thicc(2.f)
 	{
+		Colours::c.init(audioProcessor.state.props.getUserSettings());
 	}
 
 	std::vector<Param*>& Utils::getAllParams() noexcept

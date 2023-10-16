@@ -51,5 +51,5 @@ namespace gui
 	void makeTextButton(Button&, const String&, const String&, Colour);
 
 	/* btn, onPaint, tooltip, col */
-	void makePaintButton(Button&, const Label::OnPaint&, const String&, Colour);
+	void makePaintButton(Button&, const Label::OnPaint&, const String&);
 }

@@ -41,8 +41,8 @@ namespace gui
         addAndMakeVisible(bgImage.refreshButton);
         addAndMakeVisible(tooltip);
 
-        makeTextLabel(labels[kDev], JucePlugin_Manufacturer, font::flx(), Just::centred, juce::Colours::white);
-        makeTextLabel(labels[kTitle], JucePlugin_Name, font::flx(), Just::centred, juce::Colours::white);
+        makeTextLabel(labels[kDev], JucePlugin_Manufacturer, font::flx(), Just::centred, CID::Txt);
+        makeTextLabel(labels[kTitle], JucePlugin_Name, font::flx(), Just::centred, CID::Txt);
         for (auto& label : labels)
             addAndMakeVisible(label);
 
@@ -60,7 +60,7 @@ namespace gui
     
     void Editor::paintOverChildren(Graphics& g)
     {
-        layout.paint(g, juce::Colours::limegreen);
+        layout.paint(g, getColour(CID::Hover));
     }
 
     void Editor::resized()

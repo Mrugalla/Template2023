@@ -28,27 +28,25 @@ namespace gui
 
 		void setMaxHeight() noexcept;
 
-		void resized() override;
-
 		String text;
 		Font font;
 		Just just;
 		OnPaint onPaint;
 		Image img;
-		Colour col;
+		CID cID;
 		Type type;
 	};
 
 	//////
 
-	/* label, text, font, just, col, tooltip */
-	void makeTextLabel(Label&, const String&, const Font&, Just, Colour, const String& = "");
+	/* label, text, font, just, cID, tooltip */
+	void makeTextLabel(Label&, const String&, const Font&, Just, CID, const String& = "");
 
 	/* label, onPaint, tooltip */
 	void makePaintLabel(Label&, const Label::OnPaint&, const String& = "");
 
-	/* label, image, col, tooltip */
-	void makeImageLabel(Label&, const Image&, Colour, const String& = "");
+	/* label, image, tooltip */
+	void makeImageLabel(Label&, const Image&, const String& = "");
 
 	//////
 

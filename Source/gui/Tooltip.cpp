@@ -21,8 +21,8 @@ namespace gui
 			{ 1 }
 		);
 
-		makeTextLabel(labels[kTooltip], "", font::dosisLight(), Just::bottomLeft, juce::Colours::white, "Read the tooltips while hovering GUI elements to find out more about them!");
-		makeTextLabel(labels[kBuildDate], getBuildDate(), font::dosisLight(), Just::bottomRight, juce::Colours::white, "The version of this plugin is defined by the time it was built.");
+		makeTextLabel(labels[kTooltip], "", font::dosisLight(), Just::bottomLeft, CID::Txt, "Read the tooltips while hovering GUI elements to find out more about them!");
+		makeTextLabel(labels[kBuildDate], getBuildDate(), font::dosisLight(), Just::bottomRight, CID::Txt, "The version of this plugin is defined by the time it was built.");
 
 		for (auto& label : labels)
 			addAndMakeVisible(label);

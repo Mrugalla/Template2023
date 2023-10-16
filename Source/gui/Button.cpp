@@ -85,38 +85,38 @@ namespace gui
 
 	//////
 
-	Button::OnPaint makeButtonOnPaint(Colour col) noexcept
+	Button::OnPaint makeButtonOnPaint() noexcept
 	{
-		return [col](Graphics& g, const Button& b)
-			{
-				const auto& utils = b.utils;
-				const auto thicc = utils.thicc;
-				const auto bounds = b.getLocalBounds().toFloat().reduced(thicc);
-				const auto over = b.isMouseOver();
-				const auto down = b.isMouseButtonDown();
-				const auto alphaBase = down ? .5f : over ? .25f : 0.f;
-				const auto alphaRange = 1.f - alphaBase;
-				const auto ani = b.clickAniPhase * b.clickAniPhase;
-				const auto alpha = alphaBase + alphaRange * ani;
-				const auto aniCol = col.withAlpha(alpha);
-				g.setColour(aniCol);
-				g.fillRoundedRectangle(bounds, thicc * .5f);
-			};
+		return [](Graphics& g, const Button& b)
+		{
+			const auto& utils = b.utils;
+			const auto thicc = utils.thicc;
+			const auto bounds = b.getLocalBounds().toFloat().reduced(thicc);
+			const auto over = b.isMouseOver();
+			const auto down = b.isMouseButtonDown();
+			const auto alphaBase = down ? .5f : over ? .25f : 0.f;
+			const auto alphaRange = 1.f - alphaBase;
+			const auto ani = b.clickAniPhase * b.clickAniPhase;
+			const auto alpha = alphaBase + alphaRange * ani;
+			const auto aniCol = getColour(CID::Interact).withAlpha(alpha);
+			g.setColour(aniCol);
+			g.fillRoundedRectangle(bounds, thicc * .5f);
+		};
 	}
 
 	//////
 
-	void makeTextButton(Button& btn, const String& txt, const String& tooltip, Colour col)
+	void makeTextButton(Button& btn, const String& txt, CID cID, const String& tooltip)
 	{
-		makeTextLabel(btn.label, txt, font::nel(), Just::centred, col);
+		makeTextLabel(btn.label, txt, font::nel(), Just::centred, cID);
 		btn.tooltip = tooltip;
-		btn.onPaint = makeButtonOnPaint(col);
+		btn.onPaint = makeButtonOnPaint();
 	}
 
-	void makePaintButton(Button& btn, const Label::OnPaint& onPaint, const String& tooltip, Colour col)
+	void makePaintButton(Button& btn, const Label::OnPaint& onPaint, const String& tooltip)
 	{
 		makePaintLabel(btn.label, onPaint);
 		btn.tooltip = tooltip;
-		btn.onPaint = makeButtonOnPaint(col);
+		btn.onPaint = makeButtonOnPaint();
 	}
 }

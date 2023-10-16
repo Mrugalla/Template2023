@@ -9,7 +9,7 @@ namespace gui
 		just(Just::centred),
 		onPaint([](Graphics&, const Label&) {}),
 		img(),
-		col(juce::Colours::white),
+		cID(CID::Txt),
 		type(Type::NumTypes)
 	{
 		setInterceptsMouseClicks(false, false);
@@ -35,19 +35,18 @@ namespace gui
 
 	void Label::paint(Graphics& g)
 	{
-		g.setColour(col);
-
 		switch (type)
 		{
 		case Type::Text:
 			g.setFont(font);
+			g.setColour(getColour(cID));
 			g.drawText(text, getLocalBounds().toFloat(), just, false);
 			break;
 		case Type::Paint:
 			onPaint(g, *this);
 			break;
 		case Type::Image:
-			g.drawImage(img, getLocalBounds().toFloat(), RectPlacement::Flags::centred, true);
+			g.drawImage(img, getLocalBounds().toFloat(), RectPlacement::Flags::centred, false);
 			break;
 		}
 	}
@@ -71,19 +70,15 @@ namespace gui
 		setHeight(getMaxHeight());
 	}
 
-	void Label::resized()
-	{
-	}
-
 	//////
 
-	void makeTextLabel(Label& label, const String& text, const Font& font, Just just, Colour col, const String& tooltip)
+	void makeTextLabel(Label& label, const String& text, const Font& font, Just just, CID cID, const String& tooltip)
 	{
 		label.type = Label::Type::Text;
 		label.setText(text);
 		label.font = font;
 		label.just = just;
-		label.col = col;
+		label.cID = cID;
 		label.setTooltip(tooltip);
 	}
 
@@ -94,11 +89,10 @@ namespace gui
 		label.setTooltip(tooltip);
 	}
 
-	void makeImageLabel(Label& label, const Image& img, Colour col, const String& tooltip)
+	void makeImageLabel(Label& label, const Image& img, const String& tooltip)
 	{
 		label.type = Label::Type::Image;
 		label.img = img;
-		label.col = col;
 		label.setTooltip(tooltip);
 	}
 

@@ -23,11 +23,12 @@ namespace gui
                     const auto x2 = 4.f * xSqr;
 
                     auto pxl = img.getPixelAt(x, y);
+                    auto alpha = pxl.getAlpha();
 
                     auto mag = x2 * y2;
                     mag = std::pow(mag, 1.f - midPoint);
 
-                    pxl = pxl.interpolatedWith(col, mag);
+                    pxl = pxl.interpolatedWith(col, mag).withAlpha(alpha);
 
                     img.setPixelAt(x, y, pxl);
                 }
@@ -43,7 +44,7 @@ namespace gui
 
             img = Image(Image::ARGB, w, h, true);
 			Graphics g(img);
-			g.setColour(juce::Colours::turquoise);
+			g.setColour(getColour(CID::Bias));
 			
             const auto wF = static_cast<float>(w);
             const auto hF = static_cast<float>(h);
@@ -117,9 +118,9 @@ namespace gui
         pngWriter.writeImageToStream(img, stream);
     }
 
-    void makeImageRefreshButton(Button& btn, Colour col, const String& tooltip)
+    void makeImageRefreshButton(Button& btn, const String& tooltip)
     {
-        const auto onPaint = [col](Graphics& g, const Label& label)
+        const auto onPaint = [](Graphics& g, const Label& label)
             {
                 const auto& utils = label.utils;
                 const auto thicc = utils.thicc;
@@ -127,6 +128,7 @@ namespace gui
                 const auto endStyle = Stroke::EndCapStyle::butt;
                 Stroke stroke(thicc, jointStyle, endStyle);
 
+                g.setColour(getColour(CID::Interact));
                 const auto bounds = maxQuadIn(label.getLocalBounds()).reduced(thicc);
 
                 auto w = bounds.getWidth();
@@ -156,7 +158,7 @@ namespace gui
                 g.drawLine({ pt3, pt4 }, thicc);
             };
 
-        makePaintButton(btn, onPaint, tooltip, col);
+        makePaintButton(btn, onPaint, tooltip);
     }
 
     BgImage::BgImage(Utils& u) :
@@ -166,7 +168,7 @@ namespace gui
     {
         setInterceptsMouseClicks(false, true);
 
-        makeImageRefreshButton(refreshButton, juce::Colours::limegreen, "Click here to request a new background image.");
+        makeImageRefreshButton(refreshButton, "Click here to request a new background image.");
         refreshButton.onClick = [&](const Mouse&)
         {
             updateBgImage(false);
@@ -192,7 +194,7 @@ namespace gui
 
     void BgImage::paint(Graphics& g)
     {
-        g.fillAll(juce::Colours::black);
+        g.fillAll(getColour(CID::Bg));
         g.drawImageAt(img, 0, 0, false);
     }
 
