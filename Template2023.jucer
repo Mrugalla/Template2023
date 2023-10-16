@@ -61,6 +61,8 @@
       </GROUP>
       <GROUP id="{40307200-594D-4A49-C512-2C481058424A}" name="audio">
         <GROUP id="{59EAA807-50FE-F7F8-0D20-F8E7A0503840}" name="dsp">
+          <FILE id="geDg2S" name="SlewLimiter.cpp" compile="1" resource="0" file="Source/audio/dsp/SlewLimiter.cpp"/>
+          <FILE id="FhiUQT" name="SlewLimiter.h" compile="0" resource="0" file="Source/audio/dsp/SlewLimiter.h"/>
           <GROUP id="{1D5BCCCC-42EE-52A6-7B66-DBFC5CC929C4}" name="midi">
             <FILE id="ls4YaF" name="AutoMPE.cpp" compile="1" resource="0" file="Source/audio/dsp/midi/AutoMPE.cpp"/>
             <FILE id="huAUKl" name="AutoMPE.h" compile="0" resource="0" file="Source/audio/dsp/midi/AutoMPE.h"/>

@@ -37,7 +37,11 @@ namespace audio
 #endif
         state(),
         
-        pluginProcessor(params),
+        pluginProcessor(params
+#if PPDHasTuningEditor
+		, xenManager
+#endif
+        ),
         audioBufferD(),
 
         mixProcessor(),
@@ -188,7 +192,7 @@ namespace audio
 
     bool Processor::hasEditor() const
     {
-        return true;
+        return false;
     }
 
     juce::AudioProcessorEditor* Processor::createEditor()

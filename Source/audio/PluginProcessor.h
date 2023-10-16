@@ -1,5 +1,6 @@
 #pragma once
 #include "../param/Param.h"
+#include "dsp/SlewLimiter.h"
 #include "Using.h"
 
 /*
@@ -13,7 +14,7 @@ namespace audio
 		using Params = param::Params;
 		using PID = param::PID;
 		
-		PluginProcessor(Params&);
+		PluginProcessor(Params&, const arch::XenManager&);
 
 		/* sampleRate */
 		void prepare(double);
@@ -29,5 +30,9 @@ namespace audio
 		void loadPatch();
 
 		Params& params;
+		const arch::XenManager& xen;
+		double sampleRate;
+
+		dsp::SlewLimiterStereo slew;
 	};
 }

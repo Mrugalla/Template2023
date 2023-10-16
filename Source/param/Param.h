@@ -46,6 +46,8 @@ namespace param
 		Power,
 
 		// low level parameters
+		Slew,
+		FilterType,
 		//
 		
 		NumParams
