@@ -15,19 +15,18 @@ namespace gui
 		callbacks(),
 		idx(0)
 	{
+		startTimerHz(FPS);
 	}
 
 	void TimerCallbacks::add(CB* cb)
 	{
-		stopTimer();
+		remove(cb);
 		auto& cbs = callbacks[static_cast<int>(cb->fps)];
 		cbs.push_back(cb);
-		startTimerHz(FPS);
 	}
 
 	void TimerCallbacks::remove(CB* cb)
 	{
-		stopTimer();
 		for (auto i = 0; i < NumFPSs; ++i)
 		{
 			auto& cbs = callbacks[i];
@@ -38,7 +37,6 @@ namespace gui
 				return;
 			}
 		}
-		startTimerHz(FPS);
 	}
 
 	void TimerCallbacks::timerCallback()

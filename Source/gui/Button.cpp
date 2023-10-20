@@ -9,7 +9,8 @@ namespace gui
 		onClick([](const Mouse&) {}),
 		onWheel([](const Mouse&, const MouseWheel&) {}),
 		hoverAniPhase(0.f), clickAniPhase(0.f),
-		value(0.f)
+		value(0.f),
+		type(Type::kBool)
 	{
 		addAndMakeVisible(label);
 
@@ -111,7 +112,8 @@ namespace gui
 
 			const auto hoverAniPhase = b.hoverAniPhase * b.hoverAniPhase;
 			const auto clickAniPhase = b.clickAniPhase * b.clickAniPhase;
-			const auto alpha = hoverAniPhase * .25f + clickAniPhase * .5f;
+			const auto valueAlpha = b.type == Button::Type::kBool && b.value > .5f ? .25f : 0.f;
+			const auto alpha = hoverAniPhase * .25f + clickAniPhase * .5f + valueAlpha;
 			const auto aniCol = getColour(CID::Interact).withAlpha(alpha);
 			g.setColour(aniCol);
 			g.fillRoundedRectangle(bounds, thicc * .5f);

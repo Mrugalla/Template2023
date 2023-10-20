@@ -10,6 +10,7 @@ GUI
     SharedPluginState
         drag/wheel sensitivity
     Button
+        write function that attaches it to parameter (filterType)
         cancel click on opposite mouse button
         make OnWheel
     TextEditor

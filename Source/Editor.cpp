@@ -48,6 +48,16 @@ namespace gui
 
         makeTextButton(filterTypeButton, param::toString(PID::FilterType), param::toTooltip(PID::FilterType), CID::Interact);
         filterTypeButton.label.replaceSpacesWithLineBreaks();
+        filterTypeButton.onClick = [&btn = filterTypeButton](const Mouse&)
+        {
+            btn.value = 1.f - btn.value;
+        };
+        filterTypeButton.addCallback(Callback([](){}, 2, cbFPS::k60, true));
+        filterTypeButton.addCallback(Callback([]() {}, 3, cbFPS::k60, true));
+        filterTypeButton.addCallback(Callback([]() {}, 4, cbFPS::k60, true));
+        filterTypeButton.addCallback(Callback([]() {}, 5, cbFPS::k60, true));
+        filterTypeButton.addCallback(Callback([]() {}, 6, cbFPS::k60, true));
+        filterTypeButton.registerCallbacks();
         addAndMakeVisible(filterTypeButton);
 
         const auto& user = *audioProcessor.state.props.getUserSettings();

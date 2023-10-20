@@ -44,6 +44,7 @@ namespace gui
 
 	void Comp::addCallback(const Callback& callback)
 	{
+		removeCallbacks(callback.id);
 		callbacks.push_back(callback);
 	}
 
