@@ -60,7 +60,7 @@ namespace param
 
 		// LOW LEVEL PARAMS:
 		case PID::Slew: return "Slew";
-		case PID::FilterType: return "Type";
+		case PID::FilterType: return "Filter Type";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -127,6 +127,8 @@ namespace param
 		case PID::Power: return "Dis/Enable the plugin.";
 
 		// LOW LEVEL PARAMS:
+		case PID::FilterType: return "Choose the filter type. (LP or HP)";
+		case PID::Slew: return "Apply the slew rate to the signal.";
 
 		default: return "Invalid Tooltip.";
 		}

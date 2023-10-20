@@ -20,11 +20,13 @@ namespace gui
 
 		void addEvt(const evt::Evt&);
 
-		void addCallback(const Callback&, cbFPS);
+		void addCallback(const Callback&);
 
 		void popCallback();
 
 		void removeCallbacks(int id);
+
+		void registerCallbacks();
 
 		void mouseEnter(const Mouse&) override;
 

@@ -42,11 +42,15 @@ namespace gui
 		utils.eventSystem.notify(evt::Type::ClickedEmpty, this);
 	}
 
-	void Comp::addCallback(const Callback& callback, cbFPS fps)
+	void Comp::addCallback(const Callback& callback)
 	{
-		removeCallbacks(callback.id);
 		callbacks.push_back(callback);
-		utils.addCallback(&callbacks.back(), fps);
+	}
+
+	void Comp::registerCallbacks()
+	{
+		for (auto& cb : callbacks)
+			utils.registerCallback(&cb);
 	}
 
 	void Comp::popCallback()

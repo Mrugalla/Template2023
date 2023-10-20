@@ -12,9 +12,9 @@ namespace gui
 		/* pluginTop, processor */
 		Utils(Component&, Processor&);
 
-		void addCallback(Callback* cb, cbFPS fps)
+		void registerCallback(Callback* cb)
 		{
-			callbacks.add(cb, fps);
+			callbacks.add(cb);
 		}
 
 		void removeCallback(Callback* cb)

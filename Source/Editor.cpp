@@ -6,13 +6,12 @@ namespace gui
     {
         return [&c = comp](evt::Type type, const void*)
         {
-            if (type == evt::Type::ColourSchemeChanged)
+            switch (type)
             {
-                repaintWithChildren(&c);
-            }
-            else if (type == evt::Type::ClickedEmpty)
-            {
-                c.giveAwayKeyboardFocus();
+            case evt::Type::ColourSchemeChanged:
+                return repaintWithChildren(&c);
+            case evt::Type::ClickedEmpty:
+                return c.giveAwayKeyboardFocus();
             }
         };
     }
@@ -29,7 +28,8 @@ namespace gui
         {
             Label(utils),
             Label(utils)
-        }
+        },
+        filterTypeButton(utils)
     {
         layout.init
         (
@@ -45,6 +45,10 @@ namespace gui
         makeTextLabel(labels[kTitle], JucePlugin_Name, font::flx(), Just::centred, CID::Txt);
         for (auto& label : labels)
             addAndMakeVisible(label);
+
+        makeTextButton(filterTypeButton, param::toString(PID::FilterType), param::toTooltip(PID::FilterType), CID::Interact);
+        filterTypeButton.label.replaceSpacesWithLineBreaks();
+        addAndMakeVisible(filterTypeButton);
 
         const auto& user = *audioProcessor.state.props.getUserSettings();
         const auto editorWidth = user.getDoubleValue("EditorWidth", EditorWidth);
@@ -81,6 +85,9 @@ namespace gui
         layout.place(labels[kDev], 1, 1, 1, 1);
         layout.place(labels[kTitle], 2, 1, 1, 1);
         setMaxCommonHeight(labels.data(), kNumLabels);
+
+        layout.place(filterTypeButton, 1, 2, 1, 1, false);
+        filterTypeButton.label.setMaxHeight();
 
         auto& user = *audioProcessor.state.props.getUserSettings();
 		const auto editorWidth = static_cast<double>(getWidth());

@@ -8,10 +8,34 @@ namespace gui
 		onPaint([](Graphics&, const Button&) {}),
 		onClick([](const Mouse&) {}),
 		onWheel([](const Mouse&, const MouseWheel&) {}),
-		clickAniPhase(0.f),
+		hoverAniPhase(0.f), clickAniPhase(0.f),
 		value(0.f)
 	{
 		addAndMakeVisible(label);
+
+		const auto fps = cbFPS::k30;
+		addCallback(Callback([&, fps]()
+		{
+			hoverAniPhase -= msToInc(AniLengthMs, fps);
+			if (hoverAniPhase <= 0.f)
+			{
+				hoverAniPhase = 0.f;
+				callbacks[kHoverAniCB].active = false;
+			}
+			repaint();
+		}, kHoverAniCB, fps, false));
+		addCallback(Callback([&, fps]()
+		{
+			clickAniPhase -= msToInc(AniLengthMs, fps);
+			if (clickAniPhase <= 0.f)
+			{
+				clickAniPhase = 0.f;
+				callbacks[kClickAniCB].active = false;
+			}
+			repaint();
+		}, kClickAniCB, fps, false));
+
+		registerCallbacks();
 	}
 
 	void Button::paint(Graphics& g)
@@ -39,13 +63,15 @@ namespace gui
 	void Button::mouseEnter(const Mouse& mouse)
 	{
 		Comp::mouseEnter(mouse);
+		hoverAniPhase = 1.f;
+		callbacks[kHoverAniCB].active = false;
 		repaint();
 	}
 
 	void Button::mouseExit(const Mouse& mouse)
 	{
 		Comp::mouseExit(mouse);
-		repaint();
+		callbacks[kHoverAniCB].active = true;
 	}
 
 	void Button::mouseDown(const Mouse& mouse)
@@ -61,18 +87,8 @@ namespace gui
 		if (mouse.mouseWasDraggedSinceMouseDown())
 			return;
 
-		const auto fps = cbFPS::k30;
 		clickAniPhase = 1.f;
-		addCallback(Callback([&, fps]()
-			{
-				clickAniPhase -= msToInc(ClickAniLengthMs, fps);
-				if (clickAniPhase <= 0.f)
-				{
-					clickAniPhase = 0.f;
-					removeCallbacks(kClickAniCB);
-				}
-				repaint();
-			}, kClickAniCB), fps);
+		callbacks[kClickAniCB].active = true;
 
 		onClick(mouse);
 		repaint();
@@ -92,12 +108,10 @@ namespace gui
 			const auto& utils = b.utils;
 			const auto thicc = utils.thicc;
 			const auto bounds = b.getLocalBounds().toFloat().reduced(thicc);
-			const auto over = b.isMouseOver();
-			const auto down = b.isMouseButtonDown();
-			const auto alphaBase = down ? .5f : over ? .25f : 0.f;
-			const auto alphaRange = 1.f - alphaBase;
-			const auto ani = b.clickAniPhase * b.clickAniPhase;
-			const auto alpha = alphaBase + alphaRange * ani;
+
+			const auto hoverAniPhase = b.hoverAniPhase * b.hoverAniPhase;
+			const auto clickAniPhase = b.clickAniPhase * b.clickAniPhase;
+			const auto alpha = hoverAniPhase * .25f + clickAniPhase * .5f;
 			const auto aniCol = getColour(CID::Interact).withAlpha(alpha);
 			g.setColour(aniCol);
 			g.fillRoundedRectangle(bounds, thicc * .5f);
@@ -106,7 +120,7 @@ namespace gui
 
 	//////
 
-	void makeTextButton(Button& btn, const String& txt, CID cID, const String& tooltip)
+	void makeTextButton(Button& btn, const String& txt, const String& tooltip, CID cID)
 	{
 		makeTextLabel(btn.label, txt, font::nel(), Just::centred, cID);
 		btn.tooltip = tooltip;

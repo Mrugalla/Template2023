@@ -2,22 +2,32 @@
 
 namespace gui
 {
+	TimerCallbacks::CB::CB(std::function<void()> _func, int _id, kFPS _fps, bool _active):
+		cb(_func),
+		id(_id),
+		fps(_fps),
+		active(_active)
+	{
+	}
+
 	TimerCallbacks::TimerCallbacks() :
 		Timer(),
 		callbacks(),
 		idx(0)
 	{
-		startTimerHz(FPS);
 	}
 
-	void TimerCallbacks::add(CB* cb, kFPS fps)
+	void TimerCallbacks::add(CB* cb)
 	{
-		auto& cbs = callbacks[static_cast<int>(fps)];
+		stopTimer();
+		auto& cbs = callbacks[static_cast<int>(cb->fps)];
 		cbs.push_back(cb);
+		startTimerHz(FPS);
 	}
 
 	void TimerCallbacks::remove(CB* cb)
 	{
+		stopTimer();
 		for (auto i = 0; i < NumFPSs; ++i)
 		{
 			auto& cbs = callbacks[i];
@@ -28,6 +38,7 @@ namespace gui
 				return;
 			}
 		}
+		startTimerHz(FPS);
 	}
 
 	void TimerCallbacks::timerCallback()
@@ -42,7 +53,8 @@ namespace gui
 
 			if (idx % fpsOrder == 0)
 				for (auto cb : cbs)
-					cb->cb();
+					if(cb->active)
+						cb->cb();
 		}
 
 		idx &= 15;

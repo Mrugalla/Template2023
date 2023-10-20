@@ -8,20 +8,19 @@ ToThink
 
 GUI
     SharedPluginState
-        Colours?
-        Thickness?
-        Drag sensitivity?
-    Label
-        Find or make best performing drawText method
+        drag/wheel sensitivity
     Button
         cancel click on opposite mouse button
-        OnWheel
+        make OnWheel
     TextEditor
         button that edits its label
     Editor
         makeToast (firstTimeUwU)
     Knob
         OnPaint, Click, Wheel, Drag
+    Options
+        colourscheme
+        drag sensitivity
 AUDIO
     FFT
         replace by 3rd party lib for performance (kiss fft or pffft)

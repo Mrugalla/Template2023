@@ -27,6 +27,8 @@ namespace gui
         enum { kTitle, kDev, kNumLabels };
         std::array<Label, kNumLabels> labels;
 
+        Button filterTypeButton;
+
         //JUCE_HEAVYWEIGHT_LEAK_DETECTOR(Editor)
     };
 }

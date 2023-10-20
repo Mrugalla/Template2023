@@ -32,6 +32,11 @@ namespace gui
 
 		text = txt;
 	}
+	
+	void Label::replaceSpacesWithLineBreaks()
+	{
+		text = text.replaceCharacters(" ", "\n");
+	}
 
 	void Label::paint(Graphics& g)
 	{
@@ -40,7 +45,7 @@ namespace gui
 		case Type::Text:
 			g.setFont(font);
 			g.setColour(getColour(cID));
-			g.drawText(text, getLocalBounds().toFloat(), just, false);
+			g.drawFittedText(text, getLocalBounds(), just, 1, 0.f);
 			break;
 		case Type::Paint:
 			onPaint(g, *this);

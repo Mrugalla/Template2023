@@ -189,7 +189,9 @@ namespace gui
 
             updateBgImage(false);
             repaint();
-        }, kUpdateBoundsCB), cbFPS::k3_75);
+        }, kUpdateBoundsCB, cbFPS::k3_75, true));
+
+        registerCallbacks();
     }
 
     void BgImage::paint(Graphics& g)

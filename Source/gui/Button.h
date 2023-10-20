@@ -6,12 +6,12 @@ namespace gui
 	struct Button :
 		public Comp
 	{
-		static constexpr float ClickAniLengthMs = 400.f;
+		static constexpr float AniLengthMs = 300.f;
 
 		using OnPaint = std::function<void(Graphics&, const Button&)>;
 		using OnClick = std::function<void(const Mouse&)>;
 		using OnWheel = std::function<void(const Mouse&, const MouseWheel&)>;
-		enum { kClickAniCB, kNumCallbacks };
+		enum { kHoverAniCB, kClickAniCB, kNumCallbacks };
 
 		/* u */
 		Button(Utils&);
@@ -38,7 +38,7 @@ namespace gui
 		OnPaint onPaint;
 		OnClick onClick;
 		OnWheel onWheel;
-		float clickAniPhase;
+		float hoverAniPhase, clickAniPhase;
 		float value;
 	};
 
@@ -47,9 +47,9 @@ namespace gui
 
 	//////
 
-	/* btn, text, tooltip, col */
-	void makeTextButton(Button&, const String&, const String&, Colour);
+	/* btn, text, tooltip, cID */
+	void makeTextButton(Button&, const String&, const String&, CID);
 
-	/* btn, onPaint, tooltip, col */
+	/* btn, onPaint, tooltip */
 	void makePaintButton(Button&, const Label::OnPaint&, const String&);
 }

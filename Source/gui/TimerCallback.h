@@ -19,13 +19,18 @@ namespace gui
 
 		struct CB
 		{
+			/* function, id, fps, active */
+			CB(std::function<void()>, int, kFPS, bool);
+
 			std::function<void()> cb;
 			int id;
+			kFPS fps;
+			bool active;
 		};
 
 		TimerCallbacks();
 
-		void add(CB*, kFPS);
+		void add(CB*);
 
 		void remove(CB*);
 

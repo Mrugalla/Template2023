@@ -20,6 +20,8 @@ namespace gui
 
 		void setText(const String&);
 
+		void replaceSpacesWithLineBreaks();
+
 		void paint(Graphics&) override;
 
 		void setHeight(float) noexcept;

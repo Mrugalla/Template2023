@@ -192,7 +192,7 @@ namespace audio
 
     bool Processor::hasEditor() const
     {
-        return false;
+        return true;
     }
 
     juce::AudioProcessorEditor* Processor::createEditor()

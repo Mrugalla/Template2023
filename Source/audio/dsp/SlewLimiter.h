@@ -9,62 +9,31 @@ namespace dsp
         using FilerTypeFunc = std::function<double()>;
         using FilterTypeFuncs = std::array<FilerTypeFunc, NumTypes>;
        
-        SlewLimiter() :
-            y(0.),
-            dist(0.),
-            filterTypeFuncs()
-        {
-            filterTypeFuncs[LP] = [&x = y]()
-            {
-                return x;
-            };
-            filterTypeFuncs[HP] = [&x = dist]()
-			{
-				return x;
-			};
-        }
+        SlewLimiter();
 
+        /* smpls, slew[0,2], numSamples, type */
         void operator()(double* smpls, double slew,
-            int numSamples, Type type) noexcept
-        {
-            for(auto s = 0; s < numSamples; ++s)
-				smpls[s] = process(smpls[s], slew, type);
-        }
+            int numSamples, Type type) noexcept;
 
     protected:
         double y, dist;
         FilterTypeFuncs filterTypeFuncs;
 
-        double process(double x, double slew, Type type) noexcept
-        {
-            dist = x - y;
-            const auto pol = dist < 0. ? -1. : 1.;
-            y += dist * pol > slew ? slew * pol : dist;
-            return filterTypeFuncs[type]();
-        }
+        /* x, slew, type */
+        double process(double, double, Type) noexcept;
 	};
 
     struct SlewLimiterStereo
     {
         using Type = SlewLimiter::Type;
 
-        static double freqHzToSlewRate(double freq, double sampleRate) noexcept
-        {
-            return freq / sampleRate;
-        }
+        /* freq, sampleRate */
+        static double freqHzToSlewRate(double, double) noexcept;
 
-        SlewLimiterStereo() :
-			slews(),
-            sampleRate(1.)
-		{}
+        SlewLimiterStereo();
 
-        /* samples, slewRate, numChannels, numSamples, filterType */
-        void operator()(double** samples, double slew,
-            int numChannels, int numSamples, Type type) noexcept
-        {
-            for (auto ch = 0; ch < numChannels; ++ch)
-                slews[ch](samples[ch], slew, numSamples, type);
-        }
+        /* samples, slewRate[0,2], numChannels, numSamples, filterType */
+        void operator()(double**, double, int, int, Type) noexcept;
 
     protected:
         std::array<SlewLimiter, 2> slews;
