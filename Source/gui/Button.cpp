@@ -102,9 +102,19 @@ namespace gui
 
 	//////
 
-	Button::OnPaint makeButtonOnPaint() noexcept
+	Button::OnPaint makeButtonOnPaint(Button::Type type) noexcept
 	{
-		return [](Graphics& g, const Button& b)
+		const auto valAlphaFunc = type == Button::Type::kBool ?
+			[](float val)
+			{
+				return val > .5f ? .25f : 0.f;
+			} :
+			[](float)
+			{
+				return 0.f;
+			};
+
+		return [valAlphaFunc](Graphics& g, const Button& b)
 		{
 			const auto& utils = b.utils;
 			const auto thicc = utils.thicc;
@@ -112,7 +122,7 @@ namespace gui
 
 			const auto hoverAniPhase = b.hoverAniPhase * b.hoverAniPhase;
 			const auto clickAniPhase = b.clickAniPhase * b.clickAniPhase;
-			const auto valueAlpha = b.type == Button::Type::kBool && b.value > .5f ? .25f : 0.f;
+			const auto valueAlpha = valAlphaFunc(b.value);
 			const auto alpha = hoverAniPhase * .25f + clickAniPhase * .5f + valueAlpha;
 			const auto aniCol = getColour(CID::Interact).withAlpha(alpha);
 			g.setColour(aniCol);
@@ -126,13 +136,13 @@ namespace gui
 	{
 		makeTextLabel(btn.label, txt, font::nel(), Just::centred, cID);
 		btn.tooltip = tooltip;
-		btn.onPaint = makeButtonOnPaint();
+		btn.onPaint = makeButtonOnPaint(btn.type);
 	}
 
 	void makePaintButton(Button& btn, const Label::OnPaint& onPaint, const String& tooltip)
 	{
 		makePaintLabel(btn.label, onPaint);
 		btn.tooltip = tooltip;
-		btn.onPaint = makeButtonOnPaint();
+		btn.onPaint = makeButtonOnPaint(btn.type);
 	}
 }

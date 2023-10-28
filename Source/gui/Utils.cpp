@@ -23,6 +23,16 @@ namespace gui
 		return params.data();
 	}
 
+	Param& Utils::getParam(PID pID) noexcept
+	{
+		return params(pID);
+	}
+
+	const Param& Utils::getParam(PID pID) const noexcept
+	{
+		return params(pID);
+	}
+
 	ValueTree Utils::getState() const noexcept
 	{
 		return audioProcessor.state.state;

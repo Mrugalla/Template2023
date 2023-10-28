@@ -51,6 +51,9 @@ namespace gui
 	void Comp::registerCallbacks()
 	{
 		for (auto& cb : callbacks)
+			utils.removeCallback(&cb);
+
+		for (auto& cb : callbacks)
 			utils.registerCallback(&cb);
 	}
 

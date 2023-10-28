@@ -170,29 +170,36 @@ namespace param
 	// PARAM:
 
 	Param::Param(const PID pID, const Range& _range, const float _valDenormDefault,
-		const ValToStrFunc& _valToStr, const StrToValFunc& _strToVal,
-		const Unit _unit) :
-
+		const ValToStrFunc& _valToStr, const StrToValFunc& _strToVal, const Unit _unit) :
 		AudioProcessorParameter(),
 		id(pID),
 		range(_range),
-		
 		valDenormDefault(range.snapToLegalValue(_valDenormDefault)),
-
 		valNorm(range.convertTo0to1(valDenormDefault)),
 		maxModDepth(0.f),
 		valMod(valNorm.load()),
 		modBias(.5f),
-
 		valToStr(_valToStr),
 		strToVal(_strToVal),
 		unit(_unit),
-
 		locked(false),
 		inGesture(false),
-
 		modDepthLocked(false)
 	{
+	}
+
+	Param::Type Param::getType() const noexcept
+	{
+		const auto interval = range.interval;
+		const bool stepped = interval == 1.f;
+
+		if (!stepped)
+			return Type::Float;
+
+		if(range.start == 0.f && range.end == 1.f)
+			return Type::Bool;
+		
+		return Type::Int;
 	}
 
 	void Param::savePatch(State& state) const

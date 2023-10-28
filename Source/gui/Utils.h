@@ -24,6 +24,8 @@ namespace gui
 
 		std::vector<Param*>& getAllParams() noexcept;
 		const std::vector<Param*>& getAllParams() const noexcept;
+		Param& getParam(PID) noexcept;
+		const Param& getParam(PID) const noexcept;
 
 		juce::ValueTree getState() const noexcept;
 

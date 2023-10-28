@@ -11,6 +11,7 @@ GUI
         drag/wheel sensitivity
     Button
         write function that attaches it to parameter (filterType)
+            crashes on init usually
         cancel click on opposite mouse button
         make OnWheel
     TextEditor

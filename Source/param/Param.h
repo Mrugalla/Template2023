@@ -119,10 +119,17 @@ namespace param
 	{
 		static constexpr float BiasEps = .000001f;
 	public:
+		enum class Type
+		{
+			Bool, Int, Float, NumTypes
+		};
+
 		/* pID, range, valDenormDefault, valToStr, strToVal, unit */
 		Param(const PID, const Range&, const float,
 			const ValToStrFunc&, const StrToValFunc&,
 			const Unit = Unit::NumUnits);
+
+		Type getType() const noexcept;
 
 		void savePatch(State&) const;
 
