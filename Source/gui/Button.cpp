@@ -99,19 +99,19 @@ namespace gui
 		onWheel(mouse, wheel);
 	}
 
-	//////
+	////// LOOK AND FEEL:
 
 	Button::OnPaint makeButtonOnPaint(Button::Type type) noexcept
 	{
 		const auto valAlphaFunc = type == Button::Type::kBool ?
-			[](float val)
-			{
-				return val > .5f ? .25f : 0.f;
-			} :
-			[](float)
-			{
-				return 0.f;
-			};
+		[](float val)
+		{
+			return val > .5f ? .25f : 0.f;
+		} :
+		[](float)
+		{
+			return 0.f;
+		};
 
 		return [valAlphaFunc](Graphics& g, const Button& b)
 		{
@@ -129,8 +129,6 @@ namespace gui
 		};
 	}
 
-	//////
-
 	void makeTextButton(Button& btn, const String& txt, const String& tooltip, CID cID)
 	{
 		makeTextLabel(btn.label, txt, font::nel(), Just::centred, cID);
@@ -143,5 +141,44 @@ namespace gui
 		makePaintLabel(btn.label, onPaint);
 		btn.tooltip = tooltip;
 		btn.onPaint = makeButtonOnPaint(btn.type);
+	}
+
+	////// PARAMETER ATTACHMENT:
+
+	void makeParameter(Button& button, PID pID)
+	{
+		makeTextButton(button, param::toString(pID), param::toTooltip(pID), CID::Interact);
+
+		auto& utils = button.utils;
+		auto& param = utils.getParam(pID);
+		const auto type = param.getType();
+		button.type = type == Param::Type::Bool ? Button::Type::kBool : Button::Type::kInt;
+
+		button.onClick = [&btn = button, pID](const Mouse&)
+		{
+			auto& utils = btn.utils;
+			auto& param = utils.getParam(pID);
+			const auto& range = param.range;
+			const auto interval = static_cast<int>(range.interval);
+			auto valDenorm = static_cast<int>(param.getValueDenorm()) + interval;
+			if (valDenorm > static_cast<int>(range.end))
+				valDenorm = static_cast<int>(range.start);
+			const auto valNorm = range.convertTo0to1(static_cast<float>(valDenorm));
+			param.setValueWithGesture(valNorm);
+		};
+
+		button.add(Callback([&btn = button, pID]()
+		{
+			const auto& utils = btn.utils;
+			const auto& param = utils.getParam(pID);
+			const auto val = param.getValue();
+
+			if (btn.value == val)
+				return;
+
+			btn.value = val;
+			btn.repaint();
+
+		}, Button::kUpdateParameterCB, cbFPS::k15, true));
 	}
 }

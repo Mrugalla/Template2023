@@ -12,7 +12,7 @@ namespace gui
 		using OnClick = std::function<void(const Mouse&)>;
 		using OnWheel = std::function<void(const Mouse&, const MouseWheel&)>;
 		enum class Type { kBool, kInt, kNumTypes };
-		enum { kHoverAniCB, kClickAniCB, kNumCallbacks };
+		enum { kHoverAniCB, kClickAniCB, kUpdateParameterCB, kNumCallbacks };
 
 		/* u */
 		Button(Utils&);
@@ -47,7 +47,7 @@ namespace gui
 	/* type */
 	Button::OnPaint makeButtonOnPaint(Button::Type) noexcept;
 
-	//////
+	////// LOOK AND FEEL:
 
 	/* btn, text, tooltip, cID */
 	void makeTextButton(Button&, const String&, const String&, CID);
@@ -55,42 +55,7 @@ namespace gui
 	/* btn, onPaint, tooltip */
 	void makePaintButton(Button&, const Label::OnPaint&, const String&);
 
-	//////
+	////// PARAMETER ATTACHMENT:
 
-	inline void makeParameter(Button& button, PID pID)
-	{
-		makeTextButton(button, param::toString(pID), param::toTooltip(pID), CID::Interact);
-
-		auto& utils = button.utils;
-		auto& param = utils.getParam(pID);
-		const auto type = param.getType();
-		button.type = type == Param::Type::Bool ? Button::Type::kBool : Button::Type::kInt;
-
-		button.onClick = [&btn = button, pID](const Mouse&)
-		{
-			auto& utils = btn.utils;
-			auto& param = utils.getParam(pID);
-			const auto& range = param.range;
-			const auto interval = static_cast<int>(range.interval);
-			auto valDenorm = static_cast<int>(param.getValueDenorm()) + interval;
-			if (valDenorm > static_cast<int>(range.end))
-				valDenorm = static_cast<int>(range.start);
-			const auto valNorm = range.convertTo0to1(static_cast<float>(valDenorm));
-			param.setValueWithGesture(valNorm);
-		};
-		
-		button.add(Callback([&btn = button, pID]()
-		{
-			const auto& utils = btn.utils;
-			const auto& param = utils.getParam(pID);
-			const auto val = param.getValue();
-
-			if (btn.value == val)
-				return;
-
-			btn.value = val;
-			btn.repaint();
-
-		}, 3, cbFPS::k15, true));
-	}
+	void makeParameter(Button&, PID);
 }
