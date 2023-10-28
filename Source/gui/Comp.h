@@ -12,6 +12,12 @@ namespace gui
 
 		~Comp();
 
+		void deregisterCallbacks();
+
+		void add(const Callback&);
+
+		void registerCallbacks();
+
 		/* xL, yL */
 		void initLayout(const std::vector<int>&, const std::vector<int>&);
 
@@ -19,14 +25,6 @@ namespace gui
 		void initLayout(const String&, const String&);
 
 		void addEvt(const evt::Evt&);
-
-		void addCallback(const Callback&);
-
-		void popCallback();
-
-		void removeCallbacks(int id);
-
-		void registerCallbacks();
 
 		void mouseEnter(const Mouse&) override;
 

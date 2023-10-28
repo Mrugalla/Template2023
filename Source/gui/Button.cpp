@@ -15,7 +15,7 @@ namespace gui
 		addAndMakeVisible(label);
 
 		const auto fps = cbFPS::k30;
-		addCallback(Callback([&, fps]()
+		add(Callback([&, fps]()
 		{
 			hoverAniPhase -= msToInc(AniLengthMs, fps);
 			if (hoverAniPhase <= 0.f)
@@ -25,7 +25,8 @@ namespace gui
 			}
 			repaint();
 		}, kHoverAniCB, fps, false));
-		addCallback(Callback([&, fps]()
+
+		add(Callback([&, fps]()
 		{
 			clickAniPhase -= msToInc(AniLengthMs, fps);
 			if (clickAniPhase <= 0.f)
@@ -35,8 +36,6 @@ namespace gui
 			}
 			repaint();
 		}, kClickAniCB, fps, false));
-
-		registerCallbacks();
 	}
 
 	void Button::paint(Graphics& g)

@@ -79,7 +79,7 @@ namespace gui
 			param.setValueWithGesture(valNorm);
 		};
 		
-		button.addCallback(Callback([&btn = button, pID]()
+		button.add(Callback([&btn = button, pID]()
 		{
 			const auto& utils = btn.utils;
 			const auto& param = utils.getParam(pID);
@@ -92,7 +92,5 @@ namespace gui
 			btn.repaint();
 
 		}, 3, cbFPS::k15, true));
-
-		button.registerCallbacks();
 	}
 }

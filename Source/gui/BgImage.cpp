@@ -178,7 +178,7 @@ namespace gui
         updateBgImage(false);
         setOpaque(true);
 
-        addCallback(Callback([&]()
+        add(Callback([&]()
         {
             if (!img.isValid())
                 return;
@@ -190,8 +190,6 @@ namespace gui
             updateBgImage(false);
             repaint();
         }, kUpdateBoundsCB, cbFPS::k3_75, true));
-
-        registerCallbacks();
     }
 
     void BgImage::paint(Graphics& g)

@@ -12,12 +12,12 @@ namespace gui
 		/* pluginTop, processor */
 		Utils(Component&, Processor&);
 
-		void registerCallback(Callback* cb)
+		void add(Callback* cb)
 		{
 			callbacks.add(cb);
 		}
 
-		void removeCallback(Callback* cb)
+		void remove(Callback* cb)
 		{
 			callbacks.remove(cb);
 		}

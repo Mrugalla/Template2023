@@ -13,10 +13,28 @@ namespace gui
 
 	Comp::~Comp()
 	{
-		for (auto& cb : callbacks)
-			utils.removeCallback(&cb);
+		deregisterCallbacks();
 	}
 	
+	void Comp::deregisterCallbacks()
+	{
+		for (auto& cb : callbacks)
+			utils.remove(&cb);
+	}
+
+	void Comp::add(const Callback& callback)
+	{
+		deregisterCallbacks();
+		callbacks.push_back(callback);
+		registerCallbacks();
+	}
+
+	void Comp::registerCallbacks()
+	{
+		for (auto& cb : callbacks)
+			utils.add(&cb);
+	}
+
 	void Comp::initLayout(const std::vector<int>& xL, const std::vector<int>& yL)
 	{
 		layout.init(xL, yL);
@@ -40,38 +58,6 @@ namespace gui
 	void Comp::mouseUp(const Mouse&)
 	{
 		utils.eventSystem.notify(evt::Type::ClickedEmpty, this);
-	}
-
-	void Comp::addCallback(const Callback& callback)
-	{
-		removeCallbacks(callback.id);
-		callbacks.push_back(callback);
-	}
-
-	void Comp::registerCallbacks()
-	{
-		for (auto& cb : callbacks)
-			utils.removeCallback(&cb);
-
-		for (auto& cb : callbacks)
-			utils.registerCallback(&cb);
-	}
-
-	void Comp::popCallback()
-	{
-		utils.removeCallback(&callbacks.back());
-		callbacks.pop_back();
-	}
-
-	void Comp::removeCallbacks(int id)
-	{
-		for (auto i = 0; i < callbacks.size(); ++i)
-			if (callbacks[i].id == id)
-			{
-				utils.removeCallback(&callbacks[i]);
-				callbacks.erase(callbacks.begin() + i);
-				return removeCallbacks(id);
-			}
 	}
 
 	void Comp::setTooltip(const String& t)

@@ -20,7 +20,6 @@ namespace gui
 
 	void TimerCallbacks::add(CB* cb)
 	{
-		remove(cb);
 		auto& cbs = callbacks[static_cast<int>(cb->fps)];
 		cbs.push_back(cb);
 	}
@@ -34,7 +33,7 @@ namespace gui
 			if (it != cbs.end())
 			{
 				cbs.erase(it);
-				return;
+				return remove(cb);
 			}
 		}
 	}
@@ -45,7 +44,7 @@ namespace gui
 
 		for (auto i = 0; i < NumFPSs; ++i)
 		{
-			auto& cbs = callbacks[i];
+			const auto& cbs = callbacks[i];
 			const auto fps = static_cast<kFPS>(i);
 			const auto fpsOrder = 1 << static_cast<int>(fps);
 
