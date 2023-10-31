@@ -1,6 +1,7 @@
 #pragma once
 #include "gui/Tooltip.h"
 #include "gui/BgImage.h"
+#include "gui/Knob.h"
 
 namespace gui
 {
@@ -28,6 +29,7 @@ namespace gui
         std::array<Label, kNumLabels> labels;
 
         Button filterTypeButton;
+        Knob macroKnob, slewKnob;
 
         //JUCE_HEAVYWEIGHT_LEAK_DETECTOR(Editor)
     };

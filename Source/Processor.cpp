@@ -218,7 +218,8 @@ namespace audio
     {
         juce::ScopedNoDenormals noDenormals;
 		
-        param::processMacroMod(params);
+        const auto macroVal = params(PID::Macro).getValue();
+        params.modulate(macroVal);
 		
         const auto numSamplesMain = buffer.getNumSamples();
         if (numSamplesMain == 0)
@@ -276,7 +277,8 @@ namespace audio
 		
         juce::ScopedNoDenormals noDenormals;
 		
-        param::processMacroMod(params);
+        const auto macroVal = params(PID::Macro).getValue();
+        params.modulate(macroVal);
 
         const auto numSamplesMain = buffer.getNumSamples();
         {

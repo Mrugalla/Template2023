@@ -119,17 +119,18 @@ namespace param
 	{
 		static constexpr float BiasEps = .000001f;
 	public:
-		enum class Type
+
+		struct Mod
 		{
-			Bool, Int, Float, NumTypes
+			Mod();
+
+			std::atomic<float> depth, bias;
 		};
 
 		/* pID, range, valDenormDefault, valToStr, strToVal, unit */
 		Param(const PID, const Range&, const float,
 			const ValToStrFunc&, const StrToValFunc&,
 			const Unit = Unit::NumUnits);
-
-		Type getType() const noexcept;
 
 		void savePatch(State&) const;
 
@@ -141,7 +142,10 @@ namespace param
 		float getValueDenorm() const noexcept;
 
 		// called by host, normalized, avoid locks, not used by editor
-		void setValue(float/*normalized*/) override;
+		void setValue(float) override;
+
+		// setValue without the lock
+		void setValueFromEditor(float) noexcept;
 
 		// called by editor
 		bool isInGesture() const noexcept;
@@ -152,11 +156,11 @@ namespace param
 
 		void endGesture();
 
-		float getMaxModDepth() const noexcept;
+		float getModDepth() const noexcept;
 
-		void setMaxModDepth(float) noexcept;
+		void setModDepth(float) noexcept;
 
-		/*macro*/
+		/* modSource */
 		float calcValModOf(float) const noexcept;
 
 		float getValMod() const noexcept;
@@ -167,10 +171,16 @@ namespace param
 
 		float getModBias() const noexcept;
 
-		void setDefaultValue(float/*norm*/) noexcept;
+		void setModulationDefault() noexcept;
 
-		// called by processor to update modulation value(s)
-		void modulate(float/*macro*/) noexcept;
+		/* norm */
+		void setDefaultValue(float) noexcept;
+
+		void startModulation() noexcept;
+
+		void modulate(float) noexcept;
+
+		void endModulation() noexcept;
 
 		float getDefaultValue() const override;
 
@@ -196,22 +206,24 @@ namespace param
 		void setLocked(bool) noexcept;
 		void switchLock() noexcept;
 
-		void setModDepthLocked(bool) noexcept;
+		void setModDepthAbsolute(bool) noexcept;
 
-		float biased(float /*start*/, float /*end*/, float /*bias [0,1]*/, float /*x*/) const noexcept;
+		/* start, end, bias[0,1], x */
+		float biased(float, float, float, float) const noexcept;
 
 		const PID id;
 		const Range range;
 	protected:
-		float valDenormDefault;
-		std::atomic<float> valNorm, maxModDepth, valMod, modBias;
+		float valDenormDefault, valInternal;
+		Mod mod;
+		std::atomic<float> valNorm, valMod;
 		ValToStrFunc valToStr;
 		StrToValFunc strToVal;
 		Unit unit;
 
 		std::atomic<bool> locked, inGesture;
 
-		bool modDepthLocked;
+		bool modDepthAbsolute;
 	};
 
 	struct Params
@@ -233,9 +245,11 @@ namespace param
 
 		size_t numParams() const noexcept;
 
-		bool isModDepthLocked() const noexcept;
-		void setModDepthLocked(bool) noexcept;
-		void switchModDepthLocked() noexcept;
+		void modulate(float modSrc) noexcept;
+
+		bool isModDepthAbsolute() const noexcept;
+		void setModDepthAbsolute(bool) noexcept;
+		void switchModDepthAbsolute() noexcept;
 
 		Param* operator[](int) noexcept;
 		const Param* operator[](int) const noexcept;
@@ -251,7 +265,7 @@ namespace param
 		const Parameters& data() const noexcept;
 	protected:
 		Parameters params;
-		std::atomic<float> modDepthLocked;
+		std::atomic<float> modDepthAbsolute;
 	};
 
 	namespace strToVal
@@ -313,6 +327,4 @@ namespace param
 		ValToStrFunc legato();
 		ValToStrFunc filterType();
 	}
-
-	void processMacroMod(Params&) noexcept;
 }

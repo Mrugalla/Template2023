@@ -29,12 +29,13 @@ namespace gui
             Label(utils),
             Label(utils)
         },
-        filterTypeButton(utils)
+        filterTypeButton(utils),
+        macroKnob(utils), slewKnob(utils)
     {
         layout.init
         (
-            { 1, 5, 5, 21, 2 },
-            { 1, 3, 21, 1 }
+            { 1, 3, 5, 5, 21, 2 },
+            { 1, 2, 5, 2, 21, 2, 1 }
         );
 
         addAndMakeVisible(bgImage);
@@ -46,9 +47,13 @@ namespace gui
         for (auto& label : labels)
             addAndMakeVisible(label);
 
-        makeParameter(filterTypeButton, PID::FilterType);
-        filterTypeButton.label.replaceSpacesWithLineBreaks();
+        makeParameter(filterTypeButton, PID::FilterType, Button::Type::kChoice, "Type");
         addAndMakeVisible(filterTypeButton);
+
+        addAndMakeVisible(macroKnob);
+        makeParameter(macroKnob, PID::Macro, "Macro");
+        addAndMakeVisible(slewKnob);
+        makeParameter(slewKnob, PID::Slew, "Slew");
 
         const auto& user = *audioProcessor.state.props.getUserSettings();
         const auto editorWidth = user.getDoubleValue("EditorWidth", EditorWidth);
@@ -78,7 +83,7 @@ namespace gui
         layout.resized(getLocalBounds());
 
         bgImage.setBounds(getLocalBounds());
-        layout.place(bgImage.refreshButton, 4, 0, 1, 1, false);
+        bgImage.refreshButton.setBounds(layout.cornerTopRight().toNearestInt());
 
         tooltip.setBounds(layout.bottom().toNearestInt());
 
@@ -88,6 +93,9 @@ namespace gui
 
         layout.place(filterTypeButton, 1, 2, 1, 1, false);
         filterTypeButton.label.setMaxHeight();
+
+        layout.place(macroKnob, 2, 2, 1, 1, true);
+        layout.place(slewKnob, 3, 2, 1, 1, true);
 
         auto& user = *audioProcessor.state.props.getUserSettings();
 		const auto editorWidth = static_cast<double>(getWidth());

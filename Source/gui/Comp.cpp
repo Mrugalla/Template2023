@@ -7,7 +7,9 @@ namespace gui
 		layout(),
 		tooltip(_tooltip),
 		members(),
-		callbacks()
+		callbacks(),
+		stuff(),
+		comps()
 	{
 	}
 
@@ -16,6 +18,11 @@ namespace gui
 		deregisterCallbacks();
 	}
 	
+	void Comp::setLocked(bool e)
+	{
+		setAlpha(e ? LockAlpha : 1.f);
+	}
+
 	void Comp::deregisterCallbacks()
 	{
 		for (auto& cb : callbacks)
@@ -33,11 +40,6 @@ namespace gui
 	{
 		for (auto& cb : callbacks)
 			utils.add(&cb);
-	}
-
-	void Comp::initLayout(const std::vector<int>& xL, const std::vector<int>& yL)
-	{
-		layout.init(xL, yL);
 	}
 
 	void Comp::initLayout(const String& xL, const String& yL)

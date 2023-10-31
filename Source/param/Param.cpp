@@ -169,37 +169,23 @@ namespace param
 
 	// PARAM:
 
+	Param::Mod::Mod() :
+		depth(0.f),
+		bias(.5f)
+	{}
+
 	Param::Param(const PID pID, const Range& _range, const float _valDenormDefault,
 		const ValToStrFunc& _valToStr, const StrToValFunc& _strToVal, const Unit _unit) :
 		AudioProcessorParameter(),
 		id(pID),
 		range(_range),
 		valDenormDefault(range.snapToLegalValue(_valDenormDefault)),
-		valNorm(range.convertTo0to1(valDenormDefault)),
-		maxModDepth(0.f),
-		valMod(valNorm.load()),
-		modBias(.5f),
-		valToStr(_valToStr),
-		strToVal(_strToVal),
-		unit(_unit),
-		locked(false),
-		inGesture(false),
-		modDepthLocked(false)
+		valInternal(range.convertTo0to1(valDenormDefault)),
+		mod(),
+		valNorm(valInternal), valMod(valNorm.load()),
+		valToStr(_valToStr), strToVal(_strToVal), unit(_unit),
+		locked(false), inGesture(false), modDepthAbsolute(false)
 	{
-	}
-
-	Param::Type Param::getType() const noexcept
-	{
-		const auto interval = range.interval;
-		const bool stepped = interval == 1.f;
-
-		if (!stepped)
-			return Type::Float;
-
-		if(range.start == 0.f && range.end == 1.f)
-			return Type::Bool;
-		
-		return Type::Int;
 	}
 
 	void Param::savePatch(State& state) const
@@ -208,39 +194,38 @@ namespace param
 
 		const auto v = range.convertFrom0to1(getValue());
 		state.set(idStr + "/value", v);
-		const auto mdd = getMaxModDepth();
-		state.set(idStr + "/maxmoddepth", mdd);
+		const auto md = getModDepth();
+		state.set(idStr + "/md", md);
 		const auto mb = getModBias();
-		state.set(idStr + "/modbias", mb);
+		state.set(idStr + "/mb", mb);
 	}
 
 	void Param::loadPatch(State& state)
 	{
-		const String idStr("params/" + toID(toString(id)));
+		if (isLocked())
+			return;
 
-		const auto lckd = isLocked();
-		if (!lckd)
+		const String idStr("params/" + toID(toString(id)));
+		
+		auto var = state.get(idStr + "/value");
+		if (var)
 		{
-			auto var = state.get(idStr + "/value");
-			if (var)
-			{
-				const auto val = static_cast<float>(*var);
-				const auto legalVal = range.snapToLegalValue(val);
-				const auto valD = range.convertTo0to1(legalVal);
-				setValueNotifyingHost(valD);
-			}
-			var = state.get(idStr + "/maxmoddepth");
-			if (var)
-			{
-				const auto val = static_cast<float>(*var);
-				setMaxModDepth(val);
-			}
-			var = state.get(idStr + "/modbias");
-			if (var)
-			{
-				const auto val = static_cast<float>(*var);
-				setModBias(val);
-			}
+			const auto val = static_cast<float>(*var);
+			const auto legalVal = range.snapToLegalValue(val);
+			const auto valD = range.convertTo0to1(legalVal);
+			setValueNotifyingHost(valD);
+		}
+		var = state.get(idStr + "/md");
+		if (var)
+		{
+			const auto val = static_cast<float>(*var);
+			setModDepth(val);
+		}
+		var = state.get(idStr + "/mb");
+		if (var)
+		{
+			const auto val = static_cast<float>(*var);
+			setModBias(val);
 		}
 	}
 
@@ -255,23 +240,30 @@ namespace param
 		return range.convertFrom0to1(getValue());
 	}
 
-	// called by host, normalized, avoid locks, not used (directly) by editor
 	void Param::setValue(float normalized)
 	{
 		if (isLocked())
 			return;
 
-		if (!modDepthLocked)
+		if (!modDepthAbsolute)
 			return valNorm.store(normalized);
 
-		const auto p0 = valNorm.load();
-		const auto p1 = normalized;
+		const auto pLast = valNorm.load();
+		const auto pCur = normalized;
 
-		const auto d0 = getMaxModDepth();
-		const auto d1 = d0 - p1 + p0;
+		const auto dLast = getModDepth();
+		const auto dCur = dLast - pCur + pLast;
+		setModDepth(dCur);
 
-		valNorm.store(p1);
-		setMaxModDepth(d1);
+		valNorm.store(pCur);
+	}
+
+	void Param::setValueFromEditor(float x) noexcept
+	{
+		const auto lckd = isLocked();
+		setLocked(false);
+		setValueNotifyingHost(x);
+		setLocked(lckd);
 	}
 
 	// called by editor
@@ -280,12 +272,13 @@ namespace param
 		return inGesture.load();
 	}
 
+	// called by editor
 	void Param::setValueWithGesture(float norm)
 	{
 		if (isInGesture())
 			return;
 		beginChangeGesture();
-		setValueNotifyingHost(norm);
+		setValueFromEditor(norm);
 		endChangeGesture();
 	}
 
@@ -301,30 +294,28 @@ namespace param
 		endChangeGesture();
 	}
 
-	float Param::getMaxModDepth() const noexcept
+	float Param::getModDepth() const noexcept
 	{
-		return maxModDepth.load();
-	};
+		return mod.depth.load();
+	}
 
-	void Param::setMaxModDepth(float v) noexcept
+	void Param::setModDepth(float v) noexcept
 	{
 		if (isLocked())
 			return;
 
-		maxModDepth.store(juce::jlimit(-1.f, 1.f, v));
+		mod.depth.store(juce::jlimit(-1.f, 1.f, v));
 	}
 
-	float Param::calcValModOf(float macro) const noexcept
+	float Param::calcValModOf(float modSrc) const noexcept
 	{
-		const auto norm = getValue();
+		const auto md = mod.depth.load();
+		const auto pol = md > 0.f ? 1.f : -1.f;
+		const auto dAbs = md * pol;
+		const auto dRemapped = biased(0.f, dAbs, mod.bias.load(), modSrc);
+		const auto mValue = dRemapped * pol;
 
-		const auto mmd = maxModDepth.load();
-		const auto pol = mmd > 0.f ? 1.f : -1.f;
-		const auto md = mmd * pol;
-		const auto mdSkew = biased(0.f, md, modBias.load(), macro);
-		const auto mod = mdSkew * pol;
-
-		return juce::jlimit(0.f, 1.f, norm + mod);
+		return mValue;
 	}
 
 	float Param::getValMod() const noexcept
@@ -343,17 +334,23 @@ namespace param
 			return;
 
 		b = juce::jlimit(BiasEps, 1.f - BiasEps, b);
-		modBias.store(b);
+		mod.bias.store(b);
 	}
 
 	float Param::getModBias() const noexcept
 	{
-		return modBias.load();
+		return mod.bias.load();
 	}
 
-	void Param::setModDepthLocked(bool e) noexcept
+	void Param::setModulationDefault() noexcept
 	{
-		modDepthLocked = e;
+		setModDepth(0.f);
+		setModBias(.5f);
+	}
+
+	void Param::setModDepthAbsolute(bool e) noexcept
+	{
+		modDepthAbsolute = e;
 	}
 
 	void Param::setDefaultValue(float norm) noexcept
@@ -361,10 +358,19 @@ namespace param
 		valDenormDefault = range.convertFrom0to1(norm);
 	}
 
-	// called by processor to update modulation value(s)
-	void Param::modulate(float macro) noexcept
+	void Param::startModulation() noexcept
 	{
-		valMod.store(calcValModOf(macro));
+		valInternal = getValue();
+	}
+
+	void Param::modulate(float modSrc) noexcept
+	{
+		valInternal += calcValModOf(modSrc);
+	}
+
+	void Param::endModulation() noexcept
+	{
+		valMod.store(juce::jlimit(0.f, 1.f, valInternal));
 	}
 
 	float Param::getDefaultValue() const
@@ -434,7 +440,7 @@ namespace param
 		setLocked(!isLocked());
 	}
 
-	float Param::biased(float start, float end, float bias/*[0,1]*/, float x) const noexcept
+	float Param::biased(float start, float end, float bias, float x) const noexcept
 	{
 		const auto r = end - start;
 		if (r == 0.f)
@@ -1221,10 +1227,11 @@ namespace param
 #endif
 	) :
 		params(),
-		modDepthLocked(false)
+		modDepthAbsolute(false)
 	{
 		{ // HIGH LEVEL PARAMS:
-			params.push_back(makeParam(PID::Macro, 0.f));
+			params.push_back(makeParam(PID::Macro, 1.f));
+			params.back()->setLocked(true);
 			
 #if PPDIsNonlinear
 			const auto gainInRange = makeRange::withCentre(PPDGainInMin, PPDGainInMax, 0.f);
@@ -1248,7 +1255,7 @@ namespace param
 			params.push_back(makeParam(PID::StereoConfig, 1.f, makeRange::toggle(), Unit::StereoConfig));
 #endif
 #if PPDHasHQ
-			params.push_back(makeParam(PID::HQ, 0.f, makeRange::toggle(), Unit::Power));
+			params.push_back(makeParam(PID::HQ, 1.f, makeRange::toggle(), Unit::Power));
 #endif
 #if PPDHasLookahead
 			params.push_back(makeParam(PID::Lookahead, 0.f, makeRange::toggle(), Unit::Power));
@@ -1275,10 +1282,10 @@ namespace param
 
 	void Params::loadPatch(State& state)
 	{
-		const String idStr("params");
-		const auto mdl = state.get(idStr + "/moddepthlocked");
-		if (mdl != nullptr)
-			setModDepthLocked(static_cast<int>(*mdl) != 0);
+		const String idStr("params/");
+		const auto mda = state.get(idStr + "mdabs");
+		if (mda != nullptr)
+			setModDepthAbsolute(static_cast<int>(*mda) != 0);
 
 		for (auto param : params)
 			param->loadPatch(state);
@@ -1289,8 +1296,8 @@ namespace param
 		for (auto param : params)
 			param->savePatch(state);
 
-		const String idStr("params");
-		state.set(idStr + "/moddepthlocked", (isModDepthLocked() ? 1 : 0));
+		const String idStr("params/");
+		state.set(idStr + "mdabs", (isModDepthAbsolute() ? 1 : 0));
 	}
 
 	int Params::getParamIdx(const String& nameOrID) const
@@ -1304,7 +1311,20 @@ namespace param
 		return -1;
 	}
 
-	size_t Params::numParams() const noexcept { return params.size(); }
+	size_t Params::numParams() const noexcept
+	{
+		return params.size();
+	}
+
+	void Params::modulate(float modSrc) noexcept
+	{
+		for (auto i = 1; i < NumParams; ++i)
+		{
+			params[i]->startModulation();
+			params[i]->modulate(modSrc);
+			params[i]->endModulation();
+		}
+	}
 
 	Param* Params::operator[](int i) noexcept { return params[i]; }
 	const Param* Params::operator[](int i) const noexcept { return params[i]; }
@@ -1316,30 +1336,30 @@ namespace param
 	Param& Params::operator()(PID p) noexcept { return *params[static_cast<int>(p)]; }
 	const Param& Params::operator()(PID p) const noexcept { return *params[static_cast<int>(p)]; }
 
-	Params::Parameters& Params::data() noexcept { return params; }
-
-	const Params::Parameters& Params::data() const noexcept { return params; }
-
-	bool Params::isModDepthLocked() const noexcept { return modDepthLocked.load(); }
-
-	void Params::setModDepthLocked(bool e) noexcept
+	Params::Parameters& Params::data() noexcept
 	{
-		modDepthLocked.store(e);
+		return params;
+	}
+
+	const Params::Parameters& Params::data() const noexcept
+	{
+		return params;
+	}
+
+	bool Params::isModDepthAbsolute() const noexcept
+	{
+		return modDepthAbsolute.load();
+	}
+
+	void Params::setModDepthAbsolute(bool e) noexcept
+	{
+		modDepthAbsolute.store(e);
 		for (auto& p : params)
-			p->setModDepthLocked(e);
+			p->setModDepthAbsolute(e);
 	}
 
-	void Params::switchModDepthLocked() noexcept
+	void Params::switchModDepthAbsolute() noexcept
 	{
-		setModDepthLocked(!isModDepthLocked());
-	}
-
-	// MACRO PROCESSOR
-
-	void processMacroMod(Params& params) noexcept
-	{
-		const auto macro = params(PID::Macro).getValue();
-		for (auto i = 1; i < NumParams; ++i)
-			params(i).modulate(macro);
+		setModDepthAbsolute(!isModDepthAbsolute());
 	}
 }

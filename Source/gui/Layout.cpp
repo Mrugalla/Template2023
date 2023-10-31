@@ -226,6 +226,16 @@ namespace gui
 		return isQuad ? maxQuadIn(nBounds) : nBounds;
 	}
 
+	BoundsF Layout::cornerTopRight() const noexcept
+	{
+		const auto x = getX(static_cast<int>(rX.size() - 3));
+		const auto y = 0.f;
+		const auto w = rX.back() - x;
+		const auto h = getY(1);
+
+		return { x, y, w, h };
+	}
+
 	float Layout::getX(int i) const noexcept
 	{
 		return rX[i];

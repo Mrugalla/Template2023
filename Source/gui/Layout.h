@@ -56,6 +56,8 @@ namespace gui
 
 		BoundsF right(bool /*isQuad*/ = false) const noexcept;
 
+		BoundsF cornerTopRight() const noexcept;
+
 		float getX(int) const noexcept;
 		float getY(int) const noexcept;
 		float getX(float) const noexcept;

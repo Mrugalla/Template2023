@@ -7,19 +7,20 @@ namespace gui
 	struct Comp :
 		public Component
 	{
+		static constexpr float LockAlpha = .2f;
+
 		/* utils, tooltip */
 		Comp(Utils&, const String & = "");
 
 		~Comp();
+
+		void setLocked(bool);
 
 		void deregisterCallbacks();
 
 		void add(const Callback&);
 
 		void registerCallbacks();
-
-		/* xL, yL */
-		void initLayout(const std::vector<int>&, const std::vector<int>&);
 
 		/* xL, yL */
 		void initLayout(const String&, const String&);
@@ -37,5 +38,7 @@ namespace gui
 		String tooltip;
 		std::vector<evt::Member> members;
 		Callbacks callbacks;
+		std::vector<Var> stuff;
+		std::vector<std::unique_ptr<Comp>> comps;
 	};
 }

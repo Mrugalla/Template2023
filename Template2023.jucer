@@ -6,7 +6,7 @@
               pluginFormats="buildStandalone,buildVST3" pluginCharacteristicsValue="pluginWantsMidiIn"
               pluginName="Template2023" pluginDesc="Plugin Template" pluginManufacturer="Mrugalla"
               pluginManufacturerCode="BBBB" pluginCode="BBBB" pluginVST3Category="Fx"
-              pluginAAXCategory="0" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="20"
+              pluginAAXCategory="0" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
               defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOOut&#10;&#10;PPDHasStereoConfig=false&#10;PPDHasSidechain=false&#10;PPDHasHQ=true&#10;PPDHasLookahead=false&#10;PPDHasTuningEditor=true&#10;&#10;PPDGainInMin=-30.f&#10;PPDGainInMax=30.f&#10;PPDGainDryMin=-12.f&#10;PPDGainDryMax=12.f&#10;PPDGainWetMin=-12.f&#10;PPDGainWetMax=12.f&#10;PPDGainOutMin=-12.f&#10;PPDGainOutMax=12.f&#10;&#10;PPDMaxXen=96"
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'">
   <MAINGROUP id="WYhkvs" name="Template2023">
@@ -119,6 +119,8 @@
         <FILE id="HeCvCp" name="Comp.h" compile="0" resource="0" file="Source/gui/Comp.h"/>
         <FILE id="DxY7bF" name="Events.cpp" compile="1" resource="0" file="Source/gui/Events.cpp"/>
         <FILE id="sGl3Zw" name="Events.h" compile="0" resource="0" file="Source/gui/Events.h"/>
+        <FILE id="g2Upin" name="Knob.cpp" compile="1" resource="0" file="Source/gui/Knob.cpp"/>
+        <FILE id="tWuWsL" name="Knob.h" compile="0" resource="0" file="Source/gui/Knob.h"/>
         <FILE id="rOzncV" name="Label.cpp" compile="1" resource="0" file="Source/gui/Label.cpp"/>
         <FILE id="sajJqr" name="Label.h" compile="0" resource="0" file="Source/gui/Label.h"/>
         <FILE id="mMfZbm" name="Layout.cpp" compile="1" resource="0" file="Source/gui/Layout.cpp"/>

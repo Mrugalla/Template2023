@@ -11,7 +11,7 @@ namespace gui
 		using OnPaint = std::function<void(Graphics&, const Button&)>;
 		using OnClick = std::function<void(const Mouse&)>;
 		using OnWheel = std::function<void(const Mouse&, const MouseWheel&)>;
-		enum class Type { kBool, kInt, kNumTypes };
+		enum class Type { kTrigger, kToggle, kChoice, kNumTypes };
 		enum { kHoverAniCB, kClickAniCB, kUpdateParameterCB, kNumCallbacks };
 
 		/* u */
@@ -57,5 +57,6 @@ namespace gui
 
 	////// PARAMETER ATTACHMENT:
 
-	void makeParameter(Button&, PID);
+	/* button, PID, type, name */
+	void makeParameter(Button&, PID, Button::Type, const String& = "");
 }

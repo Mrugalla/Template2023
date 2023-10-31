@@ -10,10 +10,11 @@ GUI
     SharedPluginState
         drag/wheel sensitivity
     Button
-        write function that attaches it to parameter (filterType)
-            crashes on init usually
-        cancel click on opposite mouse button
-        make OnWheel
+        makeParameter
+            lacks modulation feature
+                macro
+                envfol
+            lacks lock feature
     TextEditor
         button that edits its label
     Editor

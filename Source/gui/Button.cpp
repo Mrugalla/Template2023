@@ -10,7 +10,7 @@ namespace gui
 		onWheel([](const Mouse&, const MouseWheel&) {}),
 		hoverAniPhase(0.f), clickAniPhase(0.f),
 		value(0.f),
-		type(Type::kBool)
+		type(Type::kTrigger)
 	{
 		addAndMakeVisible(label);
 
@@ -101,19 +101,34 @@ namespace gui
 
 	////// LOOK AND FEEL:
 
+	std::function<float(float)> makeValAlphaFunc(Button::Type type, float valAlphaMax)
+	{
+		switch (type)
+		{
+		case Button::Type::kTrigger:
+			return [valAlphaMax](float)
+			{
+				return 0.f;
+			};
+		case Button::Type::kToggle:
+			return [valAlphaMax](float val)
+			{
+				return val >= .5f ? valAlphaMax : 0.f;
+			};
+		default:
+			return [valAlphaMax](float)
+			{
+				return valAlphaMax;
+			};
+		}
+	}
+
 	Button::OnPaint makeButtonOnPaint(Button::Type type) noexcept
 	{
-		const auto valAlphaFunc = type == Button::Type::kBool ?
-		[](float val)
-		{
-			return val > .5f ? .25f : 0.f;
-		} :
-		[](float)
-		{
-			return 0.f;
-		};
-
-		return [valAlphaFunc](Graphics& g, const Button& b)
+		const auto valAlphaMax = .5f;
+		
+		return [valAlphaFunc = makeValAlphaFunc(type, valAlphaMax), alphaGain = valAlphaMax * .5f]
+		(Graphics& g, const Button& b)
 		{
 			const auto& utils = b.utils;
 			const auto thicc = utils.thicc;
@@ -122,7 +137,7 @@ namespace gui
 			const auto hoverAniPhase = b.hoverAniPhase * b.hoverAniPhase;
 			const auto clickAniPhase = b.clickAniPhase * b.clickAniPhase;
 			const auto valueAlpha = valAlphaFunc(b.value);
-			const auto alpha = hoverAniPhase * .25f + clickAniPhase * .5f + valueAlpha;
+			const auto alpha = hoverAniPhase * alphaGain + clickAniPhase * alphaGain + valueAlpha;
 			const auto aniCol = getColour(CID::Interact).withAlpha(alpha);
 			g.setColour(aniCol);
 			g.fillRoundedRectangle(bounds, thicc * .5f);
@@ -145,29 +160,95 @@ namespace gui
 
 	////// PARAMETER ATTACHMENT:
 
-	void makeParameter(Button& button, PID pID)
+	std::function<CID(float)> makeCIDFunc(Button::Type type)
 	{
-		makeTextButton(button, param::toString(pID), param::toTooltip(pID), CID::Interact);
+		switch (type)
+		{
+		case Button::Type::kTrigger:
+			return [](float)
+			{
+				return CID::Interact;
+			};
+		case Button::Type::kToggle:
+			return [](float val)
+				{
+				return val >= .5f ? CID::Bg : CID::Interact;
+			};
+		default:
+			return [](float)
+				{
+				return CID::Bg;
+			};
+		}
+	}
 
+	std::function<String()> makeValToNameFunc(Button& button, PID pID)
+	{
+		switch (button.type)
+		{
+		case Button::Type::kTrigger:
+			return [&btn = button]() { return btn.getName(); };
+		default:
+			return [&btn = button, pID]()
+			{
+				const auto& utils = btn.utils;
+				const auto& prm = utils.getParam(pID);
+
+				return btn.getName() + ": " + prm.getCurrentValueAsText();
+			};
+		}
+	}
+
+	void makeParameter(Button& button, PID pID, Button::Type type, const String& name)
+	{
 		auto& utils = button.utils;
 		auto& param = utils.getParam(pID);
-		const auto type = param.getType();
-		button.type = type == Param::Type::Bool ? Button::Type::kBool : Button::Type::kInt;
+		button.value = param.getValue();
 
-		button.onClick = [&btn = button, pID](const Mouse&)
+		button.type = type;
+		button.setName(name.isEmpty() ? param::toString(pID) : name);
+		const auto valToNameFunc = makeValToNameFunc(button, pID);
+
+		makeTextButton(button, valToNameFunc(), param::toTooltip(pID), CID::Interact);
+		
+		const auto cIDFunc = makeCIDFunc(type);
+		button.label.cID = cIDFunc(button.value);
+
+		const auto valChangeFunc = [&prm = param](int valDenorm)
+		{
+			const auto start = static_cast<int>(prm.range.start);
+			const auto end = static_cast<int>(prm.range.end);
+			if (valDenorm > end)
+				valDenorm = start;
+			else if (valDenorm < start)
+				valDenorm = end;
+			const auto valNorm = prm.range.convertTo0to1(static_cast<float>(valDenorm));
+			prm.setValueWithGesture(valNorm);
+		};
+
+		button.onClick = [&btn = button, pID, valChangeFunc](const Mouse& mouse)
+		{
+			auto& utils = btn.utils;
+			auto& param = utils.getParam(pID);
+			const auto& range = param.range;
+			const auto direc = mouse.mods.isRightButtonDown() ? -1 : 1;
+			const auto interval = static_cast<int>(range.interval) * direc;
+			auto valDenorm = static_cast<int>(param.getValueDenorm()) + interval;
+			valChangeFunc(valDenorm);
+		};
+
+		button.onWheel = [&btn = button, pID, valChangeFunc](const Mouse&, const MouseWheel& wheel)
 		{
 			auto& utils = btn.utils;
 			auto& param = utils.getParam(pID);
 			const auto& range = param.range;
 			const auto interval = static_cast<int>(range.interval);
-			auto valDenorm = static_cast<int>(param.getValueDenorm()) + interval;
-			if (valDenorm > static_cast<int>(range.end))
-				valDenorm = static_cast<int>(range.start);
-			const auto valNorm = range.convertTo0to1(static_cast<float>(valDenorm));
-			param.setValueWithGesture(valNorm);
+			const auto direc = (wheel.deltaY > 0.f ? 1 : -1) * (wheel.isReversed ? -1 : 1);
+			auto valDenorm = static_cast<int>(param.getValueDenorm()) + interval * direc;
+			valChangeFunc(valDenorm);
 		};
 
-		button.add(Callback([&btn = button, pID]()
+		button.add(Callback([&btn = button, pID, cIDFunc, valToNameFunc]()
 		{
 			const auto& utils = btn.utils;
 			const auto& param = utils.getParam(pID);
@@ -177,6 +258,8 @@ namespace gui
 				return;
 
 			btn.value = val;
+			btn.label.cID = cIDFunc(val);
+			btn.label.setText(valToNameFunc());
 			btn.repaint();
 
 		}, Button::kUpdateParameterCB, cbFPS::k15, true));

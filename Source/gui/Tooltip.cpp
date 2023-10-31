@@ -27,11 +27,11 @@ namespace gui
 		for (auto& label : labels)
 			addAndMakeVisible(label);
 
-		addEvt([&tt = labels[kTooltip]](evt::Type type, const void* stuff)
+		addEvt([&tt = labels[kTooltip]](evt::Type type, const void* stf)
 		{
 			if (type == evt::Type::TooltipUpdated)
 			{
-				const auto str = static_cast<const String*>(stuff);
+				const auto str = static_cast<const String*>(stf);
 				tt.setText(str == nullptr ? "" : *str);
 				tt.setMaxHeight();
 				tt.repaint();

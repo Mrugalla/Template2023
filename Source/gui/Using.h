@@ -57,6 +57,7 @@ namespace gui
     using ImageFileFormat = juce::ImageFileFormat;
     using PNGImageFormat = juce::PNGImageFormat;
     using FileOutputStream = juce::FileOutputStream;
+    using Var = juce::var;
 
     using Processor = audio::Processor;
 
