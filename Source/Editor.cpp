@@ -34,8 +34,8 @@ namespace gui
     {
         layout.init
         (
-            { 1, 3, 5, 5, 21, 2 },
-            { 1, 2, 5, 2, 21, 2, 1 }
+            { 1, 5, 8, 1 },
+            { 1, 5, 8, 2, 1 }
         );
 
         addAndMakeVisible(bgImage);
@@ -51,9 +51,9 @@ namespace gui
         addAndMakeVisible(filterTypeButton);
 
         addAndMakeVisible(macroKnob);
-        makeParameter(macroKnob, PID::Macro, "Macro");
+        macroKnob.attachParameter("Macro", PID::Macro);
         addAndMakeVisible(slewKnob);
-        makeParameter(slewKnob, PID::Slew, "Slew");
+        slewKnob.attachParameter("Slew", PID::Slew);
 
         const auto& user = *audioProcessor.state.props.getUserSettings();
         const auto editorWidth = user.getDoubleValue("EditorWidth", EditorWidth);
@@ -91,11 +91,11 @@ namespace gui
         layout.place(labels[kTitle], 2, 1, 1, 1);
         setMaxCommonHeight(labels.data(), kNumLabels);
 
-        layout.place(filterTypeButton, 1, 2, 1, 1, false);
+        layout.place(filterTypeButton, 2, 3, 1, 1, true);
         filterTypeButton.label.setMaxHeight();
 
-        layout.place(macroKnob, 2, 2, 1, 1, true);
-        layout.place(slewKnob, 3, 2, 1, 1, true);
+        layout.place(macroKnob, 1, 2, 1, 1, true);
+        layout.place(slewKnob, 2, 2, 1, 1, true);
 
         auto& user = *audioProcessor.state.props.getUserSettings();
 		const auto editorWidth = static_cast<double>(getWidth());

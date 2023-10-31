@@ -7,7 +7,7 @@ namespace gui
 	struct Comp :
 		public Component
 	{
-		static constexpr float LockAlpha = .2f;
+		static constexpr float LockAlpha = .5f;
 
 		/* utils, tooltip */
 		Comp(Utils&, const String & = "");
@@ -38,7 +38,7 @@ namespace gui
 		String tooltip;
 		std::vector<evt::Member> members;
 		Callbacks callbacks;
-		std::vector<Var> stuff;
-		std::vector<std::unique_ptr<Comp>> comps;
+		//std::vector<Var> stuff;
+		//std::vector<std::unique_ptr<Comp>> comps;
 	};
 }

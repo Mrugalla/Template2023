@@ -440,7 +440,7 @@ namespace param
 		setLocked(!isLocked());
 	}
 
-	float Param::biased(float start, float end, float bias, float x) const noexcept
+	float Param::biased(float start, float end, float bias, float x) noexcept
 	{
 		const auto r = end - start;
 		if (r == 0.f)
@@ -450,7 +450,6 @@ namespace param
 		const auto aR = r * bias;
 		return start + aR * x / (aM - x + a2 * x);
 	}
-
 }
 
 namespace param::strToVal
@@ -1231,7 +1230,6 @@ namespace param
 	{
 		{ // HIGH LEVEL PARAMS:
 			params.push_back(makeParam(PID::Macro, 1.f));
-			params.back()->setLocked(true);
 			
 #if PPDIsNonlinear
 			const auto gainInRange = makeRange::withCentre(PPDGainInMin, PPDGainInMax, 0.f);

@@ -29,7 +29,7 @@ namespace gui
         std::array<Label, kNumLabels> labels;
 
         Button filterTypeButton;
-        Knob macroKnob, slewKnob;
+        KnobParam macroKnob, slewKnob;
 
         //JUCE_HEAVYWEIGHT_LEAK_DETECTOR(Editor)
     };

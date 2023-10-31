@@ -209,7 +209,7 @@ namespace param
 		void setModDepthAbsolute(bool) noexcept;
 
 		/* start, end, bias[0,1], x */
-		float biased(float, float, float, float) const noexcept;
+		static float biased(float, float, float, float) noexcept;
 
 		const PID id;
 		const Range range;

@@ -7,9 +7,9 @@ namespace gui
 		layout(),
 		tooltip(_tooltip),
 		members(),
-		callbacks(),
-		stuff(),
-		comps()
+		callbacks()//,
+		//stuff(),
+		//comps()
 	{
 	}
 
