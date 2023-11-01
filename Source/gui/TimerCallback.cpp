@@ -46,7 +46,7 @@ namespace gui
 		{
 			const auto& cbs = callbacks[i];
 			const auto fps = static_cast<kFPS>(i);
-			const auto fpsOrder = 1 << static_cast<int>(fps);
+			const auto fpsOrder = 1 << static_cast<int>(fps); // 2^0 = 1, 2^1 = 2, 2^2 = 4, 2^3 = 8, 2^4 = 16
 
 			if (idx % fpsOrder == 0)
 				for (auto cb : cbs)

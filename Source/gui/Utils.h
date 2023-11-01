@@ -12,15 +12,8 @@ namespace gui
 		/* pluginTop, processor */
 		Utils(Component&, Processor&);
 
-		void add(Callback* cb)
-		{
-			callbacks.add(cb);
-		}
-
-		void remove(Callback* cb)
-		{
-			callbacks.remove(cb);
-		}
+		void add(Callback*);
+		void remove(Callback*);
 
 		std::vector<Param*>& getAllParams() noexcept;
 		const std::vector<Param*>& getAllParams() const noexcept;
@@ -38,7 +31,6 @@ namespace gui
 		void resized();
 
 		ValueTree savePatch();
-
 		void loadPatch(const ValueTree&);
 
 		Props& getProps() noexcept;

@@ -13,6 +13,16 @@ namespace gui
 		Colours::c.init(audioProcessor.state.props.getUserSettings());
 	}
 
+	void Utils::add(Callback* cb)
+	{
+		callbacks.add(cb);
+	}
+
+	void Utils::remove(Callback* cb)
+	{
+		callbacks.remove(cb);
+	}
+
 	std::vector<Param*>& Utils::getAllParams() noexcept
 	{
 		return params.data();

@@ -30,7 +30,11 @@ namespace gui
             Label(utils)
         },
         filterTypeButton(utils),
-        macroKnob(utils), slewKnob(utils)
+        
+        macroOnPaint(makeOnPaintBasic(true)),
+        knobOnPaint(makeOnPaintBasic(false)),
+        macroKnob(utils, macroOnPaint),
+        slewKnob(utils, knobOnPaint)
     {
         layout.init
         (

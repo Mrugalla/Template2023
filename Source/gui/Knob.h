@@ -229,11 +229,11 @@ namespace gui
         enum ValTypes { Value, ValMod, ModDepth, ModBias, NumValTypes };
         using OnPaint = std::function<void(const KnobParam&, Graphics&)>;
 
-        KnobParam(Utils& u) :
+        KnobParam(Utils& u, OnPaint& _onPaint) :
             Knob(u),
+            onPaint(_onPaint),
             values{ 0.f, 0.f, 0.f, 0.f },
             prms(),
-            onPaint([](const KnobParam&, Graphics&) {}),
             modDial(u),
             lockButton(u),
             label(u),
@@ -405,102 +405,6 @@ namespace gui
                 { 1, 1, 1 },
                 { 13, 5, 5 }
             );
-
-            const auto angleWidth = PiQuart * 3.f;
-            const auto angleRange = angleWidth * 2.f;
-
-            onPaint = [isMacro, angleWidth, angleRange](const KnobParam& k, Graphics& g)
-            {
-                const auto& vals = k.values;
-                const auto thicc = k.utils.thicc;
-                const auto thicc2 = thicc * 2.f;
-                const auto thicc3 = thicc * 3.f;
-                const auto thicc5 = thicc * 5.f;
-                Stroke strokeType(thicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::butt);
-                const auto radius = k.knobBounds.getWidth() * .5f;
-                const auto radiusInner = radius * .8f;
-                const auto radDif = (radius - radiusInner) * .8f;
-
-                PointF centre
-                (
-                    radius + k.knobBounds.getX(),
-                    radius + k.knobBounds.getY()
-                );
-
-                auto col = getColour(CID::Txt);
-
-                { // paint lines
-
-                    Path arcOutline;
-                    arcOutline.addCentredArc
-                    (
-                        centre.x, centre.y,
-                        radius, radius,
-                        0.f,
-                        -angleWidth, angleWidth,
-                        true
-                    );
-                    g.setColour(col);
-                    g.strokePath(arcOutline, strokeType);
-
-                    Path arcInline;
-                    arcInline.addCentredArc
-                    (
-                        centre.x, centre.y,
-                        radiusInner, radiusInner,
-                        0.f,
-                        -angleWidth, angleWidth,
-                        true
-                    );
-                    Stroke stroke2 = strokeType;
-                    stroke2.setStrokeThickness(radDif);
-                    g.strokePath(arcInline, stroke2);
-                };
-
-                const auto valNormAngle = vals[Value] * angleRange;
-                const auto valAngle = -angleWidth + valNormAngle;
-                const auto radiusExt = radius + thicc;
-
-                // paint modulation
-                if (!isMacro)
-                {
-                    const auto valModAngle = vals[ValMod] * angleRange;
-                    const auto modAngle = -angleWidth + valModAngle;
-                    const auto modTick = LineF::fromStartAndAngle(centre, radiusExt, modAngle);
-                    const auto shortenedModTick = modTick.withShortenedStart(radiusInner - thicc);
-
-                    g.setColour(Colours::c(CID::Bg));
-                    g.drawLine(shortenedModTick, thicc * 4.f);
-
-                    const auto maxModDepthAngle = juce::jlimit(-angleWidth, angleWidth, valNormAngle + vals[ModDepth] * angleRange - angleWidth);
-                    
-                    g.setColour(Colours::c(CID::Mod));
-                    g.drawLine(modTick.withShortenedStart(radiusInner), thicc2);
-                    {
-                        Path modPath;
-                        modPath.addCentredArc
-                        (
-                            centre.x, centre.y,
-                            radius, radius,
-                            0.f,
-                            maxModDepthAngle, valAngle,
-                            true
-                        );
-                        g.strokePath(modPath, strokeType);
-                    }
-                };
-
-                col = Colours::c(CID::Interact);
-
-                { // paint tick
-                    const auto tickLine = LineF::fromStartAndAngle(centre, radius, valAngle);
-                    const auto shortened = tickLine.withShortenedStart(radiusInner - thicc);
-                    g.setColour(Colours::c(CID::Bg));
-                    g.drawLine(shortened, thicc5);
-                    g.setColour(col);
-                    g.drawLine(shortened, thicc3);
-                }
-            };
         }
 
         void attachParameter(const String& name, PID pID)
@@ -513,12 +417,111 @@ namespace gui
             onPaint(*this, g);
         }
 
+        const OnPaint& onPaint;
         std::array<float, NumValTypes> values;
         std::vector<Param*> prms;
-        OnPaint onPaint;
         ModDial modDial;
         Button lockButton;
         Label label;
         BoundsF knobBounds;
     };
+
+    inline KnobParam::OnPaint makeOnPaintBasic(bool isMacro)
+    {
+        const auto angleWidth = PiQuart * 3.f;
+        const auto angleRange = angleWidth * 2.f;
+
+        return [isMacro, angleWidth, angleRange](const KnobParam& k, Graphics& g)
+        {
+            const auto& vals = k.values;
+            const auto thicc = k.utils.thicc;
+            const auto thicc2 = thicc * 2.f;
+            const auto thicc3 = thicc * 3.f;
+            const auto thicc5 = thicc * 5.f;
+            Stroke strokeType(thicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::butt);
+            const auto radius = k.knobBounds.getWidth() * .5f;
+            const auto radiusInner = radius * .8f;
+            const auto radDif = (radius - radiusInner) * .8f;
+
+            PointF centre
+            (
+                radius + k.knobBounds.getX(),
+                radius + k.knobBounds.getY()
+            );
+
+            auto col = getColour(CID::Txt);
+
+            { // paint lines
+
+                Path arcOutline;
+                arcOutline.addCentredArc
+                (
+                    centre.x, centre.y,
+                    radius, radius,
+                    0.f,
+                    -angleWidth, angleWidth,
+                    true
+                );
+                g.setColour(col);
+                g.strokePath(arcOutline, strokeType);
+
+                Path arcInline;
+                arcInline.addCentredArc
+                (
+                    centre.x, centre.y,
+                    radiusInner, radiusInner,
+                    0.f,
+                    -angleWidth, angleWidth,
+                    true
+                );
+                Stroke stroke2 = strokeType;
+                stroke2.setStrokeThickness(radDif);
+                g.strokePath(arcInline, stroke2);
+            };
+
+            const auto valNormAngle = vals[KnobParam::Value] * angleRange;
+            const auto valAngle = -angleWidth + valNormAngle;
+            const auto radiusExt = radius + thicc;
+
+            // paint modulation
+            if (!isMacro)
+            {
+                const auto valModAngle = vals[KnobParam::ValMod] * angleRange;
+                const auto modAngle = -angleWidth + valModAngle;
+                const auto modTick = LineF::fromStartAndAngle(centre, radiusExt, modAngle);
+                const auto shortenedModTick = modTick.withShortenedStart(radiusInner - thicc);
+
+                g.setColour(Colours::c(CID::Bg));
+                g.drawLine(shortenedModTick, thicc * 4.f);
+
+                const auto maxModDepthAngle = juce::jlimit(-angleWidth, angleWidth, valNormAngle + vals[KnobParam::ModDepth] * angleRange - angleWidth);
+
+                g.setColour(Colours::c(CID::Mod));
+                g.drawLine(modTick.withShortenedStart(radiusInner), thicc2);
+                {
+                    Path modPath;
+                    modPath.addCentredArc
+                    (
+                        centre.x, centre.y,
+                        radius, radius,
+                        0.f,
+                        maxModDepthAngle, valAngle,
+                        true
+                    );
+                    g.strokePath(modPath, strokeType);
+                }
+            };
+
+            col = Colours::c(CID::Interact);
+
+            { // paint tick
+                const auto tickLine = LineF::fromStartAndAngle(centre, radius, valAngle);
+                const auto shortened = tickLine.withShortenedStart(radiusInner - thicc);
+                g.setColour(Colours::c(CID::Bg));
+                g.drawLine(shortened, thicc5);
+                g.setColour(col);
+                g.drawLine(shortened, thicc3);
+            }
+        };
+    }
 }
