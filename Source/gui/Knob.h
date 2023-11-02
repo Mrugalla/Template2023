@@ -23,7 +23,7 @@ namespace gui
             dragXY(), lastPos(),
             hidesCursor(true)
 		{
-            const auto fps = cbFPS::k30;
+            const auto fps = cbFPS::k60;
             const auto speed = msToInc(AniLengthMs, fps);
 
             add(Callback([&, speed]()
@@ -475,7 +475,7 @@ namespace gui
                 thicc4 = thicc * 4.f;
                 thicc5 = thicc * 5.f;
 
-                knobBounds = k.layout(0, 0, 3, 2, true).reduced(thicc);
+                knobBounds = k.layout(0, 0, 3, 2, true).reduced(thicc3);
 
                 k.layout.place(k.label, 0, 2, 3, 1, false);
                 k.label.setMaxHeight();
@@ -496,10 +496,10 @@ namespace gui
                 const auto enterExitPhase = k.callbacks[KnobParam::kEnterExitCB].phase;
                 const auto downUpPhase = k.callbacks[KnobParam::kDownUpCB].phase;
 
-                Stroke strokeType(thicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::butt);
                 const auto radius = knobBounds.getWidth() * .5f;
                 const auto radiusInner = radius * (.7f + enterExitPhase * .1f);
                 const auto radDif = (radius - radiusInner) * (.7f + downUpPhase * .3f);
+                Stroke strokeType(radDif * .5f, Stroke::JointStyle::curved, Stroke::EndCapStyle::butt);
 
                 PointF centre
                 (
