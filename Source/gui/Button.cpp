@@ -8,7 +8,6 @@ namespace gui
 		onPaint([](Graphics&, const Button&) {}),
 		onClick([](const Mouse&) {}),
 		onWheel([](const Mouse&, const MouseWheel&) {}),
-		hoverAniPhase(0.f), clickAniPhase(0.f),
 		value(0.f),
 		type(Type::kTrigger)
 	{
@@ -17,10 +16,11 @@ namespace gui
 		const auto fps = cbFPS::k30;
 		add(Callback([&, fps]()
 		{
-			hoverAniPhase -= msToInc(AniLengthMs, fps);
-			if (hoverAniPhase <= 0.f)
+			auto& phase = callbacks[kHoverAniCB].phase;
+			phase -= msToInc(AniLengthMs, fps);
+			if (phase <= 0.f)
 			{
-				hoverAniPhase = 0.f;
+				phase = 0.f;
 				callbacks[kHoverAniCB].active = false;
 			}
 			repaint();
@@ -28,10 +28,11 @@ namespace gui
 
 		add(Callback([&, fps]()
 		{
-			clickAniPhase -= msToInc(AniLengthMs, fps);
-			if (clickAniPhase <= 0.f)
+			auto& phase = callbacks[kClickAniCB].phase;
+			phase -= msToInc(AniLengthMs, fps);
+			if (phase <= 0.f)
 			{
-				clickAniPhase = 0.f;
+				phase = 0.f;
 				callbacks[kClickAniCB].active = false;
 			}
 			repaint();
@@ -63,7 +64,7 @@ namespace gui
 	void Button::mouseEnter(const Mouse& mouse)
 	{
 		Comp::mouseEnter(mouse);
-		hoverAniPhase = 1.f;
+		callbacks[kHoverAniCB].phase = 1.f;
 		callbacks[kHoverAniCB].active = false;
 		repaint();
 	}
@@ -87,7 +88,7 @@ namespace gui
 		if (mouse.mouseWasDraggedSinceMouseDown())
 			return;
 
-		clickAniPhase = 1.f;
+		callbacks[kClickAniCB].phase = 1.f;
 		callbacks[kClickAniCB].active = true;
 
 		onClick(mouse);
@@ -134,8 +135,11 @@ namespace gui
 			const auto thicc = utils.thicc;
 			const auto bounds = b.getLocalBounds().toFloat().reduced(thicc);
 
-			const auto hoverAniPhase = b.hoverAniPhase * b.hoverAniPhase;
-			const auto clickAniPhase = b.clickAniPhase * b.clickAniPhase;
+			auto hoverAniPhase = b.callbacks[Button::kHoverAniCB].phase;
+			auto clickAniPhase = b.callbacks[Button::kClickAniCB].phase;
+			hoverAniPhase = hoverAniPhase * hoverAniPhase;
+			clickAniPhase = clickAniPhase * clickAniPhase;
+
 			const auto valueAlpha = valAlphaFunc(b.value);
 			const auto alpha = hoverAniPhase * alphaGain + clickAniPhase * alphaGain + valueAlpha;
 			const auto aniCol = getColour(CID::Interact).withAlpha(alpha);

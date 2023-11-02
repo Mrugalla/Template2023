@@ -38,7 +38,5 @@ namespace gui
 		String tooltip;
 		std::vector<evt::Member> members;
 		Callbacks callbacks;
-		//std::vector<Var> stuff;
-		//std::vector<std::unique_ptr<Comp>> comps;
 	};
 }

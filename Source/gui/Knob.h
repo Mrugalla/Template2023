@@ -12,27 +12,15 @@ namespace gui
 		using Func = std::function<void()>;
 		using OnDrag = std::function<void(const PointF&, const Mouse&)>;
 		using OnMouse = std::function<void(const Mouse&)>;
-		using OnPaint = std::function<void(Graphics&)>;
 
-		Knob(Utils& u) :
+        Knob(Utils& u) :
             Comp(u),
-            onEnter([]() {}), onExit([]() {}), onDown([]() {}),
-            onResize([]() {}), onDoubleClick([]() {}),
+            onEnter([]() {}), onExit([]() {}), onDown([]() {}), onDoubleClick([]() {}),
             onDrag([](const PointF&, const Mouse&) {}),
             onUp([](const Mouse&) {}), onWheel([](const Mouse&) {}),
-            //label(u),
             dragXY(), lastPos(),
-            //knobBounds(),
-            //values(),
             hidesCursor(true)
 		{
-            //addAndMakeVisible(label);
-        }
-
-        void resized() override
-        {
-            layout.resized(getLocalBounds());
-            onResize();
         }
 
         void mouseEnter(const Mouse& mouse) override
@@ -122,12 +110,10 @@ namespace gui
             onDoubleClick();
         }
 
-        Func onEnter, onExit, onDown, onResize, onDoubleClick;
+        Func onEnter, onExit, onDown, onDoubleClick;
         OnDrag onDrag;
         OnMouse onUp, onWheel;
-        //Label label;
         PointF dragXY, lastPos;
-        //std::vector<float> values;
         bool hidesCursor;
 	};
 
@@ -142,12 +128,6 @@ namespace gui
             biasBounds(),
             path()
         {
-            onResize = [&]()
-            {
-                auto thicc = utils.thicc * Tau;
-                biasBounds = getLocalBounds().toFloat().reduced(thicc);
-            };
-
             onDrag = [&](const PointF& dragOffset, const Mouse& mouse)
             {
                 const auto speed = 1.f / utils.getDragSpeed();
@@ -184,6 +164,13 @@ namespace gui
             prms.reserve(numPIDs);
             for (auto i = 0; i < numPIDs; ++i)
                 prms.emplace_back(&utils.getParam(pIDs[i]));
+        }
+
+        void resized() override
+        {
+            layout.resized(getLocalBounds());
+            auto thicc = utils.thicc * Tau;
+            biasBounds = getLocalBounds().toFloat().reduced(thicc);
         }
 
         void paint(Graphics& g) override
@@ -227,17 +214,33 @@ namespace gui
     {
         enum CBTypes { kUpdateParameterCB };
         enum ValTypes { Value, ValMod, ModDepth, ModBias, NumValTypes };
-        using OnPaint = std::function<void(const KnobParam&, Graphics&)>;
 
-        KnobParam(Utils& u, OnPaint& _onPaint) :
+        using OnLayout = std::function<void(Layout&)>;
+        using OnResize = std::function<void(KnobParam&)>;
+        using OnPaint = std::function<void(KnobParam&, Graphics&)>;
+
+        struct Painter
+        {
+            Painter() :
+                onLayout([](Layout&) {}),
+                onResize([](KnobParam&) {}),
+                onPaint([](KnobParam&, Graphics&) {})
+            {
+            }
+
+            OnLayout onLayout;
+            OnResize onResize;
+            OnPaint onPaint;
+        };
+
+        KnobParam(Utils& u) :
             Knob(u),
-            onPaint(_onPaint),
+            painter(nullptr),
             values{ 0.f, 0.f, 0.f, 0.f },
             prms(),
             modDial(u),
             lockButton(u),
-            label(u),
-            knobBounds()
+            label(u)
         {
 		    addAndMakeVisible(label);
             label.cID = CID::Txt;
@@ -252,7 +255,7 @@ namespace gui
 			};
         }
 
-        void attachParameters(const String& name, PID* pIDs, int numPIDs)
+        void attachParameters(const String& name, PID* pIDs, int numPIDs, Painter* p)
         {
             prms.clear();
             prms.reserve(numPIDs);
@@ -262,15 +265,15 @@ namespace gui
             setTooltip(toTooltip(pIDs[0]));
             setName(name);
 
-            makeTextLabel(label, name, font::dosisBold(), Just::centred, CID::Txt, "arr");
+            makeTextLabel(label, name, font::dosisBold(), Just::centred, CID::Txt, tooltip);
             auto& mainParam = utils.getParam(pIDs[0]);
 
             const auto drawValToLabelFunc = [&, &prm = mainParam]()
-                {
-                    label.setText(prm.getCurrentValueAsText());
-                    label.setMaxHeight();
-                    label.repaint();
-                };
+            {
+                label.setText(prm.getCurrentValueAsText());
+                label.setMaxHeight();
+                label.repaint();
+            };
 
             onEnter = [drawValToLabelFunc]()
             {
@@ -387,141 +390,220 @@ namespace gui
                     repaint();
             }, kUpdateParameterCB, cbFPS::k60, true));
 
-            onResize = [&]()
-            {
-                const auto thicc = utils.thicc;
-
-                knobBounds = layout(0, 0, 3, 2, true).reduced(thicc);
-                layout.place(label, 0, 2, 3, 1, false);
-                label.setMaxHeight();
-
-                if (modDial.isVisible())
-                    layout.place(modDial, 1, 1, 1, 1, true);
-                layout.place(lockButton, 1.5f, 1.5f, 1.5f, 1.5f, true);
-            };
-
-            layout.init
-            (
-                { 1, 1, 1 },
-                { 13, 5, 5 }
-            );
+            painter = p;
+            painter->onLayout(layout);
         }
 
-        void attachParameter(const String& name, PID pID)
+        void attachParameter(const String& name, PID pID, Painter* p)
 		{
-			attachParameters(name, &pID, 1);
+			attachParameters(name, &pID, 1, p);
 		}
+
+        void resized() override
+        {
+            layout.resized(getLocalBounds());
+            painter->onResize(*this);
+        }
 
         void paint(Graphics& g) override
         {
-            onPaint(*this, g);
+            painter->onPaint(*this, g);
         }
 
-        const OnPaint& onPaint;
+        Painter* painter;
         std::array<float, NumValTypes> values;
         std::vector<Param*> prms;
         ModDial modDial;
         Button lockButton;
         Label label;
-        BoundsF knobBounds;
     };
 
-    inline KnobParam::OnPaint makeOnPaintBasic(bool isMacro)
+    struct KnobPainterBasic :
+        public KnobParam::Painter
     {
-        const auto angleWidth = PiQuart * 3.f;
-        const auto angleRange = angleWidth * 2.f;
-
-        return [isMacro, angleWidth, angleRange](const KnobParam& k, Graphics& g)
+        KnobPainterBasic(bool isMacro) :
+            knobBounds()
         {
-            const auto& vals = k.values;
-            const auto thicc = k.utils.thicc;
-            const auto thicc2 = thicc * 2.f;
-            const auto thicc3 = thicc * 3.f;
-            const auto thicc5 = thicc * 5.f;
-            Stroke strokeType(thicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::butt);
-            const auto radius = k.knobBounds.getWidth() * .5f;
-            const auto radiusInner = radius * .8f;
-            const auto radDif = (radius - radiusInner) * .8f;
-
-            PointF centre
-            (
-                radius + k.knobBounds.getX(),
-                radius + k.knobBounds.getY()
-            );
-
-            auto col = getColour(CID::Txt);
-
-            { // paint lines
-
-                Path arcOutline;
-                arcOutline.addCentredArc
+            onLayout = [](Layout& layout)
+            {
+                layout.init
                 (
-                    centre.x, centre.y,
-                    radius, radius,
-                    0.f,
-                    -angleWidth, angleWidth,
-                    true
+                    { 1, 1, 1 },
+                    { 13, 5, 5 }
                 );
-                g.setColour(col);
-                g.strokePath(arcOutline, strokeType);
-
-                Path arcInline;
-                arcInline.addCentredArc
-                (
-                    centre.x, centre.y,
-                    radiusInner, radiusInner,
-                    0.f,
-                    -angleWidth, angleWidth,
-                    true
-                );
-                Stroke stroke2 = strokeType;
-                stroke2.setStrokeThickness(radDif);
-                g.strokePath(arcInline, stroke2);
             };
 
-            const auto valNormAngle = vals[KnobParam::Value] * angleRange;
-            const auto valAngle = -angleWidth + valNormAngle;
-            const auto radiusExt = radius + thicc;
-
-            // paint modulation
-            if (!isMacro)
+            onResize = [&](KnobParam& k)
             {
-                const auto valModAngle = vals[KnobParam::ValMod] * angleRange;
-                const auto modAngle = -angleWidth + valModAngle;
-                const auto modTick = LineF::fromStartAndAngle(centre, radiusExt, modAngle);
-                const auto shortenedModTick = modTick.withShortenedStart(radiusInner - thicc);
+                const auto thicc = k.utils.thicc;
+                thicc2 = thicc * 2.f;
+                thicc3 = thicc * 3.f;
+                thicc4 = thicc * 4.f;
+                thicc5 = thicc * 5.f;
 
-                g.setColour(Colours::c(CID::Bg));
-                g.drawLine(shortenedModTick, thicc * 4.f);
+                knobBounds = k.layout(0, 0, 3, 2, true).reduced(thicc);
 
-                const auto maxModDepthAngle = juce::jlimit(-angleWidth, angleWidth, valNormAngle + vals[KnobParam::ModDepth] * angleRange - angleWidth);
+                k.layout.place(k.label, 0, 2, 3, 1, false);
+                k.label.setMaxHeight();
 
-                g.setColour(Colours::c(CID::Mod));
-                g.drawLine(modTick.withShortenedStart(radiusInner), thicc2);
-                {
-                    Path modPath;
-                    modPath.addCentredArc
+                if (k.modDial.isVisible())
+                    k.layout.place(k.modDial, 1, 1, 1, 1, true);
+                k.layout.place(k.lockButton, 1.5f, 1.5f, 1.5f, 1.5f, true);
+			};
+
+            const auto angleWidth = PiQuart * 3.f;
+            const auto angleRange = angleWidth * 2.f;
+
+            onPaint = [&, angleWidth, angleRange, isMacro](KnobParam& k, Graphics& g)
+            {
+                const auto& vals = k.values;
+                const auto thicc = k.utils.thicc;
+                
+                Stroke strokeType(thicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::butt);
+                const auto radius = knobBounds.getWidth() * .5f;
+                const auto radiusInner = radius * .8f;
+                const auto radDif = (radius - radiusInner) * .8f;
+
+                PointF centre
+                (
+                    radius + knobBounds.getX(),
+                    radius + knobBounds.getY()
+                );
+
+                auto col = getColour(CID::Txt);
+
+                { // paint lines
+
+                    Path arcOutline;
+                    arcOutline.addCentredArc
                     (
                         centre.x, centre.y,
                         radius, radius,
                         0.f,
-                        maxModDepthAngle, valAngle,
+                        -angleWidth, angleWidth,
                         true
                     );
-                    g.strokePath(modPath, strokeType);
+                    g.setColour(col);
+                    g.strokePath(arcOutline, strokeType);
+
+                    Path arcInline;
+                    arcInline.addCentredArc
+                    (
+                        centre.x, centre.y,
+                        radiusInner, radiusInner,
+                        0.f,
+                        -angleWidth, angleWidth,
+                        true
+                    );
+                    Stroke stroke2 = strokeType;
+                    stroke2.setStrokeThickness(radDif);
+                    g.strokePath(arcInline, stroke2);
+                };
+
+                const auto valNormAngle = vals[KnobParam::Value] * angleRange;
+                const auto valAngle = -angleWidth + valNormAngle;
+                const auto radiusExt = radius + thicc;
+
+                // paint modulation
+                if (!isMacro)
+                {
+                    const auto valModAngle = vals[KnobParam::ValMod] * angleRange;
+                    const auto modAngle = -angleWidth + valModAngle;
+                    const auto modTick = LineF::fromStartAndAngle(centre, radiusExt, modAngle);
+                    const auto shortenedModTick = modTick.withShortenedStart(radiusInner - thicc);
+
+                    g.setColour(Colours::c(CID::Bg));
+                    g.drawLine(shortenedModTick, thicc4);
+
+                    const auto maxModDepthAngle = juce::jlimit(-angleWidth, angleWidth, valNormAngle + vals[KnobParam::ModDepth] * angleRange - angleWidth);
+
+                    g.setColour(Colours::c(CID::Mod));
+                    g.drawLine(modTick.withShortenedStart(radiusInner), thicc2);
+                    {
+                        Path modPath;
+                        modPath.addCentredArc
+                        (
+                            centre.x, centre.y,
+                            radius, radius,
+                            0.f,
+                            maxModDepthAngle, valAngle,
+                            true
+                        );
+                        g.strokePath(modPath, strokeType);
+                    }
+                };
+
+                col = Colours::c(CID::Interact);
+
+                { // paint tick
+                    const auto tickLine = LineF::fromStartAndAngle(centre, radius, valAngle);
+                    const auto shortened = tickLine.withShortenedStart(radiusInner - thicc);
+                    g.setColour(Colours::c(CID::Bg));
+                    g.drawLine(shortened, thicc5);
+                    g.setColour(col);
+                    g.drawLine(shortened, thicc3);
                 }
             };
+        }
 
-            col = Colours::c(CID::Interact);
+    protected:
+        BoundsF knobBounds;
+        float thicc2, thicc3, thicc4, thicc5;
+    };
 
-            { // paint tick
-                const auto tickLine = LineF::fromStartAndAngle(centre, radius, valAngle);
-                const auto shortened = tickLine.withShortenedStart(radiusInner - thicc);
-                g.setColour(Colours::c(CID::Bg));
-                g.drawLine(shortened, thicc5);
-                g.setColour(col);
-                g.drawLine(shortened, thicc3);
-            }
-        };
-    }
+    struct KnobPainterIdk :
+        KnobParam::Painter
+    {
+        KnobPainterIdk()
+        {
+            onLayout = [](Layout& layout)
+            {
+                layout.init
+                (
+                    { 1, 1, 1 },
+                    { 13, 5, 5 }
+                );
+            };
+
+            onResize = [&](KnobParam& k)
+            {
+                const auto thicc = k.utils.thicc;
+                knobBounds = k.layout(0, 0, 3, 1, true).reduced(thicc);
+
+                k.layout.place(k.label, 0, 2, 3, 1, false);
+                k.label.setMaxHeight();
+
+                if (k.modDial.isVisible())
+                    k.layout.place(k.modDial, 1, 1, 1, 1, true);
+                k.layout.place(k.lockButton, 1.5f, 1.5f, 1.5f, 1.5f, true);
+            };
+
+            onPaint = [&](KnobParam& k, Graphics& g)
+            {
+                const auto thicc = k.utils.thicc;
+
+                g.setColour(getColour(CID::Interact));
+
+                const auto& vals = k.values;
+                const auto val = vals[KnobParam::ValTypes::Value];
+
+                auto& range = k.prms[0]->range;
+                auto interval = range.interval;
+                float numCircles = 1.f + 15.f * val;
+                if (interval != 0.f)
+                {
+                    numCircles = k.prms[0]->getValueDenorm();
+                }
+                for (auto i = 0.f; i < numCircles; ++i)
+                {
+                    auto ratio = i / numCircles;
+                    auto delta = thicc + knobBounds.getWidth() * ratio * val;
+
+                    g.drawEllipse(knobBounds.reduced(delta), thicc + (thicc * val));
+                }
+            };
+        }
+
+        BoundsF knobBounds;
+    };
 }

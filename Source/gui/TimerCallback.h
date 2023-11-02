@@ -23,6 +23,7 @@ namespace gui
 			CB(std::function<void()>, int, kFPS, bool);
 
 			std::function<void()> cb;
+			float phase;
 			int id;
 			kFPS fps;
 			bool active;

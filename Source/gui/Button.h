@@ -39,7 +39,6 @@ namespace gui
 		OnPaint onPaint;
 		OnClick onClick;
 		OnWheel onWheel;
-		float hoverAniPhase, clickAniPhase;
 		float value;
 		Type type;
 	};

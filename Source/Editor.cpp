@@ -30,15 +30,20 @@ namespace gui
             Label(utils)
         },
         filterTypeButton(utils),
-        
-        macroOnPaint(makeOnPaintBasic(true)),
-        knobOnPaint(makeOnPaintBasic(false)),
-        macroKnob(utils, macroOnPaint),
-        slewKnob(utils, knobOnPaint)
+
+        painterMacro(true),
+        painterSlew(false),
+        painterGainOut(),
+        painterPB(),
+
+        macroKnob(utils),
+        slewKnob(utils),
+        gainOutKnob(utils),
+        pbKnob(utils)
     {
         layout.init
         (
-            { 1, 5, 8, 1 },
+            { 1, 5, 5, 5, 5, 1 },
             { 1, 5, 8, 2, 1 }
         );
 
@@ -55,9 +60,13 @@ namespace gui
         addAndMakeVisible(filterTypeButton);
 
         addAndMakeVisible(macroKnob);
-        macroKnob.attachParameter("Macro", PID::Macro);
+        macroKnob.attachParameter("Macro", PID::Macro, &painterMacro);
         addAndMakeVisible(slewKnob);
-        slewKnob.attachParameter("Slew", PID::Slew);
+        slewKnob.attachParameter("Slew", PID::Slew, &painterSlew);
+        addAndMakeVisible(gainOutKnob);
+        gainOutKnob.attachParameter("Gain Out", PID::GainOut, &painterGainOut);
+        addAndMakeVisible(pbKnob);
+		pbKnob.attachParameter("PB Range", PID::PitchbendRange, &painterPB);
 
         const auto& user = *audioProcessor.state.props.getUserSettings();
         const auto editorWidth = user.getDoubleValue("EditorWidth", EditorWidth);
@@ -100,6 +109,8 @@ namespace gui
 
         layout.place(macroKnob, 1, 2, 1, 1, true);
         layout.place(slewKnob, 2, 2, 1, 1, true);
+        layout.place(gainOutKnob, 3, 2, 1, 1, true);
+        layout.place(pbKnob, 4, 2, 1, 1, true);
 
         auto& user = *audioProcessor.state.props.getUserSettings();
 		const auto editorWidth = static_cast<double>(getWidth());

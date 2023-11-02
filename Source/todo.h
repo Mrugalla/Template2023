@@ -22,10 +22,9 @@ GUI
     Editor
         makeToast (firstTimeUwU)
     Knob
-        seperate functionalities
-            visuals
-            parameter
-            mechanics
+        make animations
+            hover, down, up
+            more painters
 AUDIO
     FFT
         replace by 3rd party lib for performance (kiss fft or pffft)

@@ -4,6 +4,7 @@ namespace gui
 {
 	TimerCallbacks::CB::CB(std::function<void()> _func, int _id, kFPS _fps, bool _active):
 		cb(_func),
+		phase(0.f),
 		id(_id),
 		fps(_fps),
 		active(_active)
