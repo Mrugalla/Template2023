@@ -6,8 +6,6 @@ namespace gui
 	struct Button :
 		public Comp
 	{
-		static constexpr float AniLengthMs = 200.f;
-
 		using OnPaint = std::function<void(Graphics&, const Button&)>;
 		using OnClick = std::function<void(const Mouse&)>;
 		using OnWheel = std::function<void(const Mouse&, const MouseWheel&)>;

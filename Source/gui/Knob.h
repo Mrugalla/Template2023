@@ -13,6 +13,8 @@ namespace gui
 		using OnDrag = std::function<void(const PointF&, const Mouse&)>;
 		using OnMouse = std::function<void(const Mouse&)>;
 
+        enum { kEnterExitCB, kDownUpCB, kNumCallbacks };
+
         Knob(Utils& u) :
             Comp(u),
             onEnter([]() {}), onExit([]() {}), onDown([]() {}), onDoubleClick([]() {}),
@@ -21,11 +23,38 @@ namespace gui
             dragXY(), lastPos(),
             hidesCursor(true)
 		{
+            const auto fps = cbFPS::k30;
+            const auto speed = msToInc(AniLengthMs, fps);
+
+            add(Callback([&, speed]()
+            {
+                auto& phase = callbacks[kEnterExitCB].phase;
+                const auto pol = isMouseOverOrDragging() ? 1.f : -1.f;
+                phase += speed * pol;
+                if (phase >= 1.f)
+                    phase = 1.f;
+                else if (phase < 0.f)
+                    callbacks[kEnterExitCB].stop(0.f);
+                repaint();
+            }, kEnterExitCB, fps, false));
+
+            add(Callback([&, speed]()
+                {
+                    auto& phase = callbacks[kDownUpCB].phase;
+                    const auto pol = isMouseButtonDown() ? 1.f : -1.f;
+                    phase += speed * pol;
+                    if (phase >= 1.f)
+                        phase = 1.f;
+                    else if (phase < 0.f)
+                        callbacks[kDownUpCB].stop(0.f);
+                    repaint();
+                }, kDownUpCB, fps, false));
         }
 
         void mouseEnter(const Mouse& mouse) override
         {
             Comp::mouseEnter(mouse);
+            callbacks[kEnterExitCB].start(0.f);
             onEnter();
         }
 
@@ -38,6 +67,7 @@ namespace gui
         void mouseDown(const Mouse& mouse) override
         {
             utils.giveDAWKeyboardFocus();
+            callbacks[kDownUpCB].start(0.f);
             
             dragXY.setXY
             (
@@ -120,13 +150,12 @@ namespace gui
     struct ModDial :
         public Knob
     {
-        static constexpr float NumStepsPaintCurve = 13.f;
-
         ModDial(Utils& u) :
             Knob(u),
             prms(),
             biasBounds(),
-            path()
+            path(),
+            wOff(0.f)
         {
             onDrag = [&](const PointF& dragOffset, const Mouse& mouse)
             {
@@ -168,13 +197,15 @@ namespace gui
 
         void resized() override
         {
-            layout.resized(getLocalBounds());
-            auto thicc = utils.thicc * Tau;
-            biasBounds = getLocalBounds().toFloat().reduced(thicc);
+            const auto w = static_cast<float>(getWidth());
+            wOff = w * .2f;
+            biasBounds = getLocalBounds().toFloat().reduced(wOff);
         }
 
         void paint(Graphics& g) override
         {
+            const auto enterExitPhase = callbacks[kEnterExitCB].phase;
+            
             g.setColour(getColour(CID::Mod));
             g.fillEllipse(getLocalBounds().toFloat());
 
@@ -187,19 +218,21 @@ namespace gui
             const auto width = biasBounds.getWidth();
             path.startNewSubPath(left, btm);
 
-            const auto numStepsInv = 1.f / NumStepsPaintCurve;
-            const auto bias = prms[0]->getModBias();
-            for (auto i = 0.f; i < NumStepsPaintCurve; ++i)
+            const auto& mainParam = *prms[0];
+            const auto bias = mainParam.getModBias();
+
+            const auto widthInv = 1.f / width;
+            for (auto i = 0.f; i < width; i += Tau)
             {
-                const auto ratio = i * numStepsInv;
-                const auto x = left + ratio * width;
+                const auto x = left + i;
+                const auto ratio = i * widthInv;
                 const auto y = Param::biased(btm, top, bias, ratio);
                 path.lineTo(x, y);
             }
             
             path.lineTo(right, top);
 
-            Stroke stroke(utils.thicc * Pi, Stroke::JointStyle::curved, Stroke::EndCapStyle::rounded);
+            Stroke stroke(wOff * (.5f + .5f * enterExitPhase), Stroke::JointStyle::curved, Stroke::EndCapStyle::butt);
             g.setColour(getColour(CID::Bg));
             g.strokePath(path, stroke);
         }
@@ -207,6 +240,7 @@ namespace gui
         std::vector<Param*> prms;
         BoundsF biasBounds;
         Path path;
+        float wOff;
     };
 
     struct KnobParam :
@@ -459,10 +493,13 @@ namespace gui
                 const auto& vals = k.values;
                 const auto thicc = k.utils.thicc;
                 
+                const auto enterExitPhase = k.callbacks[KnobParam::kEnterExitCB].phase;
+                const auto downUpPhase = k.callbacks[KnobParam::kDownUpCB].phase;
+
                 Stroke strokeType(thicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::butt);
                 const auto radius = knobBounds.getWidth() * .5f;
-                const auto radiusInner = radius * .8f;
-                const auto radDif = (radius - radiusInner) * .8f;
+                const auto radiusInner = radius * (.7f + enterExitPhase * .1f);
+                const auto radDif = (radius - radiusInner) * (.7f + downUpPhase * .3f);
 
                 PointF centre
                 (

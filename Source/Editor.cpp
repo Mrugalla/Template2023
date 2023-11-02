@@ -33,8 +33,8 @@ namespace gui
 
         painterMacro(true),
         painterSlew(false),
-        painterGainOut(),
-        painterPB(),
+        painterGainOut(false),
+        painterPB(false),
 
         macroKnob(utils),
         slewKnob(utils),
@@ -43,7 +43,7 @@ namespace gui
     {
         layout.init
         (
-            { 1, 5, 5, 5, 5, 1 },
+            { 1, 5, 8, 5, 3, 1 },
             { 1, 5, 8, 2, 1 }
         );
 

@@ -8,6 +8,7 @@ namespace gui
 		public Component
 	{
 		static constexpr float LockAlpha = .5f;
+		static constexpr float AniLengthMs = 200.f;
 
 		/* utils, tooltip */
 		Comp(Utils&, const String & = "");

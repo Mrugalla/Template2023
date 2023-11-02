@@ -14,10 +14,12 @@ namespace gui
 		addAndMakeVisible(label);
 
 		const auto fps = cbFPS::k30;
-		add(Callback([&, fps]()
+		const auto speed = msToInc(AniLengthMs, fps);
+
+		add(Callback([&, speed]()
 		{
 			auto& phase = callbacks[kHoverAniCB].phase;
-			phase -= msToInc(AniLengthMs, fps);
+			phase -= speed;
 			if (phase <= 0.f)
 			{
 				phase = 0.f;
@@ -26,10 +28,10 @@ namespace gui
 			repaint();
 		}, kHoverAniCB, fps, false));
 
-		add(Callback([&, fps]()
+		add(Callback([&, speed]()
 		{
 			auto& phase = callbacks[kClickAniCB].phase;
-			phase -= msToInc(AniLengthMs, fps);
+			phase -= speed;
 			if (phase <= 0.f)
 			{
 				phase = 0.f;

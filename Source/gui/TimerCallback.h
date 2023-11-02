@@ -22,6 +22,10 @@ namespace gui
 		{
 			CB(std::function<void()>, int, kFPS, bool);
 
+			void start(float) noexcept;
+
+			void stop(float) noexcept;
+
 			std::function<void()> cb;
 			float phase;
 			int id;

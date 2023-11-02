@@ -11,6 +11,18 @@ namespace gui
 	{
 	}
 
+	void TimerCallbacks::CB::start(float startPhase) noexcept
+	{
+		phase = startPhase;
+		active = true;
+	}
+
+	void TimerCallbacks::CB::stop(float endPhase) noexcept
+	{
+		phase = endPhase;
+		active = false;
+	}
+
 	TimerCallbacks::TimerCallbacks() :
 		Timer(),
 		callbacks(),
