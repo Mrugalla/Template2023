@@ -6,12 +6,14 @@ ToThink
     -
 
 GUI
+    BuildDate
+        draw automatic normal version number
+        build date in the tooltip tho
     SharedPluginState (customizable state)
         sensitivity
             drag, wheel, key
         defaultvalue
             doubleclick, key
-        line thickness
         colourscheme
             bias not needed anymore
     Button
@@ -22,6 +24,7 @@ GUI
     Editor
         makeToast (firstTimeUwU)
     Knob
+        find better place for parameter lock
         make more painters
 AUDIO
     FFT

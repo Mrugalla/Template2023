@@ -26,15 +26,15 @@ namespace gui
         tooltip(utils),
         labels
         {
-            Label(utils),
-            Label(utils)
+            Label(utils, false),
+            Label(utils, false)
         },
         filterTypeButton(utils),
 
         painterMacro(true),
-        painterSlew(false),
         painterGainOut(false),
         painterPB(false),
+        painterSlew(),
 
         macroKnob(utils),
         slewKnob(utils),
@@ -43,8 +43,8 @@ namespace gui
     {
         layout.init
         (
-            { 1, 5, 8, 5, 3, 1 },
-            { 1, 5, 8, 2, 1 }
+            { 1, 3, 8, 3, 3, 1 },
+            { 1, 2, 5, 2, 2, 1 }
         );
 
         addAndMakeVisible(bgImage);
@@ -107,10 +107,15 @@ namespace gui
         layout.place(filterTypeButton, 2, 3, 1, 1, true);
         filterTypeButton.label.setMaxHeight();
 
-        layout.place(macroKnob, 1, 2, 1, 1, true);
-        layout.place(slewKnob, 2, 2, 1, 1, true);
-        layout.place(gainOutKnob, 3, 2, 1, 1, true);
-        layout.place(pbKnob, 4, 2, 1, 1, true);
+        layout.place(macroKnob, 1, 2, 1, 2, false);
+        layout.place(slewKnob, 2, 2, 1, 1, false);
+        layout.place(gainOutKnob, 3, 2, 1, 2, false);
+        layout.place(pbKnob, 4, 2, 1, 2, false);
+
+        layout.place(macroKnob.label, 1, 4, 1, 1, false);
+        layout.place(slewKnob.label, 2, 4, 1, 1, false);
+        layout.place(gainOutKnob.label, 3, 4, 1, 1, false);
+        layout.place(pbKnob.label, 4, 4, 1, 1, false);
 
         auto& user = *audioProcessor.state.props.getUserSettings();
 		const auto editorWidth = static_cast<double>(getWidth());

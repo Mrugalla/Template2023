@@ -11,8 +11,10 @@ namespace gui
 		enum class Type { Text, Paint, Image, NumTypes };
 		static constexpr int NumTypes = static_cast<int>(Type::NumTypes);
 
-		/* u */
-		Label(Utils&);
+		/* u, autoMaxHeight */
+		Label(Utils&, bool = true);
+
+		void resized() override;
 
 		bool isEmpty() const noexcept;
 
@@ -37,6 +39,7 @@ namespace gui
 		Image img;
 		CID cID;
 		Type type;
+		bool autoMaxHeight;
 	};
 
 	//////
@@ -55,9 +58,28 @@ namespace gui
 	/* labels, size */
 	float findMaxCommonHeight(const Label*, int) noexcept;
 
+	float findMaxCommonHeight(const std::vector<Label*>&) noexcept;
+
 	/* labels, size */
 	void setMaxCommonHeight(Label*, int) noexcept;
 
 	/* labels, size */
 	void setMaxCommonHeight(Label*, size_t) noexcept;
+	
+	struct LabelGroup
+	{
+		LabelGroup(std::vector<Label*>&& _labels) :
+			labels(_labels)
+		{}
+
+		void setMaxHeight() noexcept
+		{
+			const auto h = findMaxCommonHeight(labels);
+			for (auto i = 0; i < labels.size(); ++i)
+				labels[i]->setHeight(h);
+		}
+
+	protected:
+		std::vector<Label*> labels;
+	};
 }

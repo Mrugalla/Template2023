@@ -210,23 +210,23 @@ namespace gui
             g.fillEllipse(getLocalBounds().toFloat());
 
             path.clear();
+            const auto& mainParam = *prms[0];
+            const auto bias = mainParam.getModBias();
 
             const auto left = biasBounds.getX();
             const auto btm = biasBounds.getBottom();
             const auto right = biasBounds.getRight();
             const auto top = biasBounds.getY();
             const auto width = biasBounds.getWidth();
+            auto y = Param::biased(btm, top, bias, 0.f);
             path.startNewSubPath(left, btm);
 
-            const auto& mainParam = *prms[0];
-            const auto bias = mainParam.getModBias();
-
             const auto widthInv = 1.f / width;
-            for (auto i = 0.f; i < width; i += Tau)
+            for (auto i = 0.f; i < width; ++i)
             {
                 const auto x = left + i;
                 const auto ratio = i * widthInv;
-                const auto y = Param::biased(btm, top, bias, ratio);
+                y = Param::biased(btm, top, bias, ratio);
                 path.lineTo(x, y);
             }
             
@@ -276,11 +276,7 @@ namespace gui
             lockButton(u),
             label(u)
         {
-		    addAndMakeVisible(label);
-            label.cID = CID::Txt;
-            label.font = font::dosisLight();
-
-            addAndMakeVisible(lockButton);
+		    addAndMakeVisible(lockButton);
             makeTextButton(lockButton, "L", "Click here to lock this parameter.", CID::Interact);
             lockButton.onClick = [&](const Mouse&)
 			{
@@ -291,6 +287,8 @@ namespace gui
 
         void attachParameters(const String& name, PID* pIDs, int numPIDs, Painter* p)
         {
+            getParentComponent()->addAndMakeVisible(label);
+
             prms.clear();
             prms.reserve(numPIDs);
             for (auto i = 0; i < numPIDs; ++i)
@@ -299,7 +297,7 @@ namespace gui
             setTooltip(toTooltip(pIDs[0]));
             setName(name);
 
-            makeTextLabel(label, name, font::dosisBold(), Just::centred, CID::Txt, tooltip);
+            makeTextLabel(label, name, font::dosisMedium(), Just::centredBottom, CID::Txt, tooltip);
             auto& mainParam = utils.getParam(pIDs[0]);
 
             const auto drawValToLabelFunc = [&, &prm = mainParam]()
@@ -478,7 +476,6 @@ namespace gui
                 knobBounds = k.layout(0, 0, 3, 2, true).reduced(thicc3);
 
                 k.layout.place(k.label, 0, 2, 3, 1, false);
-                k.label.setMaxHeight();
 
                 if (k.modDial.isVisible())
                     k.layout.place(k.modDial, 1, 1, 1, 1, true);
@@ -492,7 +489,7 @@ namespace gui
             {
                 const auto& vals = k.values;
                 const auto thicc = k.utils.thicc;
-                
+
                 const auto enterExitPhase = k.callbacks[KnobParam::kEnterExitCB].phase;
                 const auto downUpPhase = k.callbacks[KnobParam::kDownUpCB].phase;
 
@@ -588,6 +585,282 @@ namespace gui
         float thicc2, thicc3, thicc4, thicc5;
     };
 
+    struct KnobPainterSpirograph :
+        public KnobParam::Painter
+    {
+        struct Arm
+        {
+            LineF line;
+            float angle, inc, lengthRel, length;
+
+            void makeLine(const PointF centre)
+            {
+                line = LineF::fromStartAndAngle(centre, length, angle);
+            }
+
+            PointF getEnd() const noexcept
+			{
+				return line.getEnd();
+			}
+
+            void incAngle() noexcept
+            {
+                angle += inc;
+            }
+
+            void prepare(float aF, float angleMain, float numRings, float rad) noexcept
+            {
+                inc = angleMain + aF * numRings * angleMain;
+                length = rad * lengthRel;
+            }
+        };
+
+        struct Arms
+        {
+            Arms(float _startAngle, int numArms) :
+                arms(),
+                startAngle(_startAngle * Tau)
+            {
+                arms.resize(numArms);
+            }
+
+            void makeLengthRels(float lengthBias) noexcept
+            {
+                const auto numArmsF = static_cast<float>(arms.size());
+                for (auto a = 0; a < arms.size(); ++a)
+                {
+                    const auto aF = static_cast<float>(a);
+                    const auto aRatio = aF / numArmsF;
+                    arms[a].lengthRel = Param::biased(0.f, 1.f, lengthBias, aRatio);
+                }
+
+                for (auto a = 0; a < arms.size() - 1; ++a)
+                    arms[a].lengthRel = arms[a + 1].lengthRel - arms[a].lengthRel;
+                arms.back().lengthRel = 1.f - arms.back().lengthRel;
+            }
+
+            void makeArms(const PointF centre)
+            {
+                arms[0].makeLine(centre);
+                for (auto a = 1; a < arms.size(); ++a)
+                    arms[a].makeLine(arms[a - 1].getEnd());
+            }
+
+            PointF getEnd() const noexcept
+            {
+                return arms.back().getEnd();
+            }
+
+            void drawArms(Graphics& g, float thicc)
+            {
+                for (auto& arm : arms)
+                    g.drawLine(arm.line, thicc);
+            }
+
+            void incAngles() noexcept
+            {
+                for (auto& arm : arms)
+                    arm.incAngle();
+            }
+
+            void resetAngles() noexcept
+			{
+				for (auto& arm : arms)
+					arm.angle = startAngle;
+			}
+
+            void prepareArms(float angleMain, float numRings, float rad) noexcept
+            {
+                resetAngles();
+
+                for (auto a = 0; a < arms.size(); ++a)
+                {
+                    auto& arm = arms[a];
+                    const auto aF = static_cast<float>(a);
+                    arm.prepare(aF, angleMain, numRings, rad);
+                }
+            }
+
+            PointF getPointOfStep(const PointF centre, int stepIdx) noexcept
+            {
+                resetAngles();
+
+                for (auto i = 0; i < stepIdx; ++i)
+                {
+                    incAngles();
+                    makeArms(centre);
+                } 
+
+                return getEnd();
+            }
+
+            std::vector<Arm> arms;
+            float startAngle;
+        };
+
+        KnobPainterSpirograph(int numArms = 2,
+            float startAngle = .5f, float angleLength = 1.f,
+            float lengthBias = .4f, float lengthBiasAni = .3f,
+            float armsAlpha = .4f, float armsAlphaAni = -.2f,
+            int numRings = 4, int numSteps = 128) :
+            bounds(),
+            spirograph(),
+            pathModDepth(),
+            arms(startAngle, numArms),
+            valPoints()
+        {
+            onLayout = [](Layout& layout)
+            {
+                layout.init
+                (
+                    { 1, 1, 1 },
+                    { 5, 1 }
+                );
+            };
+
+            onResize = [&](KnobParam& k)
+            {
+                const auto thicc = k.utils.thicc;
+                bounds = k.layout(0, 0, 3, 2, true).reduced(thicc * Pi);
+
+                k.layout.place(k.label, 0, 2, 3, 1, false);
+
+                if (k.modDial.isVisible())
+                    k.layout.place(k.modDial, 1, 1, 1, 1, true);
+                k.layout.place(k.lockButton, 2, 1, 1, 1, true);
+            };
+
+            onPaint = [&, lengthBias, lengthBiasAni, numArms, angleLength, armsAlpha, armsAlphaAni, numRings, numSteps](KnobParam& k, Graphics& g)
+            {
+                spirograph.clear();
+                const auto thicc = k.utils.thicc;
+
+                const auto& vals = k.values;
+                const auto enterExitPhase = k.callbacks[KnobParam::kEnterExitCB].phase;
+                const auto downUpPhase = k.callbacks[KnobParam::kDownUpCB].phase;
+
+                const auto width = bounds.getWidth();
+                const auto rad = width * .5f;
+                PointF centre
+                (
+                    rad + bounds.getX(),
+                    rad + bounds.getY()
+                );
+                const auto numStepsF = static_cast<float>(numSteps);
+                const auto numStepsInv = 1.f / numStepsF;
+                const auto angleMain = angleLength * Tau * numStepsInv;
+
+                auto biasWithAni = lengthBias + lengthBiasAni * enterExitPhase + lengthBiasAni * downUpPhase * .5f;
+                if(biasWithAni >= 1.f)
+                    --biasWithAni;
+                arms.makeLengthRels(biasWithAni);
+
+                arms.prepareArms(angleMain, static_cast<float>(numRings), rad);
+
+                arms.makeArms(centre);
+                spirograph.startNewSubPath(arms.getEnd());
+                
+                const bool drawArms = armsAlpha != 0.f;
+                if (drawArms)
+                {
+                    const auto alphaWithAni = juce::jlimit(0.f, 1.f, armsAlpha + armsAlphaAni * downUpPhase);
+                    g.setColour(getColour(CID::Txt).withAlpha(alphaWithAni));
+                    arms.drawArms(g, thicc);
+                }
+
+                const auto mainVal = vals[KnobParam::Value];
+                const auto mainValStep = mainVal * numStepsF;
+                const auto valMod = vals[KnobParam::ValMod];
+                const auto valModStep = valMod * numStepsF;
+                const auto modDepth = vals[KnobParam::ModDepth];
+                const auto modDepthStep = juce::jlimit(0.f, numStepsF, mainValStep + modDepth * numStepsF);
+                const bool modDepthPositive = modDepth > 0.f;
+
+                const auto mainValStepFloor = static_cast<int>(mainValStep);
+                const auto mainValStepCeil = mainValStepFloor + 1;
+                const auto mainValStepFrac = mainValStep - mainValStepFloor;
+
+                pathModDepth.clear();
+                bool shallDrawModDepth = false;
+
+                for (auto i = 0; i < numSteps; ++i)
+                {
+                    const auto lastPt = arms.getEnd();
+                    arms.incAngles();
+                    arms.makeArms(centre);
+                    const auto curPt = arms.getEnd();
+
+                    spirograph.lineTo(curPt);
+                    if(shallDrawModDepth)
+						pathModDepth.lineTo(curPt);
+
+                    if (drawArms)
+                        arms.drawArms(g, thicc);
+
+                    if (i == mainValStepCeil)
+                    {
+                        //const LineF armsLine(lastPt, curPt);
+                        //const PointF interpolatedPt = armsLine.getPointAlongLine(mainValStepFrac * armsLine.getLength());
+                        
+                        valPoints[KnobParam::Value] = curPt;
+                        if (modDepthPositive)
+                        {
+                            pathModDepth.startNewSubPath(curPt);
+                            shallDrawModDepth = true;
+                        }
+                        else
+                            shallDrawModDepth = false;
+                    }
+
+                    if (i == (int)valModStep)
+                        valPoints[KnobParam::ValMod] = curPt;
+
+                    if (i == (int)modDepthStep)
+                    {
+                        valPoints[KnobParam::ModDepth] = curPt;
+                        if (modDepthPositive)
+                            shallDrawModDepth = false;
+                        else
+                        {
+                            pathModDepth.startNewSubPath(curPt);
+                            shallDrawModDepth = true;
+                        }
+                    }
+                }
+                spirograph.closeSubPath();
+
+                Stroke stroke(thicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::butt);
+                g.setColour(getColour(CID::Txt));
+                g.strokePath(spirograph, stroke);
+
+                const auto knotSize = thicc * 1.5f + downUpPhase * thicc * 1.5f;
+                const auto knotSize2 = knotSize * 2.f;
+
+                BoundsF boundsVal(valPoints[KnobParam::Value].x - knotSize, valPoints[KnobParam::Value].y - knotSize, knotSize2, knotSize2);
+                BoundsF boundsMod(valPoints[KnobParam::ValMod].x - knotSize, valPoints[KnobParam::ValMod].y - knotSize, knotSize2, knotSize2);
+
+                g.setColour(getColour(CID::Mod));
+                stroke.setStrokeThickness(knotSize);
+                g.strokePath(pathModDepth, stroke);
+                stroke.setStrokeThickness(thicc);
+
+                g.setColour(getColour(CID::Bg));
+                g.fillEllipse(boundsVal);
+                g.fillEllipse(boundsMod);
+
+                g.setColour(getColour(CID::Interact));
+                g.drawEllipse(boundsVal, thicc);
+                g.setColour(getColour(CID::Mod));
+                g.drawEllipse(boundsMod, thicc);
+            };
+        }
+
+        BoundsF bounds;
+        Path spirograph, pathModDepth;
+        Arms arms;
+        std::array<PointF, KnobParam::NumValTypes> valPoints;
+    };
+
     struct KnobPainterIdk :
         KnobParam::Painter
     {
@@ -598,7 +871,7 @@ namespace gui
                 layout.init
                 (
                     { 1, 1, 1 },
-                    { 13, 5, 5 }
+                    { 13, 5 }
                 );
             };
 
@@ -607,12 +880,12 @@ namespace gui
                 const auto thicc = k.utils.thicc;
                 knobBounds = k.layout(0, 0, 3, 1, true).reduced(thicc);
 
-                k.layout.place(k.label, 0, 2, 3, 1, false);
-                k.label.setMaxHeight();
+                //k.layout.place(k.label, 0, 2, 3, 1, false);
+                //k.label.setMaxHeight();
 
                 if (k.modDial.isVisible())
                     k.layout.place(k.modDial, 1, 1, 1, 1, true);
-                k.layout.place(k.lockButton, 1.5f, 1.5f, 1.5f, 1.5f, true);
+                k.layout.place(k.lockButton, 1, 1, 1, 1, true);
             };
 
             onPaint = [&](KnobParam& k, Graphics& g)
@@ -644,3 +917,13 @@ namespace gui
         BoundsF knobBounds;
     };
 }
+
+/*
+todo:
+
+low stepsizes reveil that it picks the wrong points for the parameter values
+
+wanna implement linear interpolation between points
+
+
+*/

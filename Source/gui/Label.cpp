@@ -2,7 +2,7 @@
 
 namespace gui
 {
-	Label::Label(Utils& u) :
+	Label::Label(Utils& u, bool _autoMaxHeight) :
 		Comp(u),
 		text(""),
 		font(),
@@ -10,9 +10,16 @@ namespace gui
 		onPaint([](Graphics&, const Label&) {}),
 		img(),
 		cID(CID::Txt),
-		type(Type::NumTypes)
+		type(Type::NumTypes),
+		autoMaxHeight(_autoMaxHeight)
 	{
 		setInterceptsMouseClicks(false, false);
+	}
+
+	void Label::resized()
+	{
+		if (autoMaxHeight)
+			setMaxHeight();
 	}
 
 	bool Label::isEmpty() const noexcept
@@ -31,6 +38,9 @@ namespace gui
 			return;
 
 		text = txt;
+
+		if (autoMaxHeight)
+			setMaxHeight();
 	}
 	
 	void Label::replaceSpacesWithLineBreaks()
@@ -45,7 +55,7 @@ namespace gui
 		case Type::Text:
 			g.setFont(font);
 			g.setColour(getColour(cID));
-			g.drawFittedText(text, getLocalBounds(), just, 1, 0.f);
+			g.drawFittedText(text, getLocalBounds(), just, 1);
 			break;
 		case Type::Paint:
 			onPaint(g, *this);
@@ -108,6 +118,14 @@ namespace gui
 		auto maxHeight = labels[0].getMaxHeight();
 		for (auto i = 1; i < size; ++i)
 			maxHeight = std::min(labels[i].getMaxHeight(), maxHeight);
+		return maxHeight;
+	}
+
+	float findMaxCommonHeight(const std::vector<Label*>& labels) noexcept
+	{
+		auto maxHeight = labels[0]->getMaxHeight();
+		for (auto i = 1; i < labels.size(); ++i)
+			maxHeight = std::min(labels[i]->getMaxHeight(), maxHeight);
 		return maxHeight;
 	}
 

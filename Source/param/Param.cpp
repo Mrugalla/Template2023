@@ -1270,7 +1270,7 @@ namespace param
 		}
 
 		// LOW LEVEL PARAMS:
-		params.push_back(makeParamPitch(PID::Slew, 36.f, makeRange::lin(0.f, 127.f), xen));
+		params.push_back(makeParamPitch(PID::Slew, 36.f, makeRange::stepped(0.f, 127.f), xen));
 		params.push_back(makeParam(PID::FilterType, 0.f, makeRange::stepped(0.f, 1.f), Unit::FilterType));
 		// LOW LEVEL PARAMS END
 
