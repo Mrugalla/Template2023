@@ -1,4 +1,5 @@
 #include "Range.h"
+#include <cmath>
 
 namespace makeRange
 {
@@ -36,6 +37,31 @@ namespace makeRange
 				}
 		};
 		else return { start, end };
+	}
+
+	Range biasedSatisfy(float start, float end, float bias) noexcept
+	{
+		// https://www.desmos.com/calculator/nevb75ufdw
+		const auto p = (bias + 1.f) * .5f;
+		const auto f1k = std::log(.5f) / std::log(p);
+		const auto k1f = std::log(.5f) / std::log(1.f - p);
+
+		return
+		{
+			start, end,
+			[b = f1k, bInv = 1.f / f1k, r = start - end](float, float max, float x)
+			{
+				return max + r * std::pow(1.f - std::pow(x, b), bInv);
+			},
+			[b = k1f, bInv = 1.f / k1f, rInv = 1.f / (end - start)](float min, float, float x)
+			{
+				return 1.f - std::pow(1.f - std::pow((x - min) * rInv, b), bInv);
+			},
+			[](float min, float max, float x)
+			{
+				return x < min ? min : x > max ? max : x;
+			}
+		};
 	}
 
 	Range stepped(float start, float end, float steps) noexcept
@@ -174,9 +200,12 @@ namespace makeRange
 		const auto numValsX = numValuesInv * EpsInv;
 		const auto normValsY = numValuesF * Eps;
 
+		const auto minVal = table.front();
+		const auto maxVal = table.back();
+
 		return
 		{
-			table.front(), table.back(),
+			minVal, maxVal,
 			[table, normValsY](float, float, float normalized)
 			{
 				const auto valueIdx = normalized * normValsY;
@@ -185,8 +214,12 @@ namespace makeRange
 			[table, numValsX](float, float, float denormalized)
 			{
 				for (auto i = 0; i < table.size(); ++i)
-					if (denormalized <= table[i])
+				{
+					const auto val = table[i];
+					if (denormalized <= val)
 						return static_cast<float>(i) * numValsX;
+				}
+					
 				return 0.f;
 			},
 			[](float start, float end, float denormalized)

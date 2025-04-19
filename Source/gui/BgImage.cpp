@@ -44,7 +44,7 @@ namespace gui
 
             img = Image(Image::ARGB, w, h, true);
 			Graphics g(img);
-			g.setColour(getColour(CID::Bias));
+			g.setColour(getColour(CID::Txt));
 			
             const auto wF = static_cast<float>(w);
             const auto hF = static_cast<float>(h);
@@ -120,16 +120,16 @@ namespace gui
 
     void makeImageRefreshButton(Button& btn, const String& tooltip)
     {
-        const auto onPaint = [](Graphics& g, const Label& label)
+        const auto onPaint = [](Graphics& g, const Button& button)
         {
-            const auto& utils = label.utils;
+            const auto& utils = button.utils;
             const auto thicc = utils.thicc;
             const auto jointStyle = Stroke::JointStyle::curved;
             const auto endStyle = Stroke::EndCapStyle::butt;
             Stroke stroke(thicc, jointStyle, endStyle);
 
             g.setColour(getColour(CID::Interact));
-            const auto bounds = maxQuadIn(label.getLocalBounds()).reduced(thicc);
+            const auto bounds = maxQuadIn(button.getLocalBounds()).reduced(thicc);
 
             auto w = bounds.getWidth();
             auto h = bounds.getHeight();
@@ -164,7 +164,8 @@ namespace gui
     BgImage::BgImage(Utils& u) :
         Comp(u),
         img(),
-        refreshButton(u)
+        refreshButton(u),
+        createImageFunc([](Image&) {})
     {
         setInterceptsMouseClicks(false, true);
 
@@ -214,7 +215,8 @@ namespace gui
 
         if (componentOk(*this))
         {
-            create::pulsar(img, utils.thicc, getWidth(), getHeight());
+            img = Image(Image::ARGB, getWidth(), getHeight(), true);
+            createImageFunc(img);
             saveImage(file, img);
         }
     }

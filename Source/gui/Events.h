@@ -8,13 +8,21 @@ namespace gui
     {
         enum class Type
         {
-            ColourSchemeChanged,
             TooltipUpdated,
             ClickedEmpty,
+            ToastShowUp,
+            ToastUpdateMessage,
+            ToastVanish,
+            ToastColour,
+            DeactivateAllTextEditors,
+            ThemeUpdated,
+            ParameterEditorShowUp,
+            ParameterEditorAssignParam,
+			ParameterEditorVanish,
             NumTypes
         };
 
-        /* type, stuff */
+        // type, stuff
         using Evt = std::function<void(const Type, const void*)>;
 
         struct System

@@ -1,6 +1,7 @@
 #pragma once
 #include <juce_core/juce_core.h>
 #include <juce_graphics/juce_graphics.h>
+#define oopsie(x) jassert(!(x))
 
 namespace math
 {
@@ -9,19 +10,134 @@ namespace math
 	using Point = juce::Point<int>;
 	using PointF = juce::Point<float>;
 	
-    static constexpr float Tau = 6.28318530718f;
-    static constexpr float Pi = 3.14159265359f;
-    static constexpr float PiInv = 1.f / Pi;
-    static constexpr float PiHalf = Pi * .5f;
-    static constexpr float PiHalfInv = 1.f / PiHalf;
+    static constexpr double Tau = 6.28318530718;
+    static constexpr double Pi = 3.14159265359;
+    static constexpr double PiInv = 1. / Pi;
+    static constexpr double PiHalf = Pi * .5;
+    static constexpr double PiHalfInv = 1. / PiHalf;
 
-    template <typename Float>
+    inline int fibonacci(int iterations) noexcept
+    {
+		int a = 0, b = 1;
+		for (auto i = 0; i < iterations; ++i)
+		{
+			const auto temp = a;
+			a = b;
+			b += temp;
+		}
+		return a;
+    }
+
+    inline bool isPrime(int n) noexcept
+    {
+        const auto numSqrt = std::sqrt(n);
+        for (auto i = 2; i <= numSqrt; ++i)
+        {
+            if (n % i == 0)
+                return false;
+        }
+        return true;
+    }
+
+    inline int prime(int iterations) noexcept
+    {
+		int n = 2;
+        while(true)
+		{
+			if (isPrime(n))
+			{
+                --iterations;
+				if (iterations == 0)
+					return n;
+			}
+			++n;
+		}
+    }
+
+    template<typename Float>
+    inline bool bufferSilent(Float* smpls, int numSamples) noexcept
+    {
+        static constexpr auto Eps = static_cast<Float>(1e-6);
+        for (auto s = 0; s < numSamples; ++s)
+        {
+            const auto smpl = smpls[s];
+            if (smpl * smpl > Eps)
+                return false;
+        }
+        return true;
+    }
+
+    template<typename Float>
+    inline bool bufferSilent(Float** samples, int numChannels, int numSamples) noexcept
+    {
+        static constexpr auto Eps = static_cast<Float>(1e-6);
+        for (auto ch = 0; ch < numChannels; ++ch)
+			if (!bufferSilent(samples[ch], numSamples))
+				return false;
+        return true;
+    }
+
+    template<typename Float>
+    inline Float limit(Float min, Float max, Float x) noexcept
+    {
+		return x < min ? min : x > max ? max : x;
+    }
+
+    template<typename Float>
     inline Float sinApprox(Float x) noexcept
     {
         const auto x2 = x * x;
         const auto numerator = -x * (static_cast<Float>(-11511339840) + x2 * (static_cast<Float>(1640635920) + x2 * (static_cast<Float>(-52785432) + x2 * static_cast<Float>(479249))));
         const auto denominator = static_cast<Float>(11511339840) + x2 * (static_cast<Float>(277920720) + x2 * (static_cast<Float>(3177720) + x2 * static_cast<Float>(18361)));
         return numerator / denominator;
+    }
+
+	template<typename Float>
+    inline Float cosApprox(Float x) noexcept
+    {
+        return sinApprox(x + static_cast<Float>(PiHalf));
+    }
+
+    // for x != -9652.5
+    template<typename Float>
+    inline Float tanhApprox(Float x) noexcept
+    {
+		const auto x2 = x * x;
+		const auto numerator = x * (static_cast<Float>(135135) + x2 * (static_cast<Float>(17325) + x2 * static_cast<Float>(378)));
+		const auto denominator = static_cast<Float>(135135) + x2 * (static_cast<Float>(62370) + x2 * (static_cast<Float>(3150) + x2 * static_cast<Float>(28)));
+		return numerator / denominator;
+    }
+
+    inline float invSqrt(float x) noexcept
+    {
+		union { float f; int i; } y;
+		y.f = x;
+		y.i = 0x5f3759df - (y.i >> 1);
+		return y.f * (1.5f - 0.5f * x * y.f * y.f);
+    }
+
+    // the quake III hack
+	inline float invSqrtQuake(float x) noexcept
+	{
+		long i;
+		float x2, y;
+		const float threehalfs = 1.5F;
+
+		x2 = x * .5F;
+		y = x;
+		i = *(long*)&y;
+		i = 0x5f3759df - (i >> 1);
+		y = *(float*)&i;
+		y = y * (threehalfs - (x2 * y * y));
+		return y;
+	}
+
+    // not smooth
+    inline float expApprox(float x) noexcept
+    {
+        union { float f; int i; } y;
+        y.i = static_cast<int>(x * 0xB5645F + 0x3F7893F5);
+        return (y.f);
     }
 
     template <typename Float>
@@ -31,31 +147,50 @@ namespace math
     }
 
     template<typename Float>
-    inline Float secsInSamples(Float secs, Float Fs) noexcept
+    inline Float secsToSamples(Float secs, Float Fs) noexcept
     {
         return secs * Fs;
     }
 
     template<typename Float>
-    inline Float msInSamples(Float ms, Float Fs) noexcept
+    inline Float samplesToSecs(Float samples, Float fsInv) noexcept
     {
-        return secsInSamples(ms * static_cast<Float>(.001), Fs);
+		return samples * fsInv;
     }
 
     template<typename Float>
-    inline Float msInInc(Float ms, Float Fs) noexcept
+    inline Float msToSamples(Float ms, Float Fs) noexcept
     {
-        return static_cast<Float>(1) / msInSamples(ms, Fs);
+        return secsToSamples(ms * static_cast<Float>(.001), Fs);
     }
 
     template<typename Float>
-    inline Float freqHzInSamples(Float hz, Float Fs) noexcept
+    inline Float samplesToMs(Float samples, Float fsInv) noexcept
+    {
+		return samplesToSecs(samples, fsInv) * static_cast<Float>(1000);
+    }
+
+
+    template<typename Float>
+    inline Float msToInc(Float ms, Float Fs) noexcept
+    {
+        return static_cast<Float>(1) / msToSamples(ms, Fs);
+    }
+
+    template<typename Float>
+    inline Float incToMs(Float inc, Float Fs) noexcept
+    {
+		return static_cast<Float>(1000) / inc;
+    }
+
+    template<typename Float>
+    inline Float freqHzToSamples(Float hz, Float Fs) noexcept
     {
         return Fs / hz;
     }
 
     template<typename Float>
-    inline float getRMS(const Float* ar, const int size) noexcept
+    inline Float getRMS(const Float* ar, const int size) noexcept
     {
         auto rms = static_cast<Float>(0);
         for (auto i = 0; i < size; ++i)
@@ -65,25 +200,25 @@ namespace math
     }
 
     template<typename Float>
-    inline Float noteInFreqHz(Float note, Float rootNote = static_cast<Float>(69), Float xen = static_cast<Float>(12), Float masterTune = static_cast<Float>(440)) noexcept
+    inline Float noteToFreqHz(Float note, Float rootNote = static_cast<Float>(69), Float xen = static_cast<Float>(12), Float masterTune = static_cast<Float>(440)) noexcept
     {
         return std::exp2((note - rootNote) / xen) * masterTune;
     }
 
     template<typename Float>
-    inline Float noteInFreqHz2(Float note, Float rootNote = static_cast<Float>(69), Float masterTune = static_cast<Float>(440)) noexcept
+    inline Float noteToFreqHz2(Float note, Float rootNote = static_cast<Float>(69), Float masterTune = static_cast<Float>(440)) noexcept
     {
         return std::exp2((note - rootNote) * static_cast<Float>(.08333333333)) * masterTune;
     }
 
     template<typename Float>
-    inline Float freqHzInNote(Float freqHz, Float rootNote = static_cast<Float>(69), Float xen = static_cast<Float>(12), Float masterTune = static_cast<Float>(440)) noexcept
+    inline Float freqHzToNote(Float freqHz, Float rootNote = static_cast<Float>(69), Float xen = static_cast<Float>(12), Float masterTune = static_cast<Float>(440)) noexcept
     {
         return std::log2(freqHz / masterTune) * xen + rootNote;
     }
 
     template<typename Float>
-    inline Float freqHzInNote2(Float freqHz, Float xen = static_cast<Float>(12), Float rootNote = static_cast<Float>(69)) noexcept
+    inline Float freqHzToNote2(Float freqHz, Float xen = static_cast<Float>(12), Float rootNote = static_cast<Float>(69)) noexcept
     {
         return std::log2(freqHz * static_cast<Float>(.00227272727)) * xen + rootNote;
     }
@@ -96,7 +231,7 @@ namespace math
 
         for (auto note = 0; note < 128; ++note)
         {
-            const auto nFreq = noteInFreqHz(static_cast<Float>(note), xen, basePitch, masterTune);
+            const auto nFreq = noteToFreqHz(static_cast<Float>(note), xen, basePitch, masterTune);
             const auto nDist = std::abs(freq - nFreq);
             if (nDist < closestDist)
             {
@@ -109,13 +244,13 @@ namespace math
     }
 
     template<typename Float>
-    inline Float freqHzInFc(Float freq, Float Fs) noexcept
+    inline Float freqHzToFc(Float freq, Float Fs) noexcept
     {
         return freq / Fs;
     }
 
     template<typename Float>
-    inline Float fcInFreqHz(Float fc, Float Fs) noexcept
+    inline Float fcToFreqHz(Float fc, Float Fs) noexcept
     {
         return fc * Fs;
     }
@@ -127,17 +262,91 @@ namespace math
     }
 
     template<typename Float>
-    inline Float decibelToAmp(Float db) noexcept
+    inline Float dbToAmp(Float db) noexcept
     {
         return std::pow(static_cast<Float>(10), db * static_cast<Float>(.05));
     }
 
     template<typename Float>
-    inline Float decibelToAmp(Float db, Float threshold) noexcept
+    inline Float dbToAmp(Float db, Float threshold) noexcept
     {
         if (db <= threshold)
-            return 0.f;
-        return std::pow(static_cast<Float>(10), db * static_cast<Float>(.05));
+            return static_cast<Float>(0);
+        return dbToAmp(db);
+    }
+
+    template<typename Float>
+	inline Float lerp(const Float* buffer, Float readHead) noexcept
+	{
+		const auto iFloor = std::floor(readHead);
+		auto i0 = static_cast<int>(iFloor);
+		auto i1 = i0 + 1;
+		const auto t = readHead - iFloor;
+		const auto v0 = buffer[i0];
+		const auto v1 = buffer[i1];
+		return v0 + t * (v1 - v0);
+	}
+
+    template<typename Float>
+	inline Float lerp(const Float* buffer, Float readHead, int size) noexcept
+	{
+		const auto iFloor = std::floor(readHead);
+		auto i0 = static_cast<int>(iFloor);
+		auto i1 = i0 + 1;
+		if (i1 >= size) i1 -= size;
+		const auto t = readHead - iFloor;
+		const auto v0 = buffer[i0];
+		const auto v1 = buffer[i1];
+		return v0 + t * (v1 - v0);
+	}
+
+    template<typename T>
+    inline T cubicHermiteSpline(const T* buffer, T readHead, int size) noexcept
+    {
+        const auto iFloor = std::floor(readHead);
+        auto i1 = static_cast<int>(iFloor);
+        auto i0 = i1 - 1;
+        auto i2 = i1 + 1;
+        auto i3 = i1 + 2;
+        if (i3 >= size) i3 -= size;
+        if (i2 >= size) i2 -= size;
+        if (i0 < 0) i0 += size;
+
+        const auto t = readHead - iFloor;
+        const auto v0 = buffer[i0];
+        const auto v1 = buffer[i1];
+        const auto v2 = buffer[i2];
+        const auto v3 = buffer[i3];
+
+        const auto c0 = v1;
+        const auto c1 = static_cast<T>(.5) * (v2 - v0);
+        const auto c2 = v0 - static_cast<T>(2.5) * v1 + static_cast<T>(2.) * v2 - static_cast<T>(.5) * v3;
+        const auto c3 = static_cast<T>(1.5) * (v1 - v2) + static_cast<T>(.5) * (v3 - v0);
+
+        return ((c3 * t + c2) * t + c1) * t + c0;
+    }
+
+    template<typename T>
+    inline T cubicHermiteSpline(const T* buffer, T readHead) noexcept
+    {
+        const auto iFloor = std::floor(readHead);
+        auto i0 = static_cast<int>(iFloor);
+        auto i1 = i0 + 1;
+        auto i2 = i0 + 2;
+        auto i3 = i0 + 3;
+
+        const auto t = readHead - iFloor;
+        const auto v0 = buffer[i0];
+        const auto v1 = buffer[i1];
+        const auto v2 = buffer[i2];
+        const auto v3 = buffer[i3];
+
+        const auto c0 = v1;
+        const auto c1 = static_cast<T>(.5) * (v2 - v0);
+        const auto c2 = v0 - static_cast<T>(2.5) * v1 + static_cast<T>(2.) * v2 - static_cast<T>(.5) * v3;
+        const auto c3 = static_cast<T>(1.5) * (v1 - v2) + static_cast<T>(.5) * (v3 - v0);
+
+        return ((c3 * t + c2) * t + c1) * t + c0;
     }
 
     /* oct [-n, n], semi [-12, 12], fine [-1, 1]*/

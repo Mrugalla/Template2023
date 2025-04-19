@@ -3,7 +3,7 @@
 
 namespace audio
 {
-	PluginProcessor::PluginProcessor(Params& _params, const arch::XenManager& _xen) :
+	PluginProcessor::PluginProcessor(Params& _params, XenManager& _xen) :
 		params(_params),
 		xen(_xen),
 		sampleRate(1.)
@@ -15,7 +15,8 @@ namespace audio
 		sampleRate = _sampleRate;
 	}
 
-	void PluginProcessor::operator()(double** samples, dsp::MidiBuffer&, int numChannels, int numSamples) noexcept
+	void PluginProcessor::operator()(double** samples, MidiBuffer&, const Transport::Info&,
+		int numChannels, int numSamples) noexcept
 	{
 		const auto slewPitch = params(PID::Slew).getValModDenorm();
 		const auto slewHz = xen.noteToFreqHzWithWrap(slewPitch, 1.f);
@@ -27,9 +28,11 @@ namespace audio
 	void PluginProcessor::processBlockBypassed(double**, dsp::MidiBuffer&, int, int) noexcept
 	{}
 
-	void PluginProcessor::savePatch()
-	{}
+	void PluginProcessor::savePatch(arch::State&)
+	{
+	}
 
-	void PluginProcessor::loadPatch()
-	{}
+	void PluginProcessor::loadPatch(const arch::State&)
+	{
+	}
 }

@@ -1,29 +1,51 @@
 #pragma once
 #include <array>
 #include <atomic>
+#include <functional>
 
 namespace arch
 {
+	static constexpr double MaxXen = 48.;
+
 	struct XenManager
 	{
+		struct Info
+		{
+			bool operator==(const Info&) const noexcept;
+
+			double xen, masterTune, anchor, pitchbendRange;
+		};
+
+		// xenInfo, numChannels
+		using UpdateFunc = std::function<void(const Info&, int)>;
+
 		XenManager();
 
-		/* xen, masterTune, referencePitch, pitchbendRange */
-		void operator()(double, double, double, double) noexcept;
+		// xenInfo, numChannels
+		void operator()(const Info&, int) noexcept;
 
 		template<typename Float>
 		Float noteToFreqHz(Float) const noexcept;
 
-		/* note, lowestFreq, highestFreq */
+		// note, lowestFreq, highestFreq
 		template<typename Float>
-		Float noteToFreqHzWithWrap(Float, Float = static_cast<Float>(0), Float = static_cast<Float>(22000)) const noexcept;
+		Float noteToFreqHzWithWrap(Float, Float = static_cast<Float>(0), Float = static_cast<Float>(22049)) const noexcept;
 
 		template<typename Float>
-		Float freqHzToNote(Float) noexcept;
+		Float freqHzToNote(Float) const noexcept;
+
+		const Info& getInfo() const noexcept;
 
 		double getXen() const noexcept;
 
+		double getPitchbendRange() const noexcept;
+
+		double getAnchor() const noexcept;
+
+		double getMasterTune() const noexcept;
+
+		UpdateFunc updateFunc;
 	protected:
-		double xen, masterTune, referencePitch, pitchbendRange;
+		Info info;
 	};
 }

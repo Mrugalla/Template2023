@@ -18,10 +18,13 @@ namespace gui
     using String = juce::String;
     using WChar = juce::juce_wchar;
     using Font = juce::Font;
+	using GlyphArrangement = juce::GlyphArrangement;
+    using FontOptions = juce::FontOptions;
     using Props = juce::PropertiesFile;
     using AppProps = juce::ApplicationProperties;
     using Cursor = juce::MouseCursor;
     using Image = juce::Image;
+	using ScaledImage = juce::ScaledImage;
     using Graphics = juce::Graphics;
     using Mouse = juce::MouseEvent;
     using MouseWheel = juce::MouseWheelDetails;
@@ -58,6 +61,22 @@ namespace gui
     using PNGImageFormat = juce::PNGImageFormat;
     using FileOutputStream = juce::FileOutputStream;
     using Var = juce::var;
+    using StringArray = juce::StringArray;
+    using AudioFormatManager = juce::AudioFormatManager;
+    using AudioBufferF = juce::AudioBuffer<float>;
+	using RectanglePlacement = juce::RectanglePlacement;
+	using ResamplingQuality = Graphics::ResamplingQuality;
+	using ColourSelector = juce::ColourSelector;
+	using ImageCache = juce::ImageCache;
+	using Int64 = juce::int64;
+	using WavAudioFormat = juce::WavAudioFormat;
+	using AudioFormatWriter = juce::AudioFormatWriter;
+	using MouseCursor = juce::MouseCursor;
+    using FileDragAndDropTarget = juce::FileDragAndDropTarget;
+	using DragAndDropTarget = juce::DragAndDropTarget;
+	using DragAndDropContainer = juce::DragAndDropContainer;
+    using DnDSrc = DragAndDropTarget::SourceDetails;
+	using URL = juce::URL;
 
     using Processor = audio::Processor;
 
@@ -69,9 +88,12 @@ namespace gui
     static constexpr float Pi = Tau * .5f;;
     static constexpr float PiHalf = Tau * .25f;
     static constexpr float PiQuart = Tau * .125f;
+	static constexpr float PiEight = Tau * .0625f;
+	static constexpr float PiSixteenth = Tau * .03125f;
+	static constexpr float Pi32 = Pi / 32.f;
 
-    static constexpr double EditorWidth = 690.;
-    static constexpr double EditorHeight = 420.;
+    static constexpr int EditorWidth = 1082;
+    static constexpr int EditorHeight = 722;
     static constexpr int EditorMinWidth = 100;
     static constexpr int EditorMinHeight = 100;
     static constexpr int FPS = 60;
@@ -80,6 +102,8 @@ namespace gui
     static constexpr double FPSInv = 1. / FPSD;
 
     bool isLineBreak(WChar) noexcept;
+
+    bool isTextCharacter(WChar) noexcept;
 
     namespace font
     {

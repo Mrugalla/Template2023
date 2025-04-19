@@ -11,8 +11,8 @@ namespace gui
 		enum class Type { Text, Paint, Image, NumTypes };
 		static constexpr int NumTypes = static_cast<int>(Type::NumTypes);
 
-		/* u, autoMaxHeight */
-		Label(Utils&, bool = true);
+		// u, autoMaxHeight
+		Label(Utils&, bool = false);
 
 		void resized() override;
 
@@ -30,7 +30,8 @@ namespace gui
 
 		float getMaxHeight() const noexcept;
 
-		void setMaxHeight() noexcept;
+		// margin
+		void setMaxHeight(float = 0.f) noexcept;
 
 		String text;
 		Font font;
@@ -44,40 +45,51 @@ namespace gui
 
 	//////
 
-	/* label, text, font, just, cID, tooltip */
+	// label, text, font, just, cID, tooltip
 	void makeTextLabel(Label&, const String&, const Font&, Just, CID, const String& = "");
 
-	/* label, onPaint, tooltip */
+	// label, onPaint, tooltip
 	void makePaintLabel(Label&, const Label::OnPaint&, const String& = "");
 
-	/* label, image, tooltip */
+	// label, image, tooltip
 	void makeImageLabel(Label&, const Image&, const String& = "");
 
 	//////
 
-	/* labels, size */
+	class Toast :
+		public Label
+	{
+		enum kCBs { kCBFade, kNumCBs };
+	public:
+		Toast(Utils&);
+
+		void paint(Graphics&) override;
+		
+		std::vector<std::function<void()>> events;
+		bool alphaAniWeight;
+	};
+
+	// labels, size
 	float findMaxCommonHeight(const Label*, int) noexcept;
 
 	float findMaxCommonHeight(const std::vector<Label*>&) noexcept;
 
-	/* labels, size */
+	// labels, size
 	void setMaxCommonHeight(Label*, int) noexcept;
 
-	/* labels, size */
+	// labels, size
 	void setMaxCommonHeight(Label*, size_t) noexcept;
 	
 	struct LabelGroup
 	{
-		LabelGroup(std::vector<Label*>&& _labels) :
-			labels(_labels)
-		{}
+		LabelGroup();
 
-		void setMaxHeight() noexcept
-		{
-			const auto h = findMaxCommonHeight(labels);
-			for (auto i = 0; i < labels.size(); ++i)
-				labels[i]->setHeight(h);
-		}
+		void clear();
+
+		void add(Label&);
+
+		// margin
+		void setMaxHeight(float = 0.f) noexcept;
 
 	protected:
 		std::vector<Label*> labels;

@@ -3,13 +3,19 @@
 
 namespace gui
 {
+	Mouse generateFakeMouseEvent(const juce::MouseInputSource&) noexcept;
+
+	void fixStupidJUCEImageThingie(Image&);
+
 	void hideCursor();
 
 	void showCursor(const Component&);
 
+	void showCursor(const PointF);
+
 	void centreCursor(const Component&, juce::MouseInputSource&);
 
-	/* text, randomizer, length, legalChars*/
+	// text, randomizer, length, legalChars
 	void appendRandomString(String&, Random&, int,
 		const String& = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
 
@@ -27,9 +33,14 @@ namespace gui
 	{
 		Layout();
 
-		void init(const std::vector<int>& /*xDist*/, const std::vector<int>& /*yDist*/);
+		// xDist, yDist
+		void init(const std::vector<int>&, const std::vector<int>&);
 
-		void fromStrings(const String& /*xDist*/, const String& /*yDist*/);
+		// xDist, yDist
+		void initFromStrings(const String&, const String&);
+
+		// numStepsX, numStepsY
+		void initGrid(int, int);
 
 		void resized(Bounds) noexcept;
 
@@ -90,20 +101,27 @@ namespace gui
 
 	void make(Path&, const Layout&, std::vector<Point>&&);
 
-	/* g, y, left, right, thicc */
+	// g, y, left, right, thicc
 	void drawHorizontalLine(Graphics&, int, float, float, int = 1);
 
-	/* g, x, top, bottom, thicc */
+	// g, x, top, bottom, thicc
 	void drawVerticalLine(Graphics&, int, float, float, int = 1);
 
-	/* graphics, bounds, edgeWidth, edgeHeight, stroke */
+	// graphics, bounds, edgeWidth, edgeHeight, stroke
 	void drawRectEdges(Graphics&, const BoundsF&, float, float, const Stroke&);
 
-	/* graphics, bounds, edgeWidth, stroke */
+	// graphics, bounds, edgeWidth, stroke
 	void drawRectEdges(Graphics&, const BoundsF&, float, const Stroke&);
 
-	/* graphics, bounds, text */
+	// graphics, bounds, text
 	void drawHeadLine(Graphics&, const BoundsF&, const String&);
+
+	// g, bounds, thicc
+	void visualizeGroupNEL(Graphics&, BoundsF, float);
+
+	// graphics, text, bounds, colour, thicc
+	void visualizeGroupNEL(Graphics&, String&&,
+		BoundsF, Colour, float);
 
 	template<class ArrayCompPtr>
 	inline void distributeVertically(const Component& parent, ArrayCompPtr& compArray)
@@ -144,10 +162,17 @@ namespace gui
 
 	PointF boundsOf(const Font&, const String&) noexcept;
 
+	// font, text, width, height
 	float findMaxHeight(const Font&, const String&, float, float) noexcept;
+
+	// path, bounds, endPos, thicc, 0, 1, 2, 3
+	// lrud = left, right, up, down [0, 1, 2, 3]
+	void closePathOverBounds(Path&, const BoundsF&, const PointF&,
+		float, int, int, int, int);
 
 	namespace imgPP
 	{
-		void blur(Image&, Graphics&, int /*its*/ = 3) noexcept;
+		// img, g, iterations
+		void blur(Image&, Graphics&, int = 3) noexcept;
 	}
 }

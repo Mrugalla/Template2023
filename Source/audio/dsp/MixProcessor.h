@@ -114,7 +114,7 @@ namespace dsp
 				gainIn.applyInverse(samples, numChannels, numSamples);
 		}
 
-		Gain<13.> gainIn;
+		Gain<13., -120.> gainIn;
 	};
 
 	struct MixProcessorDryWet
@@ -170,16 +170,16 @@ namespace dsp
 
 	private:
 		PP2Band parallelProcessor;
-		Gain<13.> gainDry, gainWetIn, gainWetOut;
+		Gain<13., -60.> gainDry, gainWetIn, gainWetOut;
 	};
 
 	struct MixProcessorWetMix
 	{
 		MixProcessorWetMix() :
 			parallelProcessor(),
-			gainWetIn(0.f),
-			gainWetOut(0.f),
-			mixPRM(1.f)
+			gainWetIn(0.),
+			gainWetOut(0.),
+			mixPRM(1.)
 		{}
 
 		void prepare(double sampleRate)
@@ -226,7 +226,7 @@ namespace dsp
 	
 	private:
 		PP2Band parallelProcessor;
-		Gain<13.> gainWetIn, gainWetOut;
+		Gain<13., -120.> gainWetIn, gainWetOut;
 		PRMD mixPRM;
 
 		/* samples, mix, numChannels, numSamples */
@@ -359,6 +359,6 @@ namespace dsp
 #else
 		MixProcessorWetMix mixProcessor;
 #endif
-		Gain<13.> gainOut;
+		Gain<13., -60.> gainOut;
 	};
 }

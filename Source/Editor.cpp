@@ -8,8 +8,8 @@ namespace gui
         {
             switch (type)
             {
-            case evt::Type::ColourSchemeChanged:
-                return repaintWithChildren(&c);
+            case evt::Type::ThemeUpdated:
+                return c.repaint();
             case evt::Type::ClickedEmpty:
                 return c.giveAwayKeyboardFocus();
             }
@@ -30,12 +30,6 @@ namespace gui
             Label(utils, false)
         },
         filterTypeButton(utils),
-
-        painterMacro(true),
-        painterGainOut(3, .5f, 1.f, .4f, .3f, .4f, -.2f, 3, 128),
-        painterPB(2, .5f, 1.f, .4f, .3f, .4f, -.2f, 5, 64),
-        painterSlew(),
-
         macroKnob(utils),
         slewKnob(utils),
         gainOutKnob(utils),
@@ -60,13 +54,18 @@ namespace gui
         addAndMakeVisible(filterTypeButton);
 
         addAndMakeVisible(macroKnob);
-        macroKnob.attachParameter("Macro", PID::Macro, &painterMacro);
+        makeParameter(PID::Macro, macroKnob);
         addAndMakeVisible(slewKnob);
-        slewKnob.attachParameter("Slew", PID::Slew, &painterSlew);
+		makeParameter(PID::Slew, slewKnob);
         addAndMakeVisible(gainOutKnob);
-        gainOutKnob.attachParameter("Gain Out", PID::GainOut, &painterGainOut);
+		makeParameter(PID::GainOut, gainOutKnob);
         addAndMakeVisible(pbKnob);
-		pbKnob.attachParameter("PB Range", PID::PitchbendRange, &painterPB);
+		makeParameter(PID::PitchbendRange, pbKnob);
+
+        makeKnob(macroKnob, false);
+		makeKnob(slewKnob);
+        makeKnob(gainOutKnob);
+		makeKnob(pbKnob);
 
         const auto& user = *audioProcessor.state.props.getUserSettings();
         const auto editorWidth = user.getDoubleValue("EditorWidth", EditorWidth);
@@ -111,11 +110,6 @@ namespace gui
         layout.place(slewKnob, 2, 2, 1, 1, false);
         layout.place(gainOutKnob, 3, 2, 1, 2, false);
         layout.place(pbKnob, 4, 2, 1, 2, false);
-
-        layout.place(macroKnob.label, 1, 4, 1, 1, false);
-        layout.place(slewKnob.label, 2, 4, 1, 1, false);
-        layout.place(gainOutKnob.label, 3, 4, 1, 1, false);
-        layout.place(pbKnob.label, 4, 4, 1, 1, false);
 
         auto& user = *audioProcessor.state.props.getUserSettings();
 		const auto editorWidth = static_cast<double>(getWidth());

@@ -1,5 +1,4 @@
 #pragma once
-#include <juce_core/juce_core.h>
 #include "juce_audio_processors/juce_audio_processors.h"
 #include "../arch/XenManager.h"
 #include "../arch/State.h"
@@ -24,7 +23,9 @@ namespace param
 #elif PPDIO == PPDIOWetMix
 		GainWet,
 		Mix,
+#if PPDHasDelta
 		Delta,
+#endif
 #endif
 		GainOut,
 #if PPDHasStereoConfig
@@ -39,10 +40,12 @@ namespace param
 		// tuning parameters
 #if PPDHasTuningEditor
 		Xen,
+		XenSnap,
 		MasterTune,
-		ReferencePitch,
+		AnchorPitch,
 		PitchbendRange,
 #endif
+		SoftClip,
 		Power,
 
 		// low level parameters
@@ -81,6 +84,7 @@ namespace param
 		Beats,
 		Degree,
 		Octaves,
+		OctavesFloat,
 		Semi,
 		Fine,
 		Ms,
@@ -98,6 +102,7 @@ namespace param
 		Legato,
 		Custom,
 		FilterType,
+		Vowel,
 		NumUnits
 	};
 
@@ -134,7 +139,7 @@ namespace param
 
 		void savePatch(State&) const;
 
-		void loadPatch(State&);
+		void loadPatch(const State&);
 
 		//called by host, normalized, thread-safe
 		float getValue() const override;
@@ -226,18 +231,18 @@ namespace param
 		bool modDepthAbsolute;
 	};
 
-	struct Params
+	class Params
 	{
 		using AudioProcessor = juce::AudioProcessor;
 		using Parameters = std::vector<Param*>;
-
+	public:
 		Params(AudioProcessor&
 #if PPDHasTuningEditor
 			, const Xen&
 #endif
 		);
 
-		void loadPatch(State&);
+		void loadPatch(const State&);
 
 		void savePatch(State&) const;
 
@@ -267,64 +272,4 @@ namespace param
 		Parameters params;
 		std::atomic<float> modDepthAbsolute;
 	};
-
-	namespace strToVal
-	{
-		std::function<float(String, const float/*altVal*/)> parse();
-
-		StrToValFunc power();
-		StrToValFunc solo();
-		StrToValFunc mute();
-		StrToValFunc percent();
-		StrToValFunc hz();
-		StrToValFunc phase();
-		StrToValFunc oct();
-		StrToValFunc semi();
-		StrToValFunc fine();
-		StrToValFunc ratio();
-		StrToValFunc lrms();
-		StrToValFunc freeSync();
-		StrToValFunc polarity();
-		StrToValFunc ms();
-		StrToValFunc db();
-		StrToValFunc voices();
-		StrToValFunc pan(const Params&);
-		StrToValFunc note();
-		StrToValFunc pitch(const Xen&);
-		StrToValFunc q();
-		StrToValFunc slope();
-		StrToValFunc beats();
-		StrToValFunc legato();
-		StrToValFunc filterType();
-	}
-
-	namespace valToStr
-	{
-		ValToStrFunc mute();
-		ValToStrFunc solo();
-		ValToStrFunc power();
-		ValToStrFunc percent();
-		ValToStrFunc hz();
-		ValToStrFunc phase();
-		ValToStrFunc phase360();
-		ValToStrFunc oct();
-		ValToStrFunc semi();
-		ValToStrFunc fine();
-		ValToStrFunc ratio();
-		ValToStrFunc lrms();
-		ValToStrFunc freeSync();
-		ValToStrFunc polarity();
-		ValToStrFunc ms();
-		ValToStrFunc db();
-		ValToStrFunc empty();
-		ValToStrFunc voices();
-		ValToStrFunc pan(const Params&);
-		ValToStrFunc note();
-		ValToStrFunc pitch(const Xen&);
-		ValToStrFunc q();
-		ValToStrFunc slope();
-		ValToStrFunc beats();
-		ValToStrFunc legato();
-		ValToStrFunc filterType();
-	}
 }

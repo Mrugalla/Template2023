@@ -29,11 +29,7 @@ namespace gui
         std::array<Label, kNumLabels> labels;
 
         Button filterTypeButton;
-
-        KnobPainterBasic painterMacro;
-        KnobPainterSpirograph painterGainOut, painterPB, painterSlew;
-
-        KnobParam macroKnob, slewKnob, gainOutKnob, pbKnob;
+        Knob macroKnob, slewKnob, gainOutKnob, pbKnob;
 
         //JUCE_HEAVYWEIGHT_LEAK_DETECTOR(Editor)
     };

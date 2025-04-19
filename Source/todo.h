@@ -1,31 +1,22 @@
 /*
 -----------------------------------------------------------------------------------------
+~~~ concepts ~~~
+
 ~~~ todo ~~~
 
 ToThink
     -
 
+Param db valToStr can be -inf (gain wet [-inf, 0])
+    but it can also be not (gain out [-12,12])
 GUI
-    BuildDate
-        draw automatic normal version number
-        build date in the tooltip tho
     SharedPluginState (customizable state)
+        fonts für verschiedene funktionen
+            (zB knob-labels, titel, etc)
         sensitivity
             drag, wheel, key
         defaultvalue
             doubleclick, key
-        colourscheme
-            bias not needed anymore
-    Button
-        makeParameter
-            lacks lock feature
-    TextEditor
-        button that edits its label
-    Editor
-        makeToast (firstTimeUwU)
-    Knob
-        find better place for parameter lock
-        make more painters
 AUDIO
     FFT
         replace by 3rd party lib for performance (kiss fft or pffft)
@@ -35,11 +26,16 @@ AUDIO
     sidechain
         envfol
             should appear to be added to macro
-            actually sample-accurate
+            sample-accurate
     MixProcessor
         code readability
         add latency compensation delay
         write cpp
+
+-----------------------------------------------------------------------------------------
+
+C:\Program Files\Image-Line\FL Studio 2024\FL64.exe
+C:\Program Files\Steinberg\Cubase 9.5\Cubase9.5.exe
 
 -----------------------------------------------------------------------------------------
 

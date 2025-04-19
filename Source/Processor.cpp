@@ -8,6 +8,8 @@
 #include "arch/Math.h"
 #include "audio/dsp/Distortion.h"
 
+#define KeepState true
+
 namespace audio
 {
     Processor::BusesProps Processor::makeBusesProps()
@@ -37,12 +39,15 @@ namespace audio
 #endif
         state(),
         
+        transport(),
         pluginProcessor(params
 #if PPDHasTuningEditor
 		, xenManager
 #endif
         ),
         audioBufferD(),
+        midiSubBuffer(),
+        midiOutBuffer(),
 
         mixProcessor(),
 #if PPDHasHQ
@@ -51,6 +56,34 @@ namespace audio
         sampleRateUp(0.),
         blockSizeUp(dsp::BlockSize)
     {
+        const auto& user = *state.props.getUserSettings();
+        const auto& settingsFile = user.getFile();
+        const auto settingsDirectory = settingsFile.getParentDirectory();
+		const auto patchesDirectory = settingsDirectory.getChildFile("Patches");
+        if (!patchesDirectory.exists())
+        {
+            patchesDirectory.createDirectory();
+
+			using String = juce::String;
+            const auto makePatch = [&p = patchesDirectory](const String& name, const void* data, int size)
+            {
+                const auto initFile = p.getChildFile(name + ".txt");
+                if (initFile.existsAsFile())
+                    initFile.deleteFile();
+                initFile.create();
+                initFile.replaceWithData(data, size);
+            };
+		}
+
+        state.set("author", "factory");
+        params.savePatch(state);
+        pluginProcessor.savePatch(state);
+        const auto init = state.state.createCopy();
+        const auto initFile = patchesDirectory.getChildFile(" init .txt");
+        if (initFile.existsAsFile())
+            initFile.deleteFile();
+        initFile.create();
+		initFile.replaceWithText(init.toXmlString());
     }
 
     Processor::~Processor()
@@ -138,9 +171,7 @@ namespace audio
         auto latency = 0;
 
         audioBufferD.setSize(2, maxBlockSize, false, true, false);
-		pluginProcessor.prepare(sampleRate);
         mixProcessor.prepare(sampleRate);
-
 #if PPDHasHQ
         const auto hqEnabled = params(PID::HQ).getValMod() > .5f;
         oversampler.prepare(sampleRate, hqEnabled);
@@ -151,6 +182,8 @@ namespace audio
         sampleRateUp = sampleRate;
 		blockSizeUp = dsp::BlockSize;
 #endif
+        transport.prepare(1. / sampleRate);
+        pluginProcessor.prepare(sampleRateUp);
         setLatencySamples(latency);
         startTimerHz(4);
     }
@@ -202,16 +235,20 @@ namespace audio
 
     void Processor::getStateInformation(juce::MemoryBlock& destData)
     {
-        pluginProcessor.savePatch();
+#if KeepState
+        pluginProcessor.savePatch(state);
         params.savePatch(state);
         state.savePatch(*this, destData);
+#endif
     }
 
     void Processor::setStateInformation(const void* data, int sizeInBytes)
     {
+#if KeepState
         state.loadPatch(*this, data, sizeInBytes);
         params.loadPatch(state);
-        pluginProcessor.loadPatch();
+        pluginProcessor.loadPatch(state);
+#endif
     }
 
     void Processor::processBlockBypassed(AudioBufferD& buffer, MidiBuffer& midiMessages)
@@ -284,7 +321,6 @@ namespace audio
         {
             const auto totalNumInputChannels = getTotalNumInputChannels();
             const auto totalNumOutputChannels = getTotalNumOutputChannels();
-
             for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
                 buffer.clear(i, 0, numSamplesMain);
         }
@@ -294,6 +330,7 @@ namespace audio
         const auto numChannels = buffer.getNumChannels();
 		auto samplesMain = buffer.getArrayOfWritePointers();
 
+        transport(playHead);
 #if PPDHasStereoConfig
         bool midSide = false;
         if (numChannels == 2)
@@ -314,9 +351,26 @@ namespace audio
 #elif PPDIO == PPDIOWetMix
         const auto gainWetDb = static_cast<double>(params(PID::GainWet).getValModDenorm());
         const auto mix = static_cast<double>(params(PID::Mix).getValMod());
+#if PPDHasDelta
         const auto delta = params(PID::Delta).getValMod() > .5f;
+#else
+        const bool delta = false;
+#endif
 #endif
         const auto gainOutDb = static_cast<double>(params(PID::GainOut).getValModDenorm());
+
+        midiOutBuffer.clear();
+
+#if PPDHasTuningEditor
+        auto xen = params(PID::Xen).getValModDenorm();
+		const auto xenSnap = params(PID::XenSnap).getValMod() > .5f;
+        if(xenSnap)
+			xen = std::round(xen);
+        const auto masterTune = std::round(params(PID::MasterTune).getValModDenorm());
+        const auto anchor = std::round(params(PID::AnchorPitch).getValModDenorm());
+        const auto pitchbendRange = std::round(params(PID::PitchbendRange).getValModDenorm());
+        xenManager({ xen, masterTune, anchor, pitchbendRange }, numChannels);
+#endif
 
         for (auto s = 0; s < numSamplesMain; s += dsp::BlockSize)
         {
@@ -356,8 +410,19 @@ namespace audio
             );
     #endif
 #endif
+            midiSubBuffer.clear();
+            for(auto it : midiMessages)
+			{
+                const auto ts = it.samplePosition;
+				if (ts >= s && ts < s + numSamples)
+                    midiSubBuffer.addEvent(it.getMessage(), ts - s);
+			}
 
-            processBlockOversampler(samples, midiMessages, numChannels, numSamples);
+            processBlockOversampler(samples, midiSubBuffer, transport.info, numChannels, numSamples);
+            transport(numSamples);
+
+            for(auto it : midiSubBuffer)
+                midiOutBuffer.addEvent(it.getMessage(), it.samplePosition + s);
             
 #if PPDIO == PPDIOOut
     #if PPDIsNonlinear
@@ -399,17 +464,32 @@ namespace audio
             
         }
 
+        midiMessages.swapWith(midiOutBuffer);
+
 #if PPDHasStereoConfig
 		if (midSide)
 			dsp::midSideDecode(samplesMain, numSamplesMain);
 #endif
 
-#if JUCE_DEBUG
+		const auto& softClipParam = params(PID::SoftClip);
+		const auto softClip = softClipParam.getValMod() > .5f;
+        const auto knee = .5 / dsp::Pi;
+        if(softClip)
+        {
+			for (auto ch = 0; ch < numChannels; ++ch)
+			{
+				auto smpls = samplesMain[ch];
+                for (auto s = 0; s < numSamplesMain; ++s)
+                    smpls[s] = dsp::softclipPrismaHeavy(smpls[s], 1., knee);
+			}
+		}
+
+#if JUCE_DEBUG && false
         for (auto ch = 0; ch < numChannels; ++ch)
         {
             auto smpls = samplesMain[ch];
             for (auto s = 0; s < numSamplesMain; ++s)
-                smpls[s] = dsp::hardclip(smpls[s], 1.);
+                smpls[s] = dsp::hardclip(smpls[s], 2.);
         }
 #endif
     }
@@ -446,7 +526,7 @@ namespace audio
     }
 
     void Processor::processBlockOversampler(double* const* samples, MidiBuffer& midi,
-        int numChannels, int numSamples) noexcept
+        const dsp::Transport::Info& transportInfo, int numChannels, int numSamples) noexcept
     {
 #if PPDHasHQ
         auto bufferInfo = oversampler.upsample(samples, numChannels, numSamples);
@@ -456,8 +536,7 @@ namespace audio
         double* samplesUp[] = { samples[0], samples[1] };
         const auto numSamplesUp = numSamples;
 #endif
-        pluginProcessor(samplesUp, midi, numChannels, numSamplesUp);
-
+        pluginProcessor(samplesUp, midi, transportInfo, numChannels, numSamplesUp);
 #if PPDHasHQ
         oversampler.downsample(samples, numSamples);
 #endif
@@ -487,3 +566,5 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new audio::Processor();
 }
+
+#undef KeepState

@@ -3,23 +3,23 @@
 
 namespace dsp
 {
-	template<double SmoothLengthMs>
-	Gain<SmoothLengthMs>::Gain(double defaultValueDb) :
-		gainPRM(math::decibelToAmp(defaultValueDb)),
+	template<double SmoothLengthMs, double MinDb>
+	Gain<SmoothLengthMs, MinDb>::Gain(double defaultValueDb) :
+		gainPRM(math::dbToAmp(defaultValueDb, MinDb)),
 		gainInfo(nullptr, 0., false)
 	{}
 
-	template<double SmoothLengthMs>
-	void Gain<SmoothLengthMs>::prepare(double sampleRate) noexcept
+	template<double SmoothLengthMs, double MinDb>
+	void Gain<SmoothLengthMs, MinDb>::prepare(double sampleRate) noexcept
 	{
 		gainPRM.prepare(sampleRate, SmoothLengthMs);
 	}
 
-	template<double SmoothLengthMs>
-	void Gain<SmoothLengthMs>::operator()(double* const* samples, double gainDb,
+	template<double SmoothLengthMs, double MinDb>
+	void Gain<SmoothLengthMs, MinDb>::operator()(double* const* samples, double gainDb,
 		int numChannels, int numSamples) noexcept
 	{
-		const auto gainAmp = math::decibelToAmp(gainDb);
+		const auto gainAmp = math::dbToAmp(gainDb, MinDb);
 		gainInfo = gainPRM(gainAmp, numSamples);
 
 		if (gainInfo.smoothing)
@@ -28,7 +28,7 @@ namespace dsp
 				auto smpls = samples[ch];
 				SIMD::multiply(smpls, gainInfo.buf, numSamples);
 			}
-		else
+		else if(gainInfo.val != 1.)
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
 				auto smpls = samples[ch];
@@ -36,8 +36,8 @@ namespace dsp
 			}
 	}
 
-	template<double SmoothLengthMs>
-	void Gain<SmoothLengthMs>::applyInverse(double* const* samples, int numChannels, int numSamples) noexcept
+	template<double SmoothLengthMs, double MinDb>
+	void Gain<SmoothLengthMs, MinDb>::applyInverse(double* const* samples, int numChannels, int numSamples) noexcept
 	{
 		if (gainInfo.smoothing)
 			for (auto ch = 0; ch < numChannels; ++ch)
@@ -58,8 +58,8 @@ namespace dsp
 		}
 	}
 
-	template<double SmoothLengthMs>
-	void Gain<SmoothLengthMs>::applyInverse(double* smpls, int numSamples) noexcept
+	template<double SmoothLengthMs, double MinDb>
+	void Gain<SmoothLengthMs, MinDb>::applyInverse(double* smpls, int numSamples) noexcept
 	{
 		if (gainInfo.smoothing)
 			for (auto s = 0; s < numSamples; ++s)
@@ -71,15 +71,27 @@ namespace dsp
 		}
 	}
 
-	template struct Gain<1.>;
-	template struct Gain<2.>;
-	template struct Gain<3.>;
-	template struct Gain<5.>;
-	template struct Gain<8.>;
-	template struct Gain<13.>;
-	template struct Gain<21.>;
-	template struct Gain<34.>;
-	template struct Gain<55.>;
-	template struct Gain<89.>;
-	template struct Gain<144.>;
+	template struct Gain<1., -60.>;
+	template struct Gain<2., -60.>;
+	template struct Gain<3., -60.>;
+	template struct Gain<5., -60.>;
+	template struct Gain<8., -60.>;
+	template struct Gain<13., -60.>;
+	template struct Gain<21., -60.>;
+	template struct Gain<34., -60.>;
+	template struct Gain<55., -60.>;
+	template struct Gain<89., -60.>;
+	template struct Gain<144., -60.>;
+
+	template struct Gain<1., -120.>;
+	template struct Gain<2., -120.>;
+	template struct Gain<3., -120.>;
+	template struct Gain<5., -120.>;
+	template struct Gain<8., -120.>;
+	template struct Gain<13., -120.>;
+	template struct Gain<21., -120.>;
+	template struct Gain<34., -120.>;
+	template struct Gain<55., -120.>;
+	template struct Gain<89., -120.>;
+	template struct Gain<144., -120.>;
 }

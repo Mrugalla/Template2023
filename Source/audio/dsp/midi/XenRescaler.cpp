@@ -13,7 +13,7 @@ namespace dsp
 			{
 				const auto channel = msg.getChannel();
 				const auto noteNumber = static_cast<double>(msg.getNoteNumber());
-				const auto freq = math::noteInFreqHz(noteNumber, xen, basePitch, masterTune);
+				const auto freq = math::noteToFreqHz(noteNumber, xen, basePitch, masterTune);
 				processNoteOn(buffer, msg.getFloatVelocity(), freq, pitchbendRange, channel, ts);
 			};
 
@@ -23,7 +23,7 @@ namespace dsp
 			{
 				const auto channel = msg.getChannel();
 				const auto noteNumber = static_cast<double>(msg.getNoteNumber());
-				const auto freq = math::noteInFreqHz(noteNumber);
+				const auto freq = math::noteToFreqHz(noteNumber);
 				const auto cFreq = math::closestFreq(freq, xen, basePitch, masterTune);
 				processNoteOn(buffer, msg.getFloatVelocity(), cFreq, pitchbendRange, channel, ts);
 			};
@@ -55,7 +55,7 @@ namespace dsp
 		curNote.setChannel(channel);
 		curNote.setVelocity(velocity);
 
-		const auto note = math::freqHzInNote(freq);
+		const auto note = math::freqHzToNote(freq);
 		const auto noteRound = std::round(note);
 		curNote.setNoteNumber(static_cast<int>(noteRound));
 

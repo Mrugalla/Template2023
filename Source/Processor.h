@@ -28,6 +28,7 @@ namespace audio
         public Timer
     {
         using BusesProps = juce::AudioProcessor::BusesProperties;
+        using ValueTree = juce::ValueTree;
 
         BusesProps makeBusesProps();
         bool canAddBus(bool) const override;
@@ -43,7 +44,7 @@ namespace audio
         void processBlock(AudioBufferD&, MidiBuffer&) override;
         void processBlockBypassed(AudioBufferD&, MidiBuffer&) override;
 
-        void processBlockOversampler(double* const*, MidiBuffer&, int, int) noexcept;
+        void processBlockOversampler(double* const*, MidiBuffer&, const dsp::Transport::Info&, int, int) noexcept;
         
         juce::AudioProcessorEditor* createEditor() override;
         bool hasEditor() const override;
@@ -69,8 +70,10 @@ namespace audio
         Params params;
         State state;
 
+        dsp::Transport transport;
         PluginProcessor pluginProcessor;
         AudioBufferD audioBufferD;
+        MidiBuffer midiSubBuffer, midiOutBuffer;
 
         dsp::MixProcessor mixProcessor;
 #if PPDHasHQ
@@ -78,5 +81,7 @@ namespace audio
 #endif
         double sampleRateUp;
         int blockSizeUp;
+
+        //JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Processor)
     };
 }

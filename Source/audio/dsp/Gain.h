@@ -3,22 +3,22 @@
 
 namespace dsp
 {
-	template<double SmoothLengthMs>
+	template<double SmoothLengthMs, double MinDb>
 	struct Gain
 	{
-		/* defaultValueDb */
+		// defaultValueDb
 		Gain(double);
 
-		/* sampleRate */
+		// sampleRate
 		void prepare(double) noexcept;
 
-		/* samples, gainDb, numChannels, numSamples */
+		// samples, gainDb, numChannels, numSamples
 		void operator()(double* const*, double, int, int) noexcept;
 
-		/* samples, numChannels, numSamples */
+		// samples, numChannels, numSamples
 		void applyInverse(double* const*, int, int) noexcept;
 
-		/* smpls, numSamples */
+		// smpls, numSamples
 		void applyInverse(double*, int) noexcept;
 
 	private:

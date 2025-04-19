@@ -4,8 +4,12 @@ namespace dsp
 {
 	template<size_t NumBands>
 	ParallelProcessor<NumBands>::ParallelProcessor() :
-		bands()
-	{}
+		bands(),
+		sleepy()
+	{
+		for (auto& s : sleepy)
+			s = true;
+	}
 
 	template<size_t NumBands>
 	void ParallelProcessor<NumBands>::split(double* const* samples, int numChannels, int numSamples) noexcept
@@ -24,6 +28,26 @@ namespace dsp
 	void ParallelProcessor<NumBands>::join(double* const* samples, int numChannels, int numSamples) noexcept
 	{
 		for (auto b = 0; b < MaxBand; ++b)
+		{
+			const auto b2 = 2 * b;
+			const double* band[] = { bands[b2].data(), bands[b2 + 1].data() };
+
+			for (auto ch = 0; ch < numChannels; ++ch)
+				SIMD::add(samples[ch], band[ch], numSamples);
+		}
+	}
+
+	template<size_t NumBands>
+	void ParallelProcessor<NumBands>::joinReplace(double* const* samples, int numChannels, int numSamples) noexcept
+	{
+		{
+			const double* band[] = { bands[0].data(), bands[1].data() };
+
+			for (auto ch = 0; ch < numChannels; ++ch)
+				SIMD::copy(samples[ch], band[ch], numSamples);
+		}
+
+		for (auto b = 1; b < MaxBand; ++b)
 		{
 			const auto b2 = 2 * b;
 			const double* band[] = { bands[b2].data(), bands[b2 + 1].data() };
@@ -54,10 +78,16 @@ namespace dsp
 	}
 
 	template<size_t NumBands>
-	ParallelProcessor<NumBands>::Band ParallelProcessor<NumBands>::getBand(int bandIdx) noexcept
+	typename ParallelProcessor<NumBands>::Band ParallelProcessor<NumBands>::getBand(int bandIdx) noexcept
 	{
 		const auto b2 = 2 * bandIdx;
 		return { bands[b2].data(), bands[b2 + 1].data() };
+	}
+
+	template<size_t NumBands>
+	typename ParallelProcessor<NumBands>::Band ParallelProcessor<NumBands>::operator[](int bandIdx) noexcept
+	{
+		return getBand(bandIdx);
 	}
 
 	template<size_t NumBands>
@@ -129,8 +159,22 @@ namespace dsp
 		}
 	}
 
+	template<size_t NumBands>
+	bool ParallelProcessor<NumBands>::isSleepy(int idx) const noexcept
+	{
+		return sleepy[idx];
+	}
+	
+	template<size_t NumBands>
+	void ParallelProcessor<NumBands>::setSleepy(bool e, int idx) noexcept
+	{
+		sleepy[idx] = e;
+	}
+
 	template struct ParallelProcessor<2>;
 	template struct ParallelProcessor<3>;
 	template struct ParallelProcessor<4>;
 	template struct ParallelProcessor<5>;
+	template struct ParallelProcessor<NumMPEChannels>;
+	template struct ParallelProcessor<NumMIDIChannels>;
 }

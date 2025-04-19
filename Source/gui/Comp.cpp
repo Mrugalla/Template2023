@@ -7,10 +7,19 @@ namespace gui
 		layout(),
 		tooltip(_tooltip),
 		members(),
-		callbacks()//,
-		//stuff(),
-		//comps()
+		callbacks()
 	{
+		setMouseCursor(makeCursor());
+
+		addEvt([this](const evt::Type type, const void* stuff)
+		{
+			if(type == evt::Type::ThemeUpdated)
+			{
+				const auto cID = *static_cast<const CID*>(stuff);
+				if (cID == CID::Interact)
+					setMouseCursor(makeCursor());
+			}
+		});
 	}
 
 	Comp::~Comp()
@@ -44,12 +53,17 @@ namespace gui
 
 	void Comp::initLayout(const String& xL, const String& yL)
 	{
-		layout.fromStrings(xL, yL);
+		layout.initFromStrings(xL, yL);
 	}
 
 	void Comp::addEvt(const evt::Evt& evt)
 	{
 		members.push_back({ utils.eventSystem, evt });
+	}
+
+	void Comp::notify(const evt::Type type, const void* stuff)
+	{
+		utils.eventSystem.notify(type, stuff);
 	}
 
 	void Comp::mouseEnter(const Mouse&)

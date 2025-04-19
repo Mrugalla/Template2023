@@ -5,7 +5,7 @@ namespace gui
 	Label::Label(Utils& u, bool _autoMaxHeight) :
 		Comp(u),
 		text(""),
-		font(),
+		font(FontOptions()),
 		just(Just::centred),
 		onPaint([](Graphics&, const Label&) {}),
 		img(),
@@ -80,9 +80,11 @@ namespace gui
 		return findMaxHeight(font, text, w, h);
 	}
 
-	void Label::setMaxHeight() noexcept
+	void Label::setMaxHeight(float margin) noexcept
 	{
-		setHeight(getMaxHeight());
+		const auto thicc = utils.thicc;
+		const auto h = getMaxHeight() - margin;
+		setHeight(h < thicc ? thicc : h);
 	}
 
 	//////
@@ -109,6 +111,86 @@ namespace gui
 		label.type = Label::Type::Image;
 		label.img = img;
 		label.setTooltip(tooltip);
+	}
+
+	//////
+
+	Toast::Toast(Utils& u) :
+		Label(u, true),
+		events(),
+		alphaAniWeight(false)
+	{
+		makeTextLabel(*this, "", font::dosisBold(), Just::centred, CID::Txt);
+
+		const auto fpsToast = cbFPS::k30;
+		const auto speedIn = msToInc(AniLengthMs, fpsToast);
+		const auto speedOut = msToInc(AniLengthMs * 2.f, fpsToast);
+		add(Callback([&, speedIn, speedOut]()
+		{
+			auto& phase = callbacks[kCBFade].phase;
+			if (alphaAniWeight)
+			{
+				if (phase == 1.f)
+					return;
+				phase += speedIn;
+				if (phase >= 1.f)
+					callbacks[kCBFade].stop(1.f);
+			}
+			else
+			{
+				if (phase == 0.f)
+					return;
+				phase -= speedOut;
+				if (phase <= 0.f)
+				{
+					callbacks[kCBFade].stop(0.f);
+					return setVisible(false);
+				}
+			}
+			setAlpha(math::tanhApprox(2.f * phase));
+			setVisible(true);
+		}, kCBFade, fpsToast, false));
+
+		addEvt([&](const evt::Type t, const void* stuff)
+		{
+			if (t == evt::Type::ToastShowUp)
+			{
+				const auto bounds = *static_cast<const Bounds*>(stuff);
+				const Point offset(getWidth(), 0);
+				const auto y = bounds.getTopLeft().y;
+				const auto nX = bounds.getTopLeft().x - offset.x;
+				if (nX > getWidth())
+					setTopLeftPosition(nX, y);
+				else
+					setTopLeftPosition(bounds.getTopLeft().x + getWidth(), y);
+				alphaAniWeight = true;
+				callbacks[kCBFade].start(callbacks[kCBFade].phase);
+			}
+			else if (t == evt::Type::ToastUpdateMessage)
+			{
+				const auto nMessage = *static_cast<const String*>(stuff);
+				setText(nMessage);
+				repaint();
+			}
+			else if (t == evt::Type::ToastVanish)
+			{
+				alphaAniWeight = false;
+				callbacks[kCBFade].start(callbacks[kCBFade].phase);
+			}
+			else if (t == evt::Type::ToastColour)
+			{
+				const auto cID = *static_cast<const CID*>(stuff);
+				makeTextLabel(*this, "", font::dosisBold(), Just::centred, cID);
+			}
+		});
+	}
+
+	void Toast::paint(Graphics& g)
+	{
+		setCol(g, CID::Darken);
+		const auto t2 = utils.thicc;
+		g.fillRoundedRectangle(getLocalBounds().toFloat().reduced(t2), t2);
+		Label::paint(g);
 	}
 
 	//////
@@ -140,4 +222,32 @@ namespace gui
 	{
 		setMaxCommonHeight(labels, static_cast<int>(size));
 	}
+
+	//////
+
+	LabelGroup::LabelGroup() :
+		labels()
+	{
+	}
+
+	void LabelGroup::clear()
+	{
+		labels.clear();
+	}
+
+	void LabelGroup::add(Label& label)
+	{
+		labels.push_back(&label);
+	}
+
+	void LabelGroup::setMaxHeight(float margin) noexcept
+	{
+		const auto thicc = labels[0]->utils.thicc;
+		const auto h = findMaxCommonHeight(labels) - margin;
+		const auto height = h < 0.f ? thicc : h;
+		for (auto i = 0; i < labels.size(); ++i)
+			labels[i]->setHeight(height);
+	}
+
+	//////
 }

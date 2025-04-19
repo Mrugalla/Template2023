@@ -10,10 +10,9 @@ namespace gui
             Bg,
             Txt,
             Interact,
-            Inactive,
-            Hover,
             Mod,
-            Bias,
+            Hover,
+            Darken,
             NumCols
         };
 
@@ -41,5 +40,14 @@ namespace gui
 
     using CID = Colours::ID;
 
+    String toString(CID);
+
     Colour getColour(CID) noexcept;
+
+    Colour toDefault(CID cID) noexcept;
+
+    void setCol(Graphics&, CID);
+
+    // g, cID, alpha
+    void setCol(Graphics&, CID, float);
 }

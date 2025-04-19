@@ -74,7 +74,7 @@ namespace dsp
 				if (msg.isNoteOn())
 				{
 					const auto noteNumber = static_cast<double>(msg.getNoteNumber());
-					const auto freq = math::noteInFreqHz(noteNumber, xen, basePitch, masterTune);
+					const auto freq = math::noteToFreqHz(noteNumber, xen, basePitch, masterTune);
 					synth.setFreqHz(freq);
 					synth.noteOn = true;
 				}
@@ -111,7 +111,7 @@ namespace dsp
 				if (msg.isNoteOn())
 				{
 					const auto noteNumber = static_cast<double>(msg.getNoteNumber());
-					const auto freq = math::noteInFreqHz(noteNumber);
+					const auto freq = math::noteToFreqHz(noteNumber);
 					const auto cFreq = math::closestFreq(freq, xen, basePitch, masterTune);
 					synth.setFreqHz(cFreq);
 					synth.noteOn = true;

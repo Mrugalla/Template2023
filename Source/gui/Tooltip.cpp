@@ -21,32 +21,11 @@ namespace gui
 			{ 1 }
 		);
 
-		makeTextLabel(labels[kTooltip], "", font::dosisLight(), Just::bottomLeft, CID::Txt, "Read the tooltips while hovering GUI elements to find out more about them!");
+		makeTextLabel(labels[kTooltip], "", font::dosisMedium(), Just::bottomLeft, CID::Txt, "Read the tooltips while hovering GUI elements to find out more about them!");
 
-		auto& user = utils.getProps();
-		const auto buildDateOldString = user.getValue("buildDate", "");
-		const auto buildDateNewString = getBuildDate();
-		
-		const auto pluginVersion = 0;
-		auto versionNumber = user.getDoubleValue("versionNumber", static_cast<double>(pluginVersion));
-		const bool newBuild = buildDateOldString != buildDateNewString;
-		
-		if (newBuild)
-		{
-			if (static_cast<int>(versionNumber) != pluginVersion)
-				versionNumber = static_cast<double>(pluginVersion);
-
-#if !JUCE_DEBUG
-			else
-				versionNumber += .000001;
-#endif
-			user.setValue("versionNumber", versionNumber);
-			user.setValue("buildDate", buildDateNewString);
-		}
-		
-		const String versionNumberString = "v: " + String(versionNumber, 6);
-		const String buildDateString = "This version's build date: " + buildDateNewString;
-		makeTextLabel(labels[kBuildDate], versionNumberString, font::dosisLight(), Just::bottomRight, CID::Txt, buildDateString);
+		const auto buildDateString = getBuildDate();
+		const String buildDateTooltip = "This version's build date: " + buildDateString;
+		makeTextLabel(labels[kBuildDate], buildDateString, font::dosisMedium(), Just::bottomRight, CID::Hover, buildDateTooltip);
 
 		for (auto& label : labels)
 			addAndMakeVisible(label);
@@ -61,6 +40,12 @@ namespace gui
 				tt.repaint();
 			}
 		});
+	}
+
+	void Tooltip::paint(Graphics& g)
+	{
+		setCol(g, CID::Darken);
+		g.fillAll();
 	}
 
 	void Tooltip::resized()

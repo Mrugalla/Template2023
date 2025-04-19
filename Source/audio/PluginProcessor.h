@@ -1,11 +1,7 @@
 #pragma once
+#include "dsp/Transport.h"
 #include "../param/Param.h"
 #include "dsp/SlewLimiter.h"
-#include "Using.h"
-
-/*
-This is where dsp custom to each individual plugin will be written
-*/
 
 namespace audio
 {
@@ -13,26 +9,29 @@ namespace audio
 	{
 		using Params = param::Params;
 		using PID = param::PID;
+		using MidiBuffer = dsp::MidiBuffer;
+		using Transport = dsp::Transport;
+		using State = arch::State;
+		using XenManager = arch::XenManager;
 		
-		PluginProcessor(Params&, const arch::XenManager&);
+		PluginProcessor(Params&, XenManager&);
 
-		/* sampleRate */
+		// sampleRate
 		void prepare(double);
 
-		/* samples, midiBuffer, numChannels, numSamples */
-		void operator()(double**, dsp::MidiBuffer&, int, int) noexcept;
+		// samples, midiBuffer, transport, numChannels, numSamples
+		void operator()(double**, MidiBuffer&, const Transport::Info&, int, int) noexcept;
 		
-		/* samples, midiBuffer, numChannels, numSamples */
-		void processBlockBypassed(double**, dsp::MidiBuffer&, int, int) noexcept;
+		// samples, midiBuffer, numChannels, numSamples
+		void processBlockBypassed(double**, MidiBuffer&, int, int) noexcept;
 
-		void savePatch();
+		void savePatch(State&);
 		
-		void loadPatch();
+		void loadPatch(const State&);
 
 		Params& params;
-		const arch::XenManager& xen;
+		XenManager& xen;
 		double sampleRate;
-
 		dsp::SlewLimiterStereo slew;
 	};
 }

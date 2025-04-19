@@ -1,6 +1,7 @@
 #pragma once
-#include "Utils.h"
 #include "Layout.h"
+#include "Utils.h"
+#include "Cursor.h"
 
 namespace gui
 {
@@ -10,23 +11,21 @@ namespace gui
 		static constexpr float LockAlpha = .5f;
 		static constexpr float AniLengthMs = 200.f;
 
-		/* utils, tooltip */
+		// utils, tooltip
 		Comp(Utils&, const String & = "");
 
 		~Comp();
 
 		void setLocked(bool);
 
-		void deregisterCallbacks();
-
 		void add(const Callback&);
 
-		void registerCallbacks();
-
-		/* xL, yL */
+		// xL, yL
 		void initLayout(const String&, const String&);
 
 		void addEvt(const evt::Evt&);
+
+		void notify(const evt::Type, const void* = nullptr);
 
 		void mouseEnter(const Mouse&) override;
 
@@ -39,5 +38,9 @@ namespace gui
 		String tooltip;
 		std::vector<evt::Member> members;
 		Callbacks callbacks;
+	private:
+		void deregisterCallbacks();
+
+		void registerCallbacks();
 	};
 }

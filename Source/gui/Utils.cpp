@@ -13,14 +13,14 @@ namespace gui
 		Colours::c.init(audioProcessor.state.props.getUserSettings());
 	}
 
-	void Utils::add(Callback* cb)
+	void Utils::add(Callback* ncb)
 	{
-		callbacks.add(cb);
+		callbacks.add(ncb);
 	}
 
-	void Utils::remove(Callback* cb)
+	void Utils::remove(Callback* ncb)
 	{
-		callbacks.remove(cb);
+		callbacks.remove(ncb);
 	}
 
 	std::vector<Param*>& Utils::getAllParams() noexcept
@@ -51,7 +51,7 @@ namespace gui
 	void Utils::resized()
 	{
 		auto a = std::min(pluginTop.getWidth(), pluginTop.getHeight());
-		auto t = static_cast<float>(a) * .004f;
+		auto t = static_cast<float>(a) * .0035f;
 		thicc = t < 1.f ? 1.f : t;
 	}
 
@@ -79,14 +79,14 @@ namespace gui
 
 	ValueTree Utils::savePatch()
 	{
-		audioProcessor.pluginProcessor.savePatch();
+		audioProcessor.pluginProcessor.savePatch(audioProcessor.state);
 		return audioProcessor.state.state;
 	}
 
 	void Utils::loadPatch(const ValueTree& vt)
 	{
 		audioProcessor.state.loadPatch(vt);
-		audioProcessor.pluginProcessor.loadPatch();
+		audioProcessor.pluginProcessor.loadPatch(audioProcessor.state);
 	}
 
 	Props& Utils::getProps() noexcept

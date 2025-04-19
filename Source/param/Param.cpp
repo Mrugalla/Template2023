@@ -1,7 +1,7 @@
 #include "Param.h"
 #include "../arch/FormulaParser.h"
-#include "../arch/Math.h"
 #include "../arch/Range.h"
+#include "../arch/Math.h"
 
 namespace param
 {
@@ -37,7 +37,9 @@ namespace param
 #elif PPDIO == PPDIOWetMix
 		case PID::GainWet: return "Gain Wet";
 		case PID::Mix: return "Mix";
+#if PPDHasDelta
 		case PID::Delta: return "Delta";
+#endif
 #endif
 		case PID::GainOut: return "Gain Out";
 #if PPDHasStereoConfig
@@ -52,10 +54,12 @@ namespace param
 #if PPDHasTuningEditor
 			// TUNING PARAM:
 		case PID::Xen: return "Xen";
+		case PID::XenSnap: return "Xen Snap";
 		case PID::MasterTune: return "Master Tune";
-		case PID::ReferencePitch: return "Reference Pitch";
+		case PID::AnchorPitch: return "Anchor Pitch";
 		case PID::PitchbendRange: return "Pitchbend Range";
 #endif
+		case PID::SoftClip: return "Soft Clip";
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
@@ -104,7 +108,9 @@ namespace param
 #elif PPDIO == PPDIOWetMix
 		case PID::GainWet: return "Apply gain to the wet signal.";
 		case PID::Mix: return "Mix the dry with the wet signal.";
+#if PPDHasDelta
 		case PID::Delta: return "Listen to the difference between the dry and the wet signal.";
+#endif
 #endif
 		case PID::GainOut: return "Apply gain to the output signal.";
 #if PPDHasStereoConfig
@@ -119,11 +125,13 @@ namespace param
 #endif
 #if PPDHasTuningEditor
 		// TUNING PARAMS:
-		case PID::Xen: return "Define the xenharmonic scale.";
-		case PID::MasterTune: return "Define the master tune / chamber pitch.";
-		case PID::ReferencePitch: return "This pitch has the same frequency in all xen scales.";
-		case PID::PitchbendRange: return "Define the pitchbend range in semitones.";
+		case PID::Xen: return "The xenharmony describes how many pitches per octave exist. Higher edo = smaller intervals.";
+		case PID::XenSnap: return "If disabled you can explore xen scales that have less or no octaves.";
+		case PID::MasterTune: return "This is the frequency the anchor pitch refers to. (Chamber Frequency)";
+		case PID::AnchorPitch: return "The anchor pitch refers to the same frequency regardless of xen scale.";
+		case PID::PitchbendRange: return "The pitchbend range in semitones describes how many pitches you can bend.";
 #endif
+		case PID::SoftClip: return "Dis/Enable soft clipping.";
 		case PID::Power: return "Dis/Enable the plugin.";
 
 		// LOW LEVEL PARAMS:
@@ -147,7 +155,7 @@ namespace param
 		case Unit::Degree: return CharPtr("\xc2\xb0");
 		case Unit::Octaves: return "oct";
 		case Unit::Semi: return "semi";
-		case Unit::Fine: return "fine";
+		case Unit::Fine: return "ct";
 		case Unit::Ms: return "ms";
 		case Unit::Decibel: return "db";
 		case Unit::Ratio: return "ratio";
@@ -200,13 +208,11 @@ namespace param
 		state.set(idStr + "/mb", mb);
 	}
 
-	void Param::loadPatch(State& state)
+	void Param::loadPatch(const State& state)
 	{
 		if (isLocked())
 			return;
-
 		const String idStr("params/" + toID(toString(id)));
-		
 		auto var = state.get(idStr + "/value");
 		if (var)
 		{
@@ -332,7 +338,7 @@ namespace param
 	{
 		if (isLocked())
 			return;
-
+		b = BiasEps + b * (1.f - 2.f * BiasEps);
 		b = juce::jlimit(BiasEps, 1.f - BiasEps, b);
 		mod.bias.store(b);
 	}
@@ -454,7 +460,7 @@ namespace param
 
 namespace param::strToVal
 {
-	extern std::function<float(String, const float/*altVal*/)> parse()
+	extern std::function<float(String, const float)> parse()
 	{
 		return [](const String& txt, const float altVal)
 		{
@@ -463,6 +469,17 @@ namespace param::strToVal
 				return fx();
 
 			return altVal;
+		};
+	}
+
+	StrToValFunc standard(float defaultVal)
+	{
+		return[p = parse(), defaultVal](const String& txt)
+		{
+			if (math::stringNegates(txt))
+				return defaultVal;
+			const auto val = p(txt, defaultVal);
+			return val;
 		};
 	}
 
@@ -546,6 +563,16 @@ namespace param::strToVal
 		};
 	}
 
+	StrToValFunc octFloat()
+	{
+		return[p = parse()](const String& txt)
+		{
+			const auto text = txt.trimCharactersAtEnd(toString(Unit::Octaves));
+			const auto val = p(text, 0.f);
+			return val;
+		};
+	}
+
 	StrToValFunc semi()
 	{
 		return[p = parse()](const String& txt)
@@ -604,9 +631,19 @@ namespace param::strToVal
 	{
 		return[p = parse()](const String& txt)
 		{
-			const auto text = txt.trimCharactersAtEnd(toString(Unit::Ms));
+			auto iStr = 0;
+			for(auto i = 0; i < txt.length(); ++i)
+				if (txt[i] >= 'a' && txt[i] <= 'z' || txt[i] >= 'A' && txt[i] <= 'Z')
+				{
+					iStr = i;
+					i = txt.length();
+				}
+			const auto text = txt.substring(0, iStr);
 			const auto val = p(text, 0.f);
-			return val;
+			if(txt.endsWith("sec") || txt.endsWith("sek"))
+				return val * 1000.f;
+			else
+				return val;
 		};
 	}
 
@@ -856,14 +893,14 @@ namespace param::valToStr
 	ValToStrFunc hz()
 	{
 		return [](float v)
-		{
-			if (v >= 10000.f)
-				return String(v * .001).substring(0, 4) + " k" + toString(Unit::Hz);
-			else if (v >= 1000.f)
-				return String(v * .001).substring(0, 3) + " k" + toString(Unit::Hz);
-			else
-				return String(v).substring(0, 5) + " " + toString(Unit::Hz);
-		};
+			{
+				if (v >= 10000.f)
+					return String(v * .001).substring(0, 4) + " k" + toString(Unit::Hz);
+				else if (v >= 1000.f)
+					return String(v * .001).substring(0, 3) + " k" + toString(Unit::Hz);
+				else
+					return String(v).substring(0, 5) + " " + toString(Unit::Hz);
+			};
 	}
 
 	ValToStrFunc phase()
@@ -881,6 +918,11 @@ namespace param::valToStr
 		return [](float v) { return String(std::round(v)) + " " + toString(Unit::Octaves); };
 	}
 
+	ValToStrFunc octFloat()
+	{
+		return [](float v) { return String(v, 1) + " " + toString(Unit::Octaves); };
+	}
+
 	ValToStrFunc semi()
 	{
 		return [](float v) { return String(std::round(v)) + " " + toString(Unit::Semi); };
@@ -894,10 +936,10 @@ namespace param::valToStr
 	ValToStrFunc ratio()
 	{
 		return [](float v)
-		{
-			const auto y = static_cast<int>(std::round(v * 100.f));
-			return String(100 - y) + " : " + String(y);
-		};
+			{
+				const auto y = static_cast<int>(std::round(v * 100.f));
+				return String(100 - y) + " : " + String(y);
+			};
 	}
 
 	ValToStrFunc lrms()
@@ -917,12 +959,29 @@ namespace param::valToStr
 
 	ValToStrFunc ms()
 	{
-		return [](float v) { return String(std::round(v * 10.f) * .1f) + " " + toString(Unit::Ms); };
+		return [](float v)
+			{
+				if (v < 100.f)
+				{
+					v = std::round(v * 100.f) * .01f;
+					return String(v) + " ms";
+				}
+				else if (v < 1000.f)
+				{
+					v = std::round(v * 10.f) * .1f;
+					return String(v) + " ms";
+				}
+				else
+				{
+					v = std::round(v * .1f) * .01f;
+					return String(v) + " sec";
+				}
+			};
 	}
 
 	ValToStrFunc db()
 	{
-		return [](float v) { return String(std::round(v * 100.f) * .01f) + " " + toString(Unit::Decibel); };
+		return [](float v) { return String(v, 1) + " " + toString(Unit::Decibel); };
 	}
 
 	ValToStrFunc empty()
@@ -933,96 +992,102 @@ namespace param::valToStr
 	ValToStrFunc voices()
 	{
 		return [](float v)
-		{
-			return String(std::round(v)) + toString(Unit::Voices);
-		};
+			{
+				return String(std::round(v)) + toString(Unit::Voices);
+			};
 	}
 
 	ValToStrFunc pan(const Params& params)
 	{
 		return [&prms = params](float v)
-		{
-			if (v == 0.f)
-				return String("C");
+			{
+				if (v == 0.f)
+					return String("C");
 
 #if PPDHasStereoConfig
-			const auto sc = prms[PID::StereoConfig];
-			const auto vm = sc->getValMod();
-			const auto isMidSide = vm > .5f;
+				const auto sc = prms[PID::StereoConfig];
+				const auto vm = sc->getValMod();
+				const auto isMidSide = vm > .5f;
 
-			if (!isMidSide)
+				if (!isMidSide)
 #endif
-			{
-				if (v == -1.f)
-					return String("Left");
-				else if (v == 1.f)
-					return String("Right");
-				else
-					return String(std::round(v * 100.f)) + (v < 0.f ? " L" : " R");
-			}
+				{
+					if (v == -1.f)
+						return String("Left");
+					else if (v == 1.f)
+						return String("Right");
+					else
+						return String(std::round(v * 100.f)) + (v < 0.f ? " L" : " R");
+				}
 #if PPDHasStereoConfig
-			else
-			{
-				if (v == -1.f)
-					return String("Mid");
-				else if (v == 1.f)
-					return String("Side");
 				else
-					return String(std::round(v * 100.f)) + (v < 0.f ? " M" : " S");
-			}
+				{
+					if (v == -1.f)
+						return String("Mid");
+					else if (v == 1.f)
+						return String("Side");
+					else
+						return String(std::round(v * 100.f)) + (v < 0.f ? " M" : " S");
+				}
 #endif
-		};
+			};
 	}
 
-	ValToStrFunc xen()
+	ValToStrFunc xen(const Params& params)
 	{
-		return [](float v)
-		{
-			return String(std::round(v)) + " " + toString(Unit::Xen);
-		};
+		return [&prms = params](float v)
+			{
+				const auto& snapParam = prms(PID::XenSnap);
+				const auto snap = snapParam.getValMod() > .5f;
+				if (snap)
+					v = std::round(v);
+				else
+					v = std::round(v * 100.f) * .01f;
+				return String(v) + " " + toString(Unit::Xen);
+			};
 	}
 
 	ValToStrFunc note()
 	{
 		return [](float v)
-		{
-			if (v >= 0.f)
 			{
-				enum pitchclass { C, Db, D, Eb, E, F, Gb, G, Ab, A, Bb, B, Num };
+				if (v >= 0.f)
+				{
+					enum pitchclass { C, Db, D, Eb, E, F, Gb, G, Ab, A, Bb, B, Num };
 
-				const auto note = static_cast<int>(std::round(v));
-				const auto octave = note / 12 - 1;
-				const auto noteName = note % 12;
-				return math::pitchclassToString(noteName) + String(octave);
-			}
-			return String("?");
-		};
+					const auto note = static_cast<int>(std::round(v));
+					const auto octave = note / 12 - 1;
+					const auto noteName = note % 12;
+					return math::pitchclassToString(noteName) + String(octave);
+				}
+				return String("?");
+			};
 	}
 
 	ValToStrFunc pitch(const Xen& xenManager)
 	{
 		return [noteFunc = note(), hzFunc = hz(), &xen = xenManager](float v)
-		{
-			return noteFunc(v) + "; " + hzFunc(xen.noteToFreqHz(v));
-		};
+			{
+				return noteFunc(v) + "; " + hzFunc(xen.noteToFreqHz(v));
+			};
 	}
 
 	ValToStrFunc q()
 	{
 		return [](float v)
-		{
-			v = std::round(v * 100.f) * .01f;
-			return String(v) + " " + toString(Unit::Q);
-		};
+			{
+				v = std::round(v * 100.f) * .01f;
+				return String(v) + " " + toString(Unit::Q);
+			};
 	}
 
 	ValToStrFunc slope()
 	{
 		return [](float v)
-		{
-			v = std::round(v) * 12.f;
-			return String(v) + " " + toString(Unit::Slope);
-		};
+			{
+				v = std::round(v) * 12.f;
+				return String(v) + " " + toString(Unit::Slope);
+			};
 	}
 
 	ValToStrFunc beats()
@@ -1030,65 +1095,65 @@ namespace param::valToStr
 		enum Mode { Whole, Triplet, Dotted, NumModes };
 
 		return [](float v)
-		{
-			if (v == 0.f)
-				return String("0");
-
-			const auto denormFloor = math::nextLowestPowTwoX(v);
-			const auto denormFrac = v - denormFloor;
-			const auto modeVal = denormFrac / denormFloor;
-			const auto mode = modeVal < .66f ? Mode::Whole :
-				modeVal < .75f ? Mode::Triplet :
-				Mode::Dotted;
-			String modeStr = mode == Mode::Whole ? String("") :
-				mode == Mode::Triplet ? String("t") :
-				String(".");
-
-			auto denominator = 1.f / denormFloor;
-			auto numerator = 1.f;
-			if (denominator < 1.f)
 			{
-				numerator = denormFloor;
-				denominator = 1.f;
-			}
+				if (v == 0.f)
+					return String("0");
 
-			return String(numerator) + " / " + String(denominator) + modeStr;
-		};
+				const auto denormFloor = math::nextLowestPowTwoX(v);
+				const auto denormFrac = v - denormFloor;
+				const auto modeVal = denormFrac / denormFloor;
+				const auto mode = modeVal < .66f ? Mode::Whole :
+					modeVal < .75f ? Mode::Triplet :
+					Mode::Dotted;
+				String modeStr = mode == Mode::Whole ? String("") :
+					mode == Mode::Triplet ? String("t") :
+					String(".");
+
+				auto denominator = 1.f / denormFloor;
+				auto numerator = 1.f;
+				if (denominator < 1.f)
+				{
+					numerator = denormFloor;
+					denominator = 1.f;
+				}
+
+				return String(numerator) + " / " + String(denominator) + modeStr;
+			};
 	}
 
 	ValToStrFunc legato()
 	{
 		return [](float v)
-		{
-			return v < .5f ? String("Off") : v < 1.5f ? String("On") : String("On+Sus");
-		};
+			{
+				return v < .5f ? String("Off") : v < 1.5f ? String("On") : String("On+Sus");
+			};
 	}
 
 	ValToStrFunc filterType()
 	{
 		return [](float v)
-		{
-			auto idx = static_cast<int>(std::round(v));
-			switch (idx)
 			{
-			case 0: return String("LP");
-			case 1: return String("HP");
-			case 2: return String("BP");
-			case 3: return String("BR");
-			case 4: return String("AP");
-			case 5: return String("LS");
-			case 6: return String("HS");
-			case 7: return String("Notch");
-			case 8: return String("Bell");
-			default: return String("");
-			}
-		};
+				auto idx = static_cast<int>(std::round(v));
+				switch (idx)
+				{
+				case 0: return String("LP");
+				case 1: return String("HP");
+				case 2: return String("BP");
+				case 3: return String("BR");
+				case 4: return String("AP");
+				case 5: return String("LS");
+				case 6: return String("HS");
+				case 7: return String("Notch");
+				case 8: return String("Bell");
+				default: return String("");
+				}
+			};
 	}
 }
 
 namespace param
 {
-	/* pID, valDenormDefault, range, Unit */
+	// pID, valDenormDefault, range, Unit
 	extern Param* makeParam(PID id, float valDenormDefault = 1.f,
 		const Range& range = { 0.f, 1.f }, Unit unit = Unit::Percent)
 	{
@@ -1141,6 +1206,10 @@ namespace param
 			valToStrFunc = valToStr::oct();
 			strToValFunc = strToVal::oct();
 			break;
+		case Unit::OctavesFloat:
+			valToStrFunc = valToStr::octFloat();
+			strToValFunc = strToVal::octFloat();
+			break;
 		case Unit::Semi:
 			valToStrFunc = valToStr::semi();
 			strToValFunc = strToVal::semi();
@@ -1152,10 +1221,6 @@ namespace param
 		case Unit::Voices:
 			valToStrFunc = valToStr::voices();
 			strToValFunc = strToVal::voices();
-			break;
-		case Unit::Xen:
-			valToStrFunc = valToStr::xen();
-			strToValFunc = strToVal::xen();
 			break;
 		case Unit::Note:
 			valToStrFunc = valToStr::note();
@@ -1183,7 +1248,7 @@ namespace param
 			break;
 		default:
 			valToStrFunc = [](float v) { return String(v); };
-			strToValFunc = [p = param::strToVal::parse()](const String& s)
+			strToValFunc = [p = strToVal::parse()](const String& s)
 			{
 				return p(s, 0.f);
 			};
@@ -1193,7 +1258,7 @@ namespace param
 		return new Param(id, range, valDenormDefault, valToStrFunc, strToValFunc, unit);
 	}
 
-	/* pID, params */
+	// pID, params
 	extern Param* makeParamPan(PID id, const Params& params)
 	{
 		ValToStrFunc valToStrFunc = valToStr::pan(params);
@@ -1202,7 +1267,7 @@ namespace param
 		return new Param(id, { -1.f, 1.f }, 0.f, valToStrFunc, strToValFunc, Unit::Pan);
 	}
 
-	/* pID, state, valDenormDefault, range, Xen */
+	// pID, valDenormDefault, range, Xen
 	extern Param* makeParamPitch(PID id, float valDenormDefault,
 		const Range& range, const Xen& xen)
 	{
@@ -1212,8 +1277,18 @@ namespace param
 		return new Param(id, range, valDenormDefault, valToStrFunc, strToValFunc, Unit::Pitch);
 	}
 
+	extern Param* makeParamXen(const Params& params)
+	{
+		constexpr auto MaxXen = static_cast<float>(arch::MaxXen);
+		constexpr auto DefaultXen = 12.f;
+		const auto range = makeRange::withCentre(3.f, MaxXen, DefaultXen);
+		ValToStrFunc valToStrFunc = valToStr::xen(params);
+		StrToValFunc strToValFunc = strToVal::xen();
+		return new Param(PID::Xen, range, DefaultXen, valToStrFunc, strToValFunc, Unit::Xen);
+	}
+
 	extern Param* makeParam(PID id, float valDenormDefault, const Range& range,
-		ValToStrFunc&& valToStrFunc, StrToValFunc&& strToValFunc)
+		const ValToStrFunc& valToStrFunc, const StrToValFunc& strToValFunc = strToVal::standard(0.f))
 	{
 		return new Param(id, range, valDenormDefault, valToStrFunc, strToValFunc, Unit::Custom);
 	}
@@ -1230,27 +1305,30 @@ namespace param
 	{
 		{ // HIGH LEVEL PARAMS:
 			params.push_back(makeParam(PID::Macro, 1.f));
-			
+
 #if PPDIsNonlinear
 			const auto gainInRange = makeRange::withCentre(PPDGainInMin, PPDGainInMax, 0.f);
 			params.push_back(makeParam(PID::GainIn, 0.f, gainInRange, Unit::Decibel));
 			params.push_back(makeParam(PID::UnityGain, 1.f, makeRange::toggle(), Unit::Polarity));
 #endif
 #if PPDIO == PPDIODryWet
-			const auto gainDryRange = makeRange::withCentre(PPDGainDryMin, PPDGainDryMax, 0.f);
-			const auto gainWetRange = makeRange::withCentre(PPDGainWetMin, PPDGainWetMax, 0.f);
-			params.push_back(makeParam(PID::GainDry, 0.f, gainDryRange, Unit::Decibel));
-			params.push_back(makeParam(PID::GainWet, 0.f, gainWetRange, Unit::Decibel));
+			const auto gainRangeCentre = -20.f;
+			const auto gainDryRange = makeRange::withCentre(PPDGainDryMin, PPDGainDryMax, gainRangeCentre);
+			const auto gainWetRange = makeRange::withCentre(PPDGainWetMin, PPDGainWetMax, gainRangeCentre);
+			params.push_back(makeParam(PID::GainDry, PPDGainDryMin, gainDryRange, Unit::Decibel));
+			params.push_back(makeParam(PID::GainWet, -18.f, gainWetRange, Unit::Decibel));
 #elif PPDIO == PPDIOWetMix
-			const auto gainWetRange = makeRange::withCentre(PPDGainWetMin, PPDGainWetMax, 0.f);
+			const auto gainWetRange = makeRange::lin(PPDGainWetMin, PPDGainWetMax);
 			params.push_back(makeParam(PID::GainWet, 0.f, gainWetRange, Unit::Decibel));
 			params.push_back(makeParam(PID::Mix, 1.f));
+#if PPDHasDelta
 			params.push_back(makeParam(PID::Delta, 0.f, makeRange::toggle(), Unit::Power));
 #endif
-			const auto gainOutRange = makeRange::withCentre(PPDGainOutMin, PPDGainOutMax, 0.f);
+#endif
+			const auto gainOutRange = makeRange::lin(PPDGainOutMin, PPDGainOutMax);
 			params.push_back(makeParam(PID::GainOut, 0.f, gainOutRange, Unit::Decibel));
 #if PPDHasStereoConfig
-			params.push_back(makeParam(PID::StereoConfig, 1.f, makeRange::toggle(), Unit::StereoConfig));
+			params.push_back(makeParam(PID::StereoConfig, 0.f, makeRange::toggle(), Unit::StereoConfig));
 #endif
 #if PPDHasHQ
 			params.push_back(makeParam(PID::HQ, 1.f, makeRange::toggle(), Unit::Power));
@@ -1260,12 +1338,13 @@ namespace param
 #endif
 #if PPDHasTuningEditor
 			// TUNING PARAMS:
-			const auto maxXen = static_cast<float>(PPDMaxXen);
-			params.push_back(makeParam(PID::Xen, 12.f, makeRange::withCentre(3.f, maxXen, 12.f), Unit::Xen));
+			params.push_back(makeParamXen(*this));
+			params.push_back(makeParam(PID::XenSnap, 1.f, makeRange::toggle(), Unit::Power));
 			params.push_back(makeParam(PID::MasterTune, 440.f, makeRange::withCentre(420.f, 460.f, 440.f), Unit::Hz));
-			params.push_back(makeParam(PID::ReferencePitch, 69.f, makeRange::stepped(0.f, 127.f), Unit::Note));
-			params.push_back(makeParam(PID::PitchbendRange, 2.f, makeRange::stepped(0.f, 48.f), Unit::Semi));
+			params.push_back(makeParam(PID::AnchorPitch, 69.f, makeRange::stepped(0.f, 127.f), Unit::Note));
+			params.push_back(makeParam(PID::PitchbendRange, 2.f, makeRange::stepped(1.f, 48.f), Unit::Semi));
 #endif
+			params.push_back(makeParam(PID::SoftClip, 0.f, makeRange::toggle(), Unit::Power));
 			params.push_back(makeParam(PID::Power, 1.f, makeRange::toggle(), Unit::Power));
 		}
 
@@ -1278,7 +1357,7 @@ namespace param
 			audioProcessor.addParameter(param);
 	}
 
-	void Params::loadPatch(State& state)
+	void Params::loadPatch(const State& state)
 	{
 		const String idStr("params/");
 		const auto mda = state.get(idStr + "mdabs");
