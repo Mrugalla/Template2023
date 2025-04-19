@@ -30,8 +30,8 @@ namespace gui
 
         Button filterTypeButton;
 
-        KnobPainterBasic painterMacro, painterGainOut, painterPB;
-        KnobPainterSpirograph painterSlew;
+        KnobPainterBasic painterMacro;
+        KnobPainterSpirograph painterGainOut, painterPB, painterSlew;
 
         KnobParam macroKnob, slewKnob, gainOutKnob, pbKnob;
 

@@ -185,6 +185,23 @@ namespace gui
                 for (auto prm : prms)
                     prm->setModulationDefault();
             };
+
+            onWheel = [&](const Mouse& mouse)
+            {
+                for (auto prm : prms)
+                {
+                    const auto& range = prm->range;
+                    const auto interval = range.interval;
+
+                    if (interval > 0.f)
+                    {
+                        const auto nStep = interval / range.getRange().getLength();
+                        dragXY.setY(dragXY.y > 0.f ? nStep : -nStep);
+                    }
+                    
+                    prm->setModDepth(prm->getModDepth() + dragXY.y);
+                }
+            };
         }
 
         void attachParameters(PID* pIDs, int numPIDs)
@@ -588,6 +605,8 @@ namespace gui
     struct KnobPainterSpirograph :
         public KnobParam::Painter
     {
+        enum class MDState { Waiting, Processing, Finished};
+
         struct Arm
         {
             LineF line;
@@ -698,22 +717,115 @@ namespace gui
             float startAngle;
         };
 
+        struct Knot
+        {
+            void saveVal(float val, float numStepsF) noexcept
+            {
+                step = val * numStepsF;
+                doLerp();
+            }
+
+            void saveModDepth(float modDepth, float numStepsF, float mainValStep) noexcept
+            {
+                step = juce::jlimit(0.f, numStepsF, mainValStep + modDepth * numStepsF);
+                doLerp();
+            }
+
+            void makeBounds(float knotSize) noexcept
+            {
+                const auto knotSize2 = knotSize * 2.f;
+                bounds.setBounds(x - knotSize, y - knotSize, knotSize2, knotSize2);
+            }
+
+            bool savePoint(const LineF& line, int idx)
+            {
+                if (iCeil != idx)
+                    return false;
+
+                const auto len = line.getLength();
+                const auto pt = line.getPointAlongLine(frac * len);
+                x = pt.x;
+                y = pt.y;
+
+                return true;
+            }
+
+            void processModDepthVal(Path& modDepth, const LineF& line, int idx,
+                MDState& mdState, bool modDepthPositive)
+            {
+                isOnValue = savePoint(line, idx);
+                if (isOnValue)
+                {
+                    if (modDepthPositive)
+                    {
+                        modDepth.startNewSubPath(x, y);
+                        mdState = MDState::Processing;
+                    }
+                    else
+                    {
+                        if (mdState == MDState::Waiting)
+                            return;
+                        modDepth.lineTo(x, y);
+                        mdState = MDState::Finished;
+                    }
+                }
+            }
+
+            bool processModDepthMod(Path& modDepth, const LineF& line, int idx,
+                MDState& mdState, bool modDepthPositive)
+            {
+                isOnValue = savePoint(line, idx);
+                if (isOnValue)
+                {
+                    if (modDepthPositive)
+                    {
+                        modDepth.lineTo(x, y);
+                        mdState = MDState::Finished;
+                    }
+                    else
+                    {
+                        switch (mdState)
+                        {
+                        case MDState::Waiting:
+                            modDepth.startNewSubPath(x, y);
+                            mdState = MDState::Processing;
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            float x, y, step, frac, vFloor;
+            int iFloor, iCeil;
+            BoundsF bounds;
+            bool isOnValue;
+
+            void doLerp() noexcept
+            {
+                vFloor = std::floor(step);
+                iFloor = static_cast<int>(vFloor);
+                iCeil = iFloor + 1;
+                frac = step - vFloor;
+            }
+        };
+
         KnobPainterSpirograph(int numArms = 2,
             float startAngle = .5f, float angleLength = 1.f,
             float lengthBias = .4f, float lengthBiasAni = .3f,
             float armsAlpha = .4f, float armsAlphaAni = -.2f,
-            int numRings = 4, int numSteps = 128) :
+            int numRings = 1, int numSteps = 7) :
             bounds(),
             spirograph(),
             pathModDepth(),
             arms(startAngle, numArms),
-            valPoints()
+            knots()
         {
             onLayout = [](Layout& layout)
             {
                 layout.init
                 (
-                    { 1, 1, 1 },
+                    { 1, 1 },
                     { 5, 1 }
                 );
             };
@@ -721,18 +833,18 @@ namespace gui
             onResize = [&](KnobParam& k)
             {
                 const auto thicc = k.utils.thicc;
-                bounds = k.layout(0, 0, 3, 2, true).reduced(thicc * Pi);
-
-                k.layout.place(k.label, 0, 2, 3, 1, false);
+                bounds = k.layout(0, 0, 2, 1, true).reduced(thicc);
 
                 if (k.modDial.isVisible())
-                    k.layout.place(k.modDial, 1, 1, 1, 1, true);
-                k.layout.place(k.lockButton, 2, 1, 1, 1, true);
+                    k.layout.place(k.modDial, 0, 1, 1, 1, true);
+                k.layout.place(k.lockButton, 1, 1, 1, 1, true);
             };
 
             onPaint = [&, lengthBias, lengthBiasAni, numArms, angleLength, armsAlpha, armsAlphaAni, numRings, numSteps](KnobParam& k, Graphics& g)
             {
                 spirograph.clear();
+                pathModDepth.clear();
+
                 const auto thicc = k.utils.thicc;
 
                 const auto& vals = k.values;
@@ -754,13 +866,22 @@ namespace gui
                 if(biasWithAni >= 1.f)
                     --biasWithAni;
                 arms.makeLengthRels(biasWithAni);
-
                 arms.prepareArms(angleMain, static_cast<float>(numRings), rad);
+                const bool drawArms = armsAlpha != 0.f;
+
+                auto& knotVal = knots[KnobParam::Value];
+                auto& knotValMod = knots[KnobParam::ValMod];
+                auto& knotModDepth = knots[KnobParam::ModDepth];
+
+                knotVal.saveVal(vals[KnobParam::Value], numStepsF);
+                knotValMod.saveVal(vals[KnobParam::ValMod], numStepsF);
+                knotModDepth.saveModDepth(vals[KnobParam::ModDepth], numStepsF, knotVal.step);
+                const bool modDepthPositive = vals[KnobParam::ModDepth] > 0.f;
+                auto mdState = MDState::Waiting;
 
                 arms.makeArms(centre);
-                spirograph.startNewSubPath(arms.getEnd());
-                
-                const bool drawArms = armsAlpha != 0.f;
+                auto curPt = arms.getEnd();
+                spirograph.startNewSubPath(curPt);
                 if (drawArms)
                 {
                     const auto alphaWithAni = juce::jlimit(0.f, 1.f, armsAlpha + armsAlphaAni * downUpPhase);
@@ -768,35 +889,57 @@ namespace gui
                     arms.drawArms(g, thicc);
                 }
 
-                const auto mainVal = vals[KnobParam::Value];
-                const auto mainValStep = mainVal * numStepsF;
-                const auto valMod = vals[KnobParam::ValMod];
-                const auto valModStep = valMod * numStepsF;
-                const auto modDepth = vals[KnobParam::ModDepth];
-                const auto modDepthStep = juce::jlimit(0.f, numStepsF, mainValStep + modDepth * numStepsF);
-                const bool modDepthPositive = modDepth > 0.f;
+                /*
+                if (knotVal.step == 0.f)
+                {
+                    knotVal.x = curPt.x;
+                    knotVal.y = curPt.y;
 
-                const auto mainValStepFloor = static_cast<int>(mainValStep);
-                const auto mainValStepCeil = mainValStepFloor + 1;
-                const auto mainValStepFrac = mainValStep - mainValStepFloor;
+                    if (modDepthPositive)
+                    {
+                        pathModDepth.startNewSubPath(curPt);
+                        mdState = MDState::Processing;
+                    }
+                }
+                if (knotValMod.step == 0.f)
+				{
+					knotValMod.x = curPt.x;
+					knotValMod.y = curPt.y;
 
-                pathModDepth.clear();
-                bool shallDrawModDepth = false;
+                    if (!modDepthPositive)
+                    {
+                        pathModDepth.startNewSubPath(curPt);
+                        mdState = MDState::Processing;
+                    }
+				}
+                */
 
-                for (auto i = 0; i < numSteps; ++i)
+                for (auto i = 1; i < numSteps; ++i)
                 {
                     const auto lastPt = arms.getEnd();
                     arms.incAngles();
                     arms.makeArms(centre);
-                    const auto curPt = arms.getEnd();
+                    curPt = arms.getEnd();
 
+                    LineF curLine(lastPt, curPt);
+                    knotVal.processModDepthVal(pathModDepth, curLine, i, mdState, modDepthPositive);
+                    if (knotValMod.processModDepthMod(pathModDepth, curLine, i, mdState, modDepthPositive))
+                    {
+                        if (knotVal.isOnValue)
+                        {
+                            pathModDepth.lineTo(knotVal.x, knotVal.y);
+                            mdState = MDState::Finished;
+                        }
+                    }
+                    
                     spirograph.lineTo(curPt);
-                    if(shallDrawModDepth)
+                    if(mdState == MDState::Processing)
 						pathModDepth.lineTo(curPt);
 
                     if (drawArms)
                         arms.drawArms(g, thicc);
 
+                    /*
                     if (i == mainValStepCeil)
                     {
                         //const LineF armsLine(lastPt, curPt);
@@ -826,39 +969,51 @@ namespace gui
                             shallDrawModDepth = true;
                         }
                     }
+                    */
                 }
+                const auto lastPt = arms.getEnd();
                 spirograph.closeSubPath();
+                curPt = spirograph.getCurrentPosition();
+
+                knotVal.processModDepthVal(pathModDepth, LineF(lastPt, curPt), numSteps, mdState, modDepthPositive);
+                if (knotValMod.processModDepthMod(pathModDepth, LineF(lastPt, curPt), numSteps, mdState, modDepthPositive))
+                {
+                    pathModDepth.lineTo(knotVal.x, knotVal.y);
+                    mdState = MDState::Finished;
+                }
+
+                if (mdState == MDState::Processing)
+                    pathModDepth.lineTo(curPt);
 
                 Stroke stroke(thicc, Stroke::JointStyle::curved, Stroke::EndCapStyle::butt);
                 g.setColour(getColour(CID::Txt));
                 g.strokePath(spirograph, stroke);
 
                 const auto knotSize = thicc * 1.5f + downUpPhase * thicc * 1.5f;
-                const auto knotSize2 = knotSize * 2.f;
 
-                BoundsF boundsVal(valPoints[KnobParam::Value].x - knotSize, valPoints[KnobParam::Value].y - knotSize, knotSize2, knotSize2);
-                BoundsF boundsMod(valPoints[KnobParam::ValMod].x - knotSize, valPoints[KnobParam::ValMod].y - knotSize, knotSize2, knotSize2);
-
+                knotVal.makeBounds(knotSize);
+                knotValMod.makeBounds(knotSize);
+                
                 g.setColour(getColour(CID::Mod));
                 stroke.setStrokeThickness(knotSize);
                 g.strokePath(pathModDepth, stroke);
                 stroke.setStrokeThickness(thicc);
 
                 g.setColour(getColour(CID::Bg));
-                g.fillEllipse(boundsVal);
-                g.fillEllipse(boundsMod);
+                g.fillEllipse(knotVal.bounds);
+                g.fillEllipse(knotValMod.bounds);
 
                 g.setColour(getColour(CID::Interact));
-                g.drawEllipse(boundsVal, thicc);
+                g.drawEllipse(knotVal.bounds, thicc);
                 g.setColour(getColour(CID::Mod));
-                g.drawEllipse(boundsMod, thicc);
+                g.drawEllipse(knotValMod.bounds, thicc);
             };
         }
 
         BoundsF bounds;
         Path spirograph, pathModDepth;
         Arms arms;
-        std::array<PointF, KnobParam::NumValTypes> valPoints;
+        std::array<Knot, KnobParam::NumValTypes> knots;
     };
 
     struct KnobPainterIdk :

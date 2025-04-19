@@ -4,7 +4,7 @@ namespace gui
 {
 	String getBuildDate()
 	{
-		return static_cast<String>(JucePlugin_Manufacturer) + ", v: " + static_cast<String>(__DATE__) + " " + static_cast<String>(__TIME__);
+		return static_cast<String>(__DATE__) + " " + static_cast<String>(__TIME__);
 	}
 
 	Tooltip::Tooltip(Utils& u) :
@@ -22,7 +22,31 @@ namespace gui
 		);
 
 		makeTextLabel(labels[kTooltip], "", font::dosisLight(), Just::bottomLeft, CID::Txt, "Read the tooltips while hovering GUI elements to find out more about them!");
-		makeTextLabel(labels[kBuildDate], getBuildDate(), font::dosisLight(), Just::bottomRight, CID::Txt, "The version of this plugin is defined by the time it was built.");
+
+		auto& user = utils.getProps();
+		const auto buildDateOldString = user.getValue("buildDate", "");
+		const auto buildDateNewString = getBuildDate();
+		
+		const auto pluginVersion = 0;
+		auto versionNumber = user.getDoubleValue("versionNumber", static_cast<double>(pluginVersion));
+		const bool newBuild = buildDateOldString != buildDateNewString;
+		
+		if (newBuild)
+		{
+			if (static_cast<int>(versionNumber) != pluginVersion)
+				versionNumber = static_cast<double>(pluginVersion);
+
+#if !JUCE_DEBUG
+			else
+				versionNumber += .000001;
+#endif
+			user.setValue("versionNumber", versionNumber);
+			user.setValue("buildDate", buildDateNewString);
+		}
+		
+		const String versionNumberString = "v: " + String(versionNumber, 6);
+		const String buildDateString = "This version's build date: " + buildDateNewString;
+		makeTextLabel(labels[kBuildDate], versionNumberString, font::dosisLight(), Just::bottomRight, CID::Txt, buildDateString);
 
 		for (auto& label : labels)
 			addAndMakeVisible(label);

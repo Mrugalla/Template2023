@@ -32,8 +32,8 @@ namespace gui
         filterTypeButton(utils),
 
         painterMacro(true),
-        painterGainOut(false),
-        painterPB(false),
+        painterGainOut(3, .5f, 1.f, .4f, .3f, .4f, -.2f, 3, 128),
+        painterPB(2, .5f, 1.f, .4f, .3f, .4f, -.2f, 5, 64),
         painterSlew(),
 
         macroKnob(utils),
