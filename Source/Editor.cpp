@@ -2,18 +2,56 @@
 
 namespace gui
 {
-    evt::Evt makeEvt(Component& comp)
+    evt::Evt makeEvt(Editor& editor)
     {
-        return [&c = comp](evt::Type type, const void*)
+        return [&e = editor](evt::Type type, const void*)
         {
             switch (type)
             {
             case evt::Type::ThemeUpdated:
-                return c.repaint();
+                return e.repaint();
             case evt::Type::ClickedEmpty:
-                return c.giveAwayKeyboardFocus();
+                return e.giveAwayKeyboardFocus();
             }
         };
+    }
+
+    void loadSize(Editor& editor)
+    {
+        const auto& user = *editor.audioProcessor.state.props.getUserSettings();
+        const auto editorWidth = user.getDoubleValue("editorwidth", EditorWidth);
+        const auto editorHeight = user.getDoubleValue("editorheight", EditorHeight);
+        editor.setOpaque(true);
+        editor.setResizable(true, true);
+        editor.setSize
+        (
+            static_cast<int>(editorWidth),
+            static_cast<int>(editorHeight)
+        );
+    }
+
+	void saveSize(Editor& editor)
+	{
+        auto& user = *editor.audioProcessor.state.props.getUserSettings();
+        const auto editorWidth = static_cast<double>(editor.getWidth());
+        const auto editorHeight = static_cast<double>(editor.getHeight());
+        user.setValue("editorwidth", editorWidth);
+        user.setValue("editorheight", editorHeight);
+	}
+
+    bool canResize(Editor& editor)
+    {
+        if (editor.getWidth() < EditorMinWidth)
+        {
+            editor.setSize(EditorMinWidth, editor.getHeight());
+            return false;
+        }
+        if (editor.getHeight() < EditorMinHeight)
+        {
+            editor.setSize(editor.getWidth(), EditorMinHeight);
+            return false;
+        }
+        return true;
     }
 
     Editor::Editor(Processor& p) :
@@ -22,100 +60,44 @@ namespace gui
         utils(*this, p),
         layout(),
         evtMember(utils.eventSystem, makeEvt(*this)),
-        bgImage(utils),
         tooltip(utils),
-        labels
-        {
-            Label(utils, false),
-            Label(utils, false)
-        },
-        filterTypeButton(utils),
-        macroKnob(utils),
-        slewKnob(utils),
-        gainOutKnob(utils),
-        pbKnob(utils)
+        numFilters(utils)
     {
         layout.init
         (
-            { 1, 3, 8, 3, 3, 1 },
-            { 1, 2, 5, 2, 2, 1 }
+            { 1 },
+            { 13, 1 }
         );
 
-        addAndMakeVisible(bgImage);
-        addAndMakeVisible(bgImage.refreshButton);
-        addAndMakeVisible(tooltip);
+		addAndMakeVisible(tooltip);
+        addAndMakeVisible(numFilters);
 
-        makeTextLabel(labels[kDev], JucePlugin_Manufacturer, font::flx(), Just::centred, CID::Txt);
-        makeTextLabel(labels[kTitle], JucePlugin_Name, font::flx(), Just::centred, CID::Txt);
-        for (auto& label : labels)
-            addAndMakeVisible(label);
+        makeParameter(PID::ModalNumFilters, numFilters);
+        makeKnob(numFilters);
 
-        makeParameter(filterTypeButton, PID::FilterType, Button::Type::kChoice, "Type");
-        addAndMakeVisible(filterTypeButton);
+        loadSize(*this);
+    }
 
-        addAndMakeVisible(macroKnob);
-        makeParameter(PID::Macro, macroKnob);
-        addAndMakeVisible(slewKnob);
-		makeParameter(PID::Slew, slewKnob);
-        addAndMakeVisible(gainOutKnob);
-		makeParameter(PID::GainOut, gainOutKnob);
-        addAndMakeVisible(pbKnob);
-		makeParameter(PID::PitchbendRange, pbKnob);
-
-        makeKnob(macroKnob, false);
-		makeKnob(slewKnob);
-        makeKnob(gainOutKnob);
-		makeKnob(pbKnob);
-
-        const auto& user = *audioProcessor.state.props.getUserSettings();
-        const auto editorWidth = user.getDoubleValue("EditorWidth", EditorWidth);
-        const auto editorHeight = user.getDoubleValue("EditorHeight", EditorHeight);
-        setOpaque(true);
-        setResizable(true, true);
-        setSize
-        (
-            static_cast<int>(editorWidth),
-            static_cast<int>(editorHeight)
-        );
+    void Editor::paint(Graphics& g)
+    {
+        g.fillAll(getColour(CID::Bg));
     }
     
-    void Editor::paintOverChildren(Graphics& g)
+    void Editor::paintOverChildren(Graphics&)
     {
-        layout.paint(g, getColour(CID::Hover));
+        //layout.paint(g, getColour(CID::Hover));
     }
 
     void Editor::resized()
     {
-        if (getWidth() < EditorMinWidth)
-            return setSize(EditorMinWidth, getHeight());
-        if (getHeight() < EditorMinHeight)
-            return setSize(getWidth(), EditorMinHeight);
+		if (!canResize(*this))
+			return;
+        saveSize(*this);
 
         utils.resized();
         layout.resized(getLocalBounds());
-
-        bgImage.setBounds(getLocalBounds());
-        bgImage.refreshButton.setBounds(layout.cornerTopRight().toNearestInt());
-
         tooltip.setBounds(layout.bottom().toNearestInt());
-
-        layout.place(labels[kDev], 1, 1, 1, 1);
-        layout.place(labels[kTitle], 2, 1, 1, 1);
-        setMaxCommonHeight(labels.data(), kNumLabels);
-
-        layout.place(filterTypeButton, 2, 3, 1, 1, true);
-        filterTypeButton.label.setMaxHeight();
-
-        layout.place(macroKnob, 1, 2, 1, 2, false);
-        layout.place(slewKnob, 2, 2, 1, 1, false);
-        layout.place(gainOutKnob, 3, 2, 1, 2, false);
-        layout.place(pbKnob, 4, 2, 1, 2, false);
-
-        auto& user = *audioProcessor.state.props.getUserSettings();
-		const auto editorWidth = static_cast<double>(getWidth());
-		const auto editorHeight = static_cast<double>(getHeight());
-		user.setValue("EditorWidth", editorWidth);
-		user.setValue("EditorHeight", editorHeight);
+        layout.place(numFilters, 0, 0, 1, 1);
 	}
 
     void Editor::mouseEnter(const Mouse&)

@@ -1,11 +1,8 @@
 #include "PluginProcessor.h"
-#include "dsp/Distortion.h"
 
-namespace audio
+namespace dsp
 {
-	PluginProcessor::PluginProcessor(Params& _params, XenManager& _xen) :
-		params(_params),
-		xen(_xen),
+	PluginProcessor::PluginProcessor() :
 		sampleRate(1.)
 	{
 	}
@@ -15,24 +12,20 @@ namespace audio
 		sampleRate = _sampleRate;
 	}
 
-	void PluginProcessor::operator()(double** samples, MidiBuffer&, const Transport::Info&,
-		int numChannels, int numSamples) noexcept
+	void PluginProcessor::operator()(double**,
+		MidiBuffer&, const Transport::Info&,
+		int, int) noexcept
 	{
-		const auto slewPitch = params(PID::Slew).getValModDenorm();
-		const auto slewHz = xen.noteToFreqHzWithWrap(slewPitch, 1.f);
-		const auto slewRate = slew.freqHzToSlewRate(slewHz, sampleRate);
-		const auto type = int(std::round(params(PID::FilterType).getValModDenorm()));
-		slew(samples, slewRate, numChannels, numSamples, dsp::SlewLimiter::Type(type));
 	}
 
-	void PluginProcessor::processBlockBypassed(double**, dsp::MidiBuffer&, int, int) noexcept
+	void PluginProcessor::processBlockBypassed(double**, MidiBuffer&, int, int) noexcept
 	{}
 
-	void PluginProcessor::savePatch(arch::State&)
+	void PluginProcessor::savePatch(State&)
 	{
 	}
 
-	void PluginProcessor::loadPatch(const arch::State&)
+	void PluginProcessor::loadPatch(const State&)
 	{
 	}
 }

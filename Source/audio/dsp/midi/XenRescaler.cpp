@@ -60,7 +60,7 @@ namespace dsp
 		curNote.setNoteNumber(static_cast<int>(noteRound));
 
 		const auto noteFrac = (note - noteRound) / pitchbendRange;
-		const auto pitchbend = noteFrac * PitchbendRangeHalf + PitchbendRangeHalf;
+		const auto pitchbend = noteFrac * PitchbendCenter + PitchbendCenter;
 
 		buffer.addEvent(MidiMessage::pitchWheel(channel, static_cast<int>(pitchbend)), ts);
 		buffer.addEvent(curNote, ts);

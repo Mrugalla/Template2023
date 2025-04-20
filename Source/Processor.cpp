@@ -40,11 +40,7 @@ namespace audio
         state(),
         
         transport(),
-        pluginProcessor(params
-#if PPDHasTuningEditor
-		, xenManager
-#endif
-        ),
+        pluginProcessor(),
         audioBufferD(),
         midiSubBuffer(),
         midiOutBuffer(),
@@ -177,7 +173,7 @@ namespace audio
         oversampler.prepare(sampleRate, hqEnabled);
         latency += oversampler.getLatency();
         sampleRateUp = oversampler.sampleRateUp;
-        blockSizeUp = oversampler.enabled ? dsp::BlockSize2x : dsp::BlockSize;
+        blockSizeUp = oversampler.enabled ? dsp::BlockSize * 2 : dsp::BlockSize;
 #else
         sampleRateUp = sampleRate;
 		blockSizeUp = dsp::BlockSize;

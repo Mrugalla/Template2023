@@ -63,8 +63,7 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
-		case PID::Slew: return "Slew";
-		case PID::FilterType: return "Filter Type";
+		case PID::ModalNumFilters: return "Num Filters";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -135,8 +134,7 @@ namespace param
 		case PID::Power: return "Dis/Enable the plugin.";
 
 		// LOW LEVEL PARAMS:
-		case PID::FilterType: return "Choose the filter type. (LP or HP)";
-		case PID::Slew: return "Apply the slew rate to the signal.";
+		case PID::ModalNumFilters: return "number of filters, duh";
 
 		default: return "Invalid Tooltip.";
 		}
@@ -1297,7 +1295,7 @@ namespace param
 
 	Params::Params(AudioProcessor& audioProcessor
 #if PPDHasTuningEditor
-		, const Xen& xen
+		, const Xen&
 #endif
 	) :
 		params(),
@@ -1349,8 +1347,7 @@ namespace param
 		}
 
 		// LOW LEVEL PARAMS:
-		params.push_back(makeParamPitch(PID::Slew, 36.f, makeRange::stepped(0.f, 127.f), xen));
-		params.push_back(makeParam(PID::FilterType, 0.f, makeRange::stepped(0.f, 1.f), Unit::FilterType));
+		params.push_back(makeParam(PID::ModalNumFilters, 0.f, makeRange::stepped(0.f, 12.f), Unit::NumUnits));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

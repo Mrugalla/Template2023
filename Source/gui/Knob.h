@@ -6,8 +6,9 @@ namespace gui
 	struct Knob :
 		public Comp
 	{
+        static constexpr float DragSpeed = .3f;
         static constexpr float SensitiveDrag = .15f;
-        static constexpr float WheelSpeed = .018f;
+        static constexpr float WheelSpeed = .0001f;
 
 		using Func = std::function<void()>;
 		using OnDrag = std::function<void(const PointF&, const Mouse&)>;

@@ -2,48 +2,41 @@
 
 namespace dsp
 {
-	template<size_t Size>
-	WHead<Size>::WHead() :
+	WHead::WHead() :
 		buf(),
 		wHead(0),
 		delaySize(1)
 	{}
 
-	template<size_t Size>
-	void WHead<Size>::prepare(int _delaySize) noexcept
+	void WHead::prepare(int _delaySize) noexcept
 	{
 		delaySize = _delaySize;
 		if (delaySize != 0)
 			wHead = wHead % delaySize;
 	}
 
-	template<size_t Size>
-	void WHead<Size>::operator()(int numSamples) noexcept
+	void WHead::operator()(int numSamples) noexcept
 	{
 		for (auto s = 0; s < numSamples; ++s, wHead = (wHead + 1) % delaySize)
 			buf[s] = wHead;
 	}
 
-	template<size_t Size>
-	int WHead<Size>::operator[](int i) const noexcept
+	int WHead::operator[](int i) const noexcept
 	{
 		return buf[i];
 	}
 
-	template<size_t Size>
-	const int* WHead<Size>::data() const noexcept
+	const int* WHead::data() const noexcept
 	{
 		return buf.data();
 	}
 
-	template<size_t Size>
-	int* WHead<Size>::data() noexcept
+	int* WHead::data() noexcept
 	{
 		return buf.data();
 	}
 
-	template<size_t Size>
-	void WHead<Size>::shift(int shift, int numSamples) noexcept
+	void WHead::shift(int shift, int numSamples) noexcept
 	{
 		for (auto s = 0; s < numSamples; ++s)
 		{
@@ -55,8 +48,4 @@ namespace dsp
 		}
 		wHead = buf[numSamples - 1];
 	}
-
-	template struct WHead<BlockSize>;
-	template struct WHead<BlockSize2x>;
-	template struct WHead<BlockSize4x>;
 }

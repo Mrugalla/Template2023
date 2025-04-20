@@ -51,7 +51,7 @@ namespace gui
 	void Utils::resized()
 	{
 		auto a = std::min(pluginTop.getWidth(), pluginTop.getHeight());
-		auto t = static_cast<float>(a) * .0035f;
+		auto t = static_cast<float>(a) * .02f;
 		thicc = t < 1.f ? 1.f : t;
 	}
 

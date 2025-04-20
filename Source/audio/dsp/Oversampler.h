@@ -7,7 +7,7 @@ namespace dsp
 	struct Oversampler
 	{
 		static constexpr double LPCutoff = 20000.;
-		using OversamplerBuffer = std::array<std::array<double, BlockSize2x>, NumChannels>;
+		using OversamplerBuffer = std::array<std::array<double, BlockSize * 2>, NumChannels>;
 
 		struct BufferInfo
 		{
@@ -17,13 +17,13 @@ namespace dsp
 
 		Oversampler();
 
-		/* sampleRate, enabled */
+		// sampleRate, enabled
 		void prepare(const double, bool);
 
-		/* samples, numChannels, numSamples */
+		// samples, numChannels, numSamples
 		BufferInfo upsample(double* const*, int, int) noexcept;
 
-		/* samplesOut, numSamples */
+		// samplesOut, numSamples
 		void downsample(double* const*, int) noexcept;
 
 		int getLatency() const noexcept;
@@ -32,7 +32,7 @@ namespace dsp
 		double sampleRate;
 		OversamplerBuffer bufferUp;
 		BufferInfo bufferInfo;
-		WHead2x wHead;
+		WHead wHead;
 		ImpulseResponseD8 irUp, irDown;
 		ConvolverD8 filterUp, filterDown;
 	public:

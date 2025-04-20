@@ -90,7 +90,7 @@ namespace gui
 
         dragXY -= posShift;
         const auto shiftDown = juce::ComponentPeer::getCurrentModifiersRealtime().isShiftDown();
-        const auto dragSpeed = shiftDown ? SensitiveDrag : 1.f;
+        const auto dragSpeed = DragSpeed * (shiftDown ? SensitiveDrag : 1.f);
         const auto dragOffset = (mouse.position - dragXY) * dragSpeed;
         onDrag(dragOffset, mouse);
         dragXY = mouse.position;
@@ -492,7 +492,7 @@ namespace gui
             const auto valNormAngle = valMain * AngleRange;
             const auto valAngle = -AngleWidth + valNormAngle;
 
-            const auto angleOffset = Pi32 * thicc * 1.5f;
+            const auto angleOffset = Pi32 * thicc;
 
             const auto arcOutlineAStart = -AngleWidth;
             const auto arcOutlineAEnd = valAngle - angleOffset;

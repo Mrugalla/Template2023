@@ -1,6 +1,5 @@
 #pragma once
 #include "gui/Tooltip.h"
-#include "gui/BgImage.h"
 #include "gui/Knob.h"
 
 namespace gui
@@ -12,6 +11,7 @@ namespace gui
     {
         Editor(Processor&);
 
+		void paint(Graphics&) override;
         void paintOverChildren(Graphics&) override;
         void resized() override;
         void mouseEnter(const Mouse&) override;
@@ -22,14 +22,8 @@ namespace gui
         Layout layout;
         evt::Member evtMember;
         
-        BgImage bgImage;
         Tooltip tooltip;
-
-        enum { kTitle, kDev, kNumLabels };
-        std::array<Label, kNumLabels> labels;
-
-        Button filterTypeButton;
-        Knob macroKnob, slewKnob, gainOutKnob, pbKnob;
+        Knob numFilters;
 
         //JUCE_HEAVYWEIGHT_LEAK_DETECTOR(Editor)
     };

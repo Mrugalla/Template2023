@@ -1,20 +1,17 @@
 #pragma once
 #include "dsp/Transport.h"
 #include "../param/Param.h"
-#include "dsp/SlewLimiter.h"
 
-namespace audio
+namespace dsp
 {
+	using Params = param::Params;
+	using PID = param::PID;
+	using State = arch::State;
+	using XenManager = arch::XenManager;
+
 	struct PluginProcessor
 	{
-		using Params = param::Params;
-		using PID = param::PID;
-		using MidiBuffer = dsp::MidiBuffer;
-		using Transport = dsp::Transport;
-		using State = arch::State;
-		using XenManager = arch::XenManager;
-		
-		PluginProcessor(Params&, XenManager&);
+		PluginProcessor();
 
 		// sampleRate
 		void prepare(double);
@@ -29,9 +26,6 @@ namespace audio
 		
 		void loadPatch(const State&);
 
-		Params& params;
-		XenManager& xen;
 		double sampleRate;
-		dsp::SlewLimiterStereo slew;
 	};
 }

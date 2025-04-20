@@ -1,9 +1,5 @@
 #pragma once
-#include <juce_audio_processors/juce_audio_processors.h>
 #include "audio/PluginProcessor.h"
-
-#include "arch/XenManager.h"
-#include "param/Param.h"
 #include "audio/dsp/MixProcessor.h"
 #include "audio/dsp/Oversampler.h"
 
@@ -44,7 +40,9 @@ namespace audio
         void processBlock(AudioBufferD&, MidiBuffer&) override;
         void processBlockBypassed(AudioBufferD&, MidiBuffer&) override;
 
-        void processBlockOversampler(double* const*, MidiBuffer&, const dsp::Transport::Info&, int, int) noexcept;
+        void processBlockOversampler(double* const*,
+            MidiBuffer&, const dsp::Transport::Info&,
+            int, int) noexcept;
         
         juce::AudioProcessorEditor* createEditor() override;
         bool hasEditor() const override;
@@ -71,7 +69,7 @@ namespace audio
         State state;
 
         dsp::Transport transport;
-        PluginProcessor pluginProcessor;
+        dsp::PluginProcessor pluginProcessor;
         AudioBufferD audioBufferD;
         MidiBuffer midiSubBuffer, midiOutBuffer;
 

@@ -59,7 +59,7 @@ namespace dsp
 		void setSleepy(bool, int) noexcept;
 
 	private:
-		std::array<std::array<double, BlockSize2x>, NumChannels> bands;
+		std::array<std::array<double, BlockSize>, NumChannels> bands;
 		std::array<bool, NumBands> sleepy;
 	};
 

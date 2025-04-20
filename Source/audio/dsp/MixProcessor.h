@@ -84,7 +84,7 @@ namespace dsp
 
 	protected:
 		AudioBuffer ring;
-		WHead1x wHead;
+		WHead wHead;
 	public:
 		int latency;
 	};
@@ -133,7 +133,7 @@ namespace dsp
 			gainWetOut.prepare(sampleRate);
 		}
 
-		/* samples, gainDryDb, numChannels, numSamples */
+		// samples, gainDryDb, numChannels, numSamples
 		void splitLinear(double* const* samples, double gainDryDb,
 			int numChannels, int numSamples) noexcept
 		{
@@ -143,7 +143,7 @@ namespace dsp
 			gainDry(bandBuf, gainDryDb, numChannels, numSamples);
 		}
 
-		/* samples, gainDryDb, gainWetInDb, numChannels, numSamples */
+		// samples, gainDryDb, gainWetInDb, numChannels, numSamples
 		void splitNonlinear(double* const* samples, double gainDryDb, double gainWetInDb,
 			int numChannels, int numSamples) noexcept
 		{
@@ -151,7 +151,7 @@ namespace dsp
 			gainWetIn(samples, gainWetInDb, numChannels, numSamples);
 		}
 
-		/* samples, gainWetDb, numChannels, numSamples  */
+		// samples, gainWetDb, numChannels, numSamples 
 		void joinLinear(double* const* samples, double gainWetOutDb,
 			int numChannels, int numSamples) noexcept
 		{
@@ -159,7 +159,7 @@ namespace dsp
 			parallelProcessor.join(samples, numChannels, numSamples);
 		}
 
-		/* samples, gainWetDb, numChannels, numSamples, unityGain  */
+		// samples, gainWetDb, numChannels, numSamples, unityGain
 		void joinNonlinear(double* const* samples, double gainWetOutDb,
 			int numChannels, int numSamples, bool unityGain) noexcept
 		{
@@ -189,7 +189,7 @@ namespace dsp
 			mixPRM.prepare(sampleRate, 13.);
 		}
 
-		/* samples, numChannels, numSamples */
+		// samples, numChannels, numSamples
 		void splitLinear(double* const* samples,
 			int numChannels, int numSamples) noexcept
 		{

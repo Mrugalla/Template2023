@@ -3,15 +3,14 @@
 
 namespace dsp
 {
-	template<size_t Size>
 	struct WHead
 	{
 		WHead();
 
-		/* delaySizeSamples */
+		// delaySizeSamples
 		void prepare(int) noexcept;
 
-		/* numSamples */
+		// numSamples
 		void operator()(int) noexcept;
 
 		int operator[](int) const noexcept;
@@ -23,11 +22,7 @@ namespace dsp
 		// shift, numSamples
 		void shift(int, int) noexcept;
 	protected:
-		std::array<int, Size> buf;
+		std::array<int, BlockSize> buf;
 		int wHead, delaySize;
 	};
-
-	using WHead1x = WHead<BlockSize>;
-	using WHead2x = WHead<BlockSize2x>;
-	using WHead4x = WHead<BlockSize4x>;
 }
