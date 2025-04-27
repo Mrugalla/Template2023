@@ -5,7 +5,6 @@
 #include "audio/dsp/MidSide.h"
 #endif
 
-#include "arch/Math.h"
 #include "audio/dsp/Distortion.h"
 
 #define KeepState true
@@ -40,17 +39,15 @@ namespace audio
         state(),
         
         transport(),
-        pluginProcessor(),
-        audioBufferD(),
-        midiSubBuffer(),
-        midiOutBuffer(),
-
-        mixProcessor(),
-#if PPDHasHQ
-        oversampler(),
+        pluginProcessor
+        (
+            params
+#if PPDHasTuningEditor
+            , xenManager
 #endif
-        sampleRateUp(0.),
-        blockSizeUp(dsp::BlockSize)
+        ),
+        midiSubBuffer(),
+        mixProcessor()
     {
         const auto& user = *state.props.getUserSettings();
         const auto& settingsFile = user.getFile();
@@ -79,7 +76,8 @@ namespace audio
         if (initFile.existsAsFile())
             initFile.deleteFile();
         initFile.create();
-		initFile.replaceWithText(init.toXmlString());
+        const auto xmlString = init.toXmlString();
+		initFile.replaceWithText(xmlString);
     }
 
     Processor::~Processor()
@@ -91,7 +89,7 @@ namespace audio
 
     bool Processor::supportsDoublePrecisionProcessing() const
     {
-        return true;
+        return false;
     }
 	
     bool Processor::canAddBus(bool isInput) const
@@ -102,7 +100,7 @@ namespace audio
         return PPDHasSidechain ? isInput : false;
     }
 	
-    const juce::String Processor::getName() const
+    const String Processor::getName() const
     {
         return JucePlugin_Name;
     }
@@ -162,24 +160,14 @@ namespace audio
     {
     }
 
-    void Processor::prepareToPlay(double sampleRate, int maxBlockSize)
+    void Processor::prepareToPlay(double sampleRate, int)
     {
         auto latency = 0;
-
-        audioBufferD.setSize(2, maxBlockSize, false, true, false);
-        mixProcessor.prepare(sampleRate);
-#if PPDHasHQ
-        const auto hqEnabled = params(PID::HQ).getValMod() > .5f;
-        oversampler.prepare(sampleRate, hqEnabled);
-        latency += oversampler.getLatency();
-        sampleRateUp = oversampler.sampleRateUp;
-        blockSizeUp = oversampler.enabled ? dsp::BlockSize * 2 : dsp::BlockSize;
-#else
-        sampleRateUp = sampleRate;
-		blockSizeUp = dsp::BlockSize;
-#endif
+        const auto sampleRateF = static_cast<float>(sampleRate);
+        params.prepare();
+        mixProcessor.prepare(sampleRateF);
         transport.prepare(1. / sampleRate);
-        pluginProcessor.prepare(sampleRateUp);
+        pluginProcessor.prepare(sampleRateF);
         setLatencySamples(latency);
         startTimerHz(4);
     }
@@ -190,10 +178,6 @@ namespace audio
 
     bool Processor::isBusesLayoutSupported(const BusesLayout& layouts) const
     {
-#if JucePlugin_IsMidiEffect
-        juce::ignoreUnused(layouts);
-        return true;
-#endif
         const auto mono = ChannelSet::mono();
         const auto stereo = ChannelSet::stereo();
 
@@ -221,7 +205,7 @@ namespace audio
 
     bool Processor::hasEditor() const
     {
-        return true;
+        return false;
     }
 
     juce::AudioProcessorEditor* Processor::createEditor()
@@ -247,71 +231,17 @@ namespace audio
 #endif
     }
 
-    void Processor::processBlockBypassed(AudioBufferD& buffer, MidiBuffer& midiMessages)
-    {
-        juce::ScopedNoDenormals noDenormals;
-		
-        const auto macroVal = params(PID::Macro).getValue();
-        params.modulate(macroVal);
-		
-        const auto numSamplesMain = buffer.getNumSamples();
-        if (numSamplesMain == 0)
-            return;
-		
-        const auto numChannels = buffer.getNumChannels() == 2 ? 2 : 1;
-        auto samplesMain = buffer.getArrayOfWritePointers();
-
-        for (auto s = 0; s < numSamplesMain; s += dsp::BlockSize)
-        {
-            double* samples[] = { &samplesMain[0][s], &samplesMain[1][s] };
-            const auto dif = numSamplesMain - s;
-            const auto numSamples = dif < dsp::BlockSize ? dif : dsp::BlockSize;
-
-            pluginProcessor.processBlockBypassed(samples, midiMessages, numChannels, numSamples);
-        }
-    }
-
-    void Processor::processBlockBypassed(AudioBufferF& buffer, MidiBuffer& midiMessages)
-    {
-        const auto numChannels = buffer.getNumChannels();
-        const auto numSamples = buffer.getNumSamples();
-
-        audioBufferD.setSize(numChannels, numSamples, true, false, true);
-
-        auto samplesF = buffer.getArrayOfWritePointers();
-        auto samplesD = audioBufferD.getArrayOfWritePointers();
-
-        for (auto ch = 0; ch < numChannels; ++ch)
-        {
-            const auto smplsF = samplesF[ch];
-            auto smplsD = samplesD[ch];
-
-            for (auto s = 0; s < numSamples; ++s)
-                smplsD[s] = static_cast<double>(smplsF[s]);
-        }
-
-        processBlockBypassed(audioBufferD, midiMessages);
-
-        for (auto ch = 0; ch < numChannels; ++ch)
-        {
-            auto smplsF = samplesF[ch];
-            const auto smplsD = samplesD[ch];
-
-            for (auto s = 0; s < numSamples; ++s)
-                smplsF[s] = static_cast<float>(smplsD[s]);
-        }
-    }
-
-    void Processor::processBlock(AudioBufferD& buffer, MidiBuffer& midiMessages)
+    void Processor::processBlock(AudioBufferF& buffer, MidiBuffer& midiMessages)
     {
         const bool pluginDisabled = params(PID::Power).getValue() < .5f;
         if (pluginDisabled)
             return processBlockBypassed(buffer, midiMessages);
-		
+
         juce::ScopedNoDenormals noDenormals;
-		
+
         const auto macroVal = params(PID::Macro).getValue();
-        params.modulate(macroVal);
+        const auto numChannels = buffer.getNumChannels();
+        params.modulate(macroVal, numChannels);
 
         const auto numSamplesMain = buffer.getNumSamples();
         {
@@ -322,9 +252,7 @@ namespace audio
         }
         if (numSamplesMain == 0)
             return;
-		
-        const auto numChannels = buffer.getNumChannels();
-		auto samplesMain = buffer.getArrayOfWritePointers();
+        auto samplesMain = buffer.getArrayOfWritePointers();
 
         transport(playHead);
 #if PPDHasStereoConfig
@@ -332,36 +260,34 @@ namespace audio
         if (numChannels == 2)
         {
             midSide = params(PID::StereoConfig).getValue() > .5f;
-            if(midSide)
+            if (midSide)
                 dsp::midSideEncode(samplesMain, numSamplesMain);
         }
 #endif
 
 #if PPDIsNonlinear
-        const auto gainInDb = static_cast<double>(params(PID::GainIn).getValModDenorm());
+        const auto gainInDb = params(PID::GainIn).getValModDenorm();
         const auto unityGain = params(PID::UnityGain).getValMod() > .5f;
 #endif
 #if PPDIO == PPDIODryWet
-        const auto gainDryDb = static_cast<double>(params(PID::GainDry).getValModDenorm());
-        const auto gainWetDb = static_cast<double>(params(PID::GainWet).getValModDenorm());
+        const auto gainDryDb = params(PID::GainDry).getValModDenorm();
+        const auto gainWetDb = params(PID::GainWet).getValModDenorm();
 #elif PPDIO == PPDIOWetMix
-        const auto gainWetDb = static_cast<double>(params(PID::GainWet).getValModDenorm());
-        const auto mix = static_cast<double>(params(PID::Mix).getValMod());
+        const auto gainWetDb = params(PID::GainWet).getValModDenorm();
+        const auto mix = params(PID::Mix).getValMod();
 #if PPDHasDelta
         const auto delta = params(PID::Delta).getValMod() > .5f;
 #else
         const bool delta = false;
 #endif
 #endif
-        const auto gainOutDb = static_cast<double>(params(PID::GainOut).getValModDenorm());
-
-        midiOutBuffer.clear();
+        const auto gainOutDb = params(PID::GainOut).getValModDenorm();
 
 #if PPDHasTuningEditor
         auto xen = params(PID::Xen).getValModDenorm();
-		const auto xenSnap = params(PID::XenSnap).getValMod() > .5f;
-        if(xenSnap)
-			xen = std::round(xen);
+        const auto xenSnap = params(PID::XenSnap).getValMod() > .5f;
+        if (xenSnap)
+            xen = std::round(xen);
         const auto masterTune = std::round(params(PID::MasterTune).getValModDenorm());
         const auto anchor = std::round(params(PID::AnchorPitch).getValModDenorm());
         const auto pitchbendRange = std::round(params(PID::PitchbendRange).getValModDenorm());
@@ -370,182 +296,139 @@ namespace audio
 
         for (auto s = 0; s < numSamplesMain; s += dsp::BlockSize)
         {
-            double* samples[] = { &samplesMain[0][s], &samplesMain[1][s] };
+            float* samples[] = { &samplesMain[0][s], &samplesMain[1][s] };
             const auto dif = numSamplesMain - s;
             const auto numSamples = dif < dsp::BlockSize ? dif : dsp::BlockSize;
 
 #if PPDIO == PPDIOOut
-	#if PPDIsNonlinear
-			mixProcessor.split
-			(
-				samples, gainInDb, numChannels, numSamples
-			);
-	#endif
-#elif PPDIO == PPDIODryWet
-    #if PPDIsNonlinear
-            mixProcessor.split
-            (
-                samples, gainDryDb, gainInDb, numChannels, numSamples
-            );
-    #else
-            mixProcessor.split
-            (
-                samples, gainDryDb, numChannels, numSamples
-            );
-    #endif
-#else
-    #if PPDIsNonlinear
+#if PPDIsNonlinear
             mixProcessor.split
             (
                 samples, gainInDb, numChannels, numSamples
             );
-    #else
+#endif
+#elif PPDIO == PPDIODryWet
+#if PPDIsNonlinear
+            mixProcessor.split
+            (
+                samples, gainDryDb, gainInDb, numChannels, numSamples
+            );
+#else
+            mixProcessor.split
+            (
+                samples, gainDryDb, numChannels, numSamples
+            );
+#endif
+#else
+#if PPDIsNonlinear
+            mixProcessor.split
+            (
+                samples, gainInDb, numChannels, numSamples
+            );
+#else
             mixProcessor.split
             (
                 samples, numChannels, numSamples
             );
-    #endif
+#endif
 #endif
             midiSubBuffer.clear();
-            for(auto it : midiMessages)
-			{
+            for (auto it : midiMessages)
+            {
                 const auto ts = it.samplePosition;
-				if (ts >= s && ts < s + numSamples)
+                if (ts >= s && ts < s + numSamples)
                     midiSubBuffer.addEvent(it.getMessage(), ts - s);
-			}
+            }
+            const auto sysexDummy = juce::MidiMessage::programChange(1, 0);
+            midiSubBuffer.addEvent(sysexDummy, numSamples);
 
-            processBlockOversampler(samples, midiSubBuffer, transport.info, numChannels, numSamples);
+            pluginProcessor(samples, midiSubBuffer, transport.info, numChannels, numSamples);
             transport(numSamples);
 
-            for(auto it : midiSubBuffer)
-                midiOutBuffer.addEvent(it.getMessage(), it.samplePosition + s);
-            
+            midiMessages.clear();
+            for (auto it : midiSubBuffer)
+                midiMessages.addEvent(it.getMessage(), it.samplePosition + s);
+
 #if PPDIO == PPDIOOut
-    #if PPDIsNonlinear
-			mixProcessor.join
-			(
-				samples, gainOutDb, numChannels, numSamples, unityGain
-			);
-	#else
+#if PPDIsNonlinear
             mixProcessor.join
-			(
-				samples, gainOutDb, numChannels, numSamples
-			);
-    #endif
+            (
+                samples, gainOutDb, numChannels, numSamples, unityGain
+            );
+#else
+            mixProcessor.join
+            (
+                samples, gainOutDb, numChannels, numSamples
+            );
+#endif
 #elif PPDIO == PPDIODryWet
-    #if PPDIsNonlinear
+#if PPDIsNonlinear
             mixProcessor.join
             (
                 samples, gainWetDb, gainOutDb, numChannels, numSamples, unityGain
             );
-    #else
+#else
             mixProcessor.join
             (
                 samples, gainWetDb, gainOutDb, numChannels, numSamples
             );
-    #endif
+#endif
 #else
-    #if PPDIsNonlinear
+#if PPDIsNonlinear
             mixProcessor.join
             (
                 samples, mix, gainWetDb, gainOutDb, numChannels, numSamples, unityGain, delta
             );
-    #else
+#else
             mixProcessor.join
             (
                 samples, mix, gainWetDb, gainOutDb, numChannels, numSamples, delta
             );
-    #endif
 #endif
-            
+#endif
+
         }
 
-        midiMessages.swapWith(midiOutBuffer);
-
 #if PPDHasStereoConfig
-		if (midSide)
-			dsp::midSideDecode(samplesMain, numSamplesMain);
+        if (midSide)
+            dsp::midSideDecode(samplesMain, numSamplesMain);
 #endif
-
-		const auto& softClipParam = params(PID::SoftClip);
-		const auto softClip = softClipParam.getValMod() > .5f;
-        const auto knee = .5 / dsp::Pi;
-        if(softClip)
-        {
-			for (auto ch = 0; ch < numChannels; ++ch)
-			{
-				auto smpls = samplesMain[ch];
-                for (auto s = 0; s < numSamplesMain; ++s)
-                    smpls[s] = dsp::softclipPrismaHeavy(smpls[s], 1., knee);
-			}
-		}
-
 #if JUCE_DEBUG && false
         for (auto ch = 0; ch < numChannels; ++ch)
         {
             auto smpls = samplesMain[ch];
             for (auto s = 0; s < numSamplesMain; ++s)
-                smpls[s] = dsp::hardclip(smpls[s], 2.);
+                smpls[s] = dsp::hardclip(smpls[s], 2.f);
         }
 #endif
     }
 
-    void Processor::processBlock(AudioBufferF& buffer, MidiBuffer& midiMessages)
+    void Processor::processBlockBypassed(AudioBufferF& buffer, MidiBuffer& midiMessages)
     {
-        const auto numChannels = buffer.getNumChannels();
-        const auto numSamples = buffer.getNumSamples();
+        juce::ScopedNoDenormals noDenormals;
 
-        audioBufferD.setSize(numChannels, numSamples, true, false, true);
+        const auto macroVal = params(PID::Macro).getValue();
+        const auto numChannels = std::min(2, buffer.getNumChannels());
+        params.modulate(macroVal, numChannels);
 
-        auto samplesF = buffer.getArrayOfWritePointers();
-        auto samplesD = audioBufferD.getArrayOfWritePointers();
+        const auto numSamplesMain = buffer.getNumSamples();
+        if (numSamplesMain == 0)
+            return;
+        auto samplesMain = buffer.getArrayOfWritePointers();
 
-        for (auto ch = 0; ch < numChannels; ++ch)
+        for (auto s = 0; s < numSamplesMain; s += dsp::BlockSize)
         {
-            const auto smplsF = samplesF[ch];
-            auto smplsD = samplesD[ch];
+            float* samples[] = { &samplesMain[0][s], &samplesMain[1][s] };
+            const auto dif = numSamplesMain - s;
+            const auto numSamples = dif < dsp::BlockSize ? dif : dsp::BlockSize;
 
-            for (auto s = 0; s < numSamples; ++s)
-                smplsD[s] = static_cast<double>(smplsF[s]);
+            pluginProcessor.processBlockBypassed(samples, midiMessages, numChannels, numSamples);
         }
-
-        processBlock(audioBufferD, midiMessages);
-
-        for (auto ch = 0; ch < numChannels; ++ch)
-        {
-            auto smplsF = samplesF[ch];
-            const auto smplsD = samplesD[ch];
-
-            for (auto s = 0; s < numSamples; ++s)
-                smplsF[s] = static_cast<float>(smplsD[s]);
-        }
-    }
-
-    void Processor::processBlockOversampler(double* const* samples, MidiBuffer& midi,
-        const dsp::Transport::Info& transportInfo, int numChannels, int numSamples) noexcept
-    {
-#if PPDHasHQ
-        auto bufferInfo = oversampler.upsample(samples, numChannels, numSamples);
-        const auto numSamplesUp = bufferInfo.numSamples;
-        double* samplesUp[] = { bufferInfo.smplsL, bufferInfo.smplsR };
-#else
-        double* samplesUp[] = { samples[0], samples[1] };
-        const auto numSamplesUp = numSamples;
-#endif
-        pluginProcessor(samplesUp, midi, transportInfo, numChannels, numSamplesUp);
-#if PPDHasHQ
-        oversampler.downsample(samples, numSamples);
-#endif
     }
 
     void Processor::timerCallback()
     {
-        bool needForcePrepare = false;
-#if PPDHasHQ
-		const auto hqEnabled = params(PID::HQ).getValMod() > .5f;
-        if (oversampler.enabled != hqEnabled)
-            needForcePrepare = true;
-#endif
+        static constexpr bool needForcePrepare = false;
         if(needForcePrepare)
             forcePrepare();
     }

@@ -3,26 +3,31 @@
 
 namespace dsp
 {
-	template<double SmoothLengthMs, double MinDb>
+	template<float SmoothLengthMs>
 	struct Gain
 	{
+		static constexpr float MinDb = -120.f;
+
 		// defaultValueDb
-		Gain(double);
+		Gain(float);
 
 		// sampleRate
-		void prepare(double) noexcept;
+		void prepare(float) noexcept;
+
+		// bufferView, gainDb, numChannels, numSamples
+		void operator()(BufferView2, float, int, int) noexcept;
 
 		// samples, gainDb, numChannels, numSamples
-		void operator()(double* const*, double, int, int) noexcept;
+		void operator()(float* const*, float, int, int) noexcept;
 
 		// samples, numChannels, numSamples
-		void applyInverse(double* const*, int, int) noexcept;
+		void applyInverse(float* const*, int, int) noexcept;
 
 		// smpls, numSamples
-		void applyInverse(double*, int) noexcept;
+		void applyInverse(float*, int) noexcept;
 
 	private:
-		PRMD gainPRM;
-		PRMInfoD gainInfo;
+		PRM gainPRM;
+		PRMInfo gainInfo;
 	};
 }

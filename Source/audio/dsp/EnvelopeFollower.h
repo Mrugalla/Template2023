@@ -7,41 +7,42 @@ namespace dsp
 	{
 		struct Params
 		{
-			double gainDb, atkMs, dcyMs, smoothMs;
+			float gainDb;
+			double atkMs, dcyMs, smoothMs;
 		};
 
 		EnvelopeFollower();
 
-		void prepare(double) noexcept;
+		void prepare(float) noexcept;
 
 		// smpls, params, numSamples
-		void operator()(double*, const Params&, int) noexcept;
+		void operator()(float*, const Params&, int) noexcept;
 
 		// samples, params, numChannels, numSamples
-		void operator()(double**, const Params&, int, int) noexcept;
+		void operator()(float**, const Params&, int, int) noexcept;
 
 		bool isSleepy() const noexcept;
 
-		double operator[](int i) const noexcept;
+		float operator[](int i) const noexcept;
 
-		double getMeter() const noexcept;
+		float getMeter() const noexcept;
 	private:
-		std::atomic<double> meter;
-		std::array<double, BlockSize> buffer;
+		std::atomic<float> meter;
+		std::array<float, BlockSize> buffer;
 		const double MinDb;
-		PRMD gainPRM;
-		smooth::LowpassD envLP, smooth;
+		PRM gainPRM;
+		smooth::LowpassG0 envLP, smooth;
 		double sampleRate, smoothMs;
 		bool attackState;
 
 		// samples, numChannels, numSamples
-		void copyMid(double**, int, int) noexcept;
+		void copyMid(float**, int, int) noexcept;
 
 		// smpls, numSamples
-		void rectify(double*, int) noexcept;
+		void rectify(float*, int) noexcept;
 
 		// gainDb, numSamples
-		void applyGain(double, int) noexcept;
+		void applyGain(float, int) noexcept;
 
 		// params, numSamples
 		void synthesizeEnvelope(const Params&, int) noexcept;

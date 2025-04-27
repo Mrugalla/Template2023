@@ -6,7 +6,7 @@ namespace dsp
 	// ResonatorBase
 
 	ResonatorBase::ResonatorBase() :
-		fc(0.), bw(0.), gain(1.)
+		fc(0.), bw(0.)
 	{}
 
 	void ResonatorBase::setCutoffFc(double _fc) noexcept
@@ -14,19 +14,29 @@ namespace dsp
 		fc = _fc;
 	}
 
+	void ResonatorBase::setCutoffFc(float _fc) noexcept
+	{
+		fc = static_cast<double>(_fc);
+	}
+
 	void ResonatorBase::setBandwidth(double _bw) noexcept
 	{
 		bw = _bw;
 	}
 
-	void ResonatorBase::setGain(double _gain) noexcept
+	void ResonatorBase::setBandwidth(float _bw) noexcept
 	{
-		gain = _gain;
+		bw = static_cast<double>(_bw);
 	}
 
 	double ResonatorBase::distort(double y) const noexcept
 	{
-		return ratioclip(y, .8, 1. / 16.);
+		return math::limit(-1., 1., y);
+	}
+
+	double ResonatorBase::operator()(float x) noexcept
+	{
+		return operator()(static_cast<double>(x));
 	}
 
 	// Resonator1
@@ -47,8 +57,8 @@ namespace dsp
 
 	void Resonator1::update() noexcept
 	{
-		const auto w = fc * Tau;
-		const auto r = 1. - std::sin(Pi * bw);
+		const auto w = fc * TauD;
+		const auto r = 1. - std::sin(PiD * bw);
 		b1 = -2. * r * std::cos(w);
 		b2 = r * r;
 	}
@@ -68,7 +78,7 @@ namespace dsp
 		y0 = distort(y0);
 		y2 = y1;
 		y1 = y0;
-		return y0 * gain;
+		return y0;
 	}
 
 	// Resonator2
@@ -87,8 +97,8 @@ namespace dsp
 
 	void Resonator2::update() noexcept
 	{
-		b2 = std::exp(-Tau * bw);
-		const auto fcTau = Tau * fc;
+		b2 = std::exp(-TauD * bw);
+		const auto fcTau = TauD * fc;
 		const auto b2_4 = 4. * b2;
 		const auto cosFc = std::cos(fcTau);
 		b1 = (-b2_4 / (1. + b2)) * cosFc;
@@ -112,7 +122,34 @@ namespace dsp
 		y = distort(y);
 		z2 = z1;
 		z1 = y;
-		return y * gain;
+		return y;
+	}
+
+	// Resonator3
+
+	void Resonator3::reset() noexcept
+	{
+		Resonator2::reset();
+		lp.reset();
+	}
+
+	void Resonator3::update() noexcept
+	{
+		Resonator2::update();
+		lp.makeFromDecayInFc(fc);
+	}
+
+	void Resonator3::copyFrom(const Resonator3& other) noexcept
+	{
+		Resonator2::copyFrom(other);
+		lp.copyCutoffFrom(other.lp);
+	}
+
+	double Resonator3::operator()(double x) noexcept
+	{
+		auto y = Resonator2::operator()(x);
+		y -= lp(y);
+		return y;
 	}
 
 	// ResonatorStereo
@@ -142,22 +179,21 @@ namespace dsp
 	}
 
 	template<class ResoClass>
+	void ResonatorStereo<ResoClass>::setCutoffFc(float _fc, int ch) noexcept
+	{
+		resonators[ch].setCutoffFc(_fc);
+	}
+
+	template<class ResoClass>
 	void ResonatorStereo<ResoClass>::setBandwidth(double _bw, int ch) noexcept
 	{
 		resonators[ch].setBandwidth(_bw);
 	}
 
 	template<class ResoClass>
-	void ResonatorStereo<ResoClass>::setGain(double _gain, int ch) noexcept
+	void ResonatorStereo<ResoClass>::setBandwidth(float _bw, int ch) noexcept
 	{
-		resonators[ch].setGain(_gain);
-	}
-
-	template<class ResoClass>
-	void ResonatorStereo<ResoClass>::setGain(double _gain) noexcept
-	{
-		for (auto ch = 0; ch < 2; ++ch)
-			setGain(_gain, ch);
+		resonators[ch].setBandwidth(_bw);
 	}
 
 	template<class ResoClass>
@@ -179,6 +215,13 @@ namespace dsp
 		return resonators[ch](x);
 	}
 
+	template<class ResoClass>
+	double ResonatorStereo<ResoClass>::operator()(float x, int ch) noexcept
+	{
+		return resonators[ch](x);
+	}
+
 	template struct ResonatorStereo<Resonator1>;
 	template struct ResonatorStereo<Resonator2>;
+	template struct ResonatorStereo<Resonator3>;
 }

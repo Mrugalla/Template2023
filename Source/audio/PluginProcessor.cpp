@@ -2,23 +2,28 @@
 
 namespace dsp
 {
-	PluginProcessor::PluginProcessor() :
+	PluginProcessor::PluginProcessor(Params& params
+#if PPDHasTuningEditor
+		, XenManager& xen
+#endif
+	) :
 		sampleRate(1.)
 	{
 	}
 
-	void PluginProcessor::prepare(double _sampleRate)
+	void PluginProcessor::prepare(float _sampleRate)
 	{
 		sampleRate = _sampleRate;
 	}
 
-	void PluginProcessor::operator()(double**,
+	void PluginProcessor::operator()(float** samples,
 		MidiBuffer&, const Transport::Info&,
-		int, int) noexcept
+		int numChannels, int numSamples) noexcept
 	{
+		
 	}
 
-	void PluginProcessor::processBlockBypassed(double**, MidiBuffer&, int, int) noexcept
+	void PluginProcessor::processBlockBypassed(float**, MidiBuffer&, int, int) noexcept
 	{}
 
 	void PluginProcessor::savePatch(State&)

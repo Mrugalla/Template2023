@@ -2,21 +2,24 @@
 
 namespace dsp
 {
-	void midSideEncode(double* const* samples, int numSamples) noexcept
+	template<typename Float>
+	void midSideEncode(Float* const* samples, int numSamples) noexcept
 	{
+		static constexpr auto A = static_cast<Float>(.5);
 		auto smplsL = samples[0];
 		auto smplsR = samples[1];
 
 		for (auto s = 0; s < numSamples; ++s)
 		{
-			const auto mid = (smplsL[s] + smplsR[s]) * .5;
-			const auto side = (smplsL[s] - smplsR[s]) * .5;
+			const auto mid = (smplsL[s] + smplsR[s]) * A;
+			const auto side = (smplsL[s] - smplsR[s]) * A;
 			smplsL[s] = mid;
 			smplsR[s] = side;
 		}
 	}
 
-	void midSideDecode(double* const* samples, int numSamples) noexcept
+	template<typename Float>
+	void midSideDecode(Float* const* samples, int numSamples) noexcept
 	{
 		auto smplsM = samples[0];
 		auto smplsS = samples[1];
@@ -29,4 +32,9 @@ namespace dsp
 			smplsS[s] = right;
 		}
 	}
+
+	template void midSideEncode(float* const*, int) noexcept;
+	template void midSideEncode(double* const*, int) noexcept;
+	template void midSideDecode(float* const*, int) noexcept;
+	template void midSideDecode(double* const*, int) noexcept;
 }

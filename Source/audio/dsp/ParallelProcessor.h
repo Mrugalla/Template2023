@@ -9,48 +9,42 @@ namespace dsp
 		static constexpr int MaxBand = NumBands - 1;
 		static constexpr int NumChannels = 2 * MaxBand;
 
-		struct Band
-		{
-			double* l;
-			double* r;
-		};
-
 		ParallelProcessor();
 
 		// samples, numChannels, numSamples
-		void split(double* const*, int, int) noexcept;
+		void split(float* const*, int, int) noexcept;
 
 		// samples, numChannels, numSamples
-		void join(double* const*, int, int) noexcept;
+		void join(float* const*, int, int) noexcept;
 
 		// samples, numChannels, numSamples
-		void joinReplace(double* const*, int, int) noexcept;
+		void joinReplace(float* const*, int, int) noexcept;
 
 		// gain, bandIdx, numChannels, numSamples
-		void applyGain(double, int, int, int) noexcept;
+		void applyGain(float, int, int, int) noexcept;
 
 		// gain, bandIdx, numChannels, numSamples
-		void applyGain(double*, int, int, int) noexcept;
+		void applyGain(float*, int, int, int) noexcept;
 
-		Band getBand(int) noexcept;
+		BufferView2 getBand(int) noexcept;
 
-		Band operator[](int) noexcept;
+		BufferView2 operator[](int) noexcept;
 
 		// only for parallel processors with exactly 2 bands
 		//samples, mix, numChannels, numSamples
-		void joinMix(double* const*, double*, int, int) noexcept;
+		void joinMix(float* const*, float*, int, int) noexcept;
 
 		// only for parallel processors with exactly 2 bands
 		//samples, mix, numChannels, numSamples
-		void joinMix(double* const*, double, int, int) noexcept;
+		void joinMix(float* const*, float, int, int) noexcept;
 
 		// only for parallel processors with exactly 2 bands
 		//samples, gain, numChannels, numSamples
-		void joinDelta(double* const*, double*, int, int) noexcept;
+		void joinDelta(float* const*, float*, int, int) noexcept;
 
 		//only for parallel processors with exactly 2 bands
 		//samples, gain, numChannels, numSamples
-		void joinDelta(double* const*, double, int, int) noexcept;
+		void joinDelta(float* const*, float, int, int) noexcept;
 
 		// bandIdx
 		bool isSleepy(int) const noexcept;
@@ -59,7 +53,7 @@ namespace dsp
 		void setSleepy(bool, int) noexcept;
 
 	private:
-		std::array<std::array<double, BlockSize>, NumChannels> bands;
+		std::array<std::array<float, BlockSize>, NumChannels> bands;
 		std::array<bool, NumBands> sleepy;
 	};
 
@@ -67,7 +61,6 @@ namespace dsp
 	using PP3Band = ParallelProcessor<3>;
 	using PP4Band = ParallelProcessor<4>;
 	using PP5Band = ParallelProcessor<5>;
-
 	using PPMPEBand = ParallelProcessor<NumMPEChannels>;
 	using PPMIDIBand = ParallelProcessor<NumMIDIChannels>;
 }

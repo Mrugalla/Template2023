@@ -97,9 +97,7 @@ namespace dsp
 		double x1, x2, y1, y2;
 	};
 
-	/*
-	2 channels of AllpassTransposedDirectFormII filters
-	*/
+	// 2 channels of AllpassTransposedDirectFormII filters
 	struct AllpassStereo
 	{
 		AllpassStereo();
@@ -127,9 +125,7 @@ namespace dsp
 		std::array<AllpassTransposedDirectFormII, 2> filters;
 	};
 
-	/*
-	axiom::NumAllpassFilters channels of AllpassTransposedDirectFormII filters
-	*/
+	// axiom::NumAllpassFilters channels of AllpassTransposedDirectFormII filters
 	struct AllpassSlope
 	{
 		AllpassSlope();

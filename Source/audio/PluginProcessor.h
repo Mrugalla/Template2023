@@ -2,30 +2,38 @@
 #include "dsp/Transport.h"
 #include "../param/Param.h"
 
+#include "dsp/Resonator.h"
+
 namespace dsp
 {
 	using Params = param::Params;
 	using PID = param::PID;
 	using State = arch::State;
+	using CB = param::Param::CB;
+#if PPDHasTuningEditor
 	using XenManager = arch::XenManager;
-
+#endif
 	struct PluginProcessor
 	{
-		PluginProcessor();
+		PluginProcessor(Params&
+#if PPDHasTuningEditor
+			, XenManager&
+#endif
+		);
 
 		// sampleRate
-		void prepare(double);
+		void prepare(float);
 
 		// samples, midiBuffer, transport, numChannels, numSamples
-		void operator()(double**, MidiBuffer&, const Transport::Info&, int, int) noexcept;
+		void operator()(float**, MidiBuffer&, const Transport::Info&, int, int) noexcept;
 		
 		// samples, midiBuffer, numChannels, numSamples
-		void processBlockBypassed(double**, MidiBuffer&, int, int) noexcept;
+		void processBlockBypassed(float**, MidiBuffer&, int, int) noexcept;
 
 		void savePatch(State&);
 		
 		void loadPatch(const State&);
 
-		double sampleRate;
+		float sampleRate;
 	};
 }

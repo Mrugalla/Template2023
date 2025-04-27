@@ -60,8 +60,7 @@ namespace gui
         utils(*this, p),
         layout(),
         evtMember(utils.eventSystem, makeEvt(*this)),
-        tooltip(utils),
-        numFilters(utils)
+        tooltip(utils)
     {
         layout.init
         (
@@ -70,11 +69,6 @@ namespace gui
         );
 
 		addAndMakeVisible(tooltip);
-        addAndMakeVisible(numFilters);
-
-        makeParameter(PID::ModalNumFilters, numFilters);
-        makeKnob(numFilters);
-
         loadSize(*this);
     }
 
@@ -97,7 +91,6 @@ namespace gui
         utils.resized();
         layout.resized(getLocalBounds());
         tooltip.setBounds(layout.bottom().toNearestInt());
-        layout.place(numFilters, 0, 0, 1, 1);
 	}
 
     void Editor::mouseEnter(const Mouse&)

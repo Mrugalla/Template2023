@@ -23,7 +23,6 @@ namespace gui
         evt::Member evtMember;
         
         Tooltip tooltip;
-        Knob numFilters;
 
         //JUCE_HEAVYWEIGHT_LEAK_DETECTOR(Editor)
     };

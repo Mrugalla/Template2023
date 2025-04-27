@@ -1,4 +1,5 @@
 #include "KeySelectorEditor.h"
+#if PPDHasTuningEditor
 
 namespace gui
 {
@@ -201,3 +202,5 @@ namespace gui
 			keyButtons[i].setVisible(true);
 	}
 }
+
+#endif

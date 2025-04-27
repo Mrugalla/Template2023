@@ -7,7 +7,7 @@ namespace dsp
 {	
 	struct LatencyCompensation
 	{
-		using DryBuffers = std::array<std::array<double, BlockSize>, 2>;
+		using DryBuffers = std::array<std::array<float, BlockSize>, 2>;
 
 		LatencyCompensation() :
 			ring(),
@@ -30,7 +30,7 @@ namespace dsp
 			}
 		}
 
-		void operator()(DryBuffers& dryBuffers, const double* const* inputSamples,
+		void operator()(DryBuffers& dryBuffers, const float* const* inputSamples,
 			int numChannels, int numSamples) noexcept
 		{
 			if (latency != 0)
@@ -59,7 +59,7 @@ namespace dsp
 					SIMD::copy(dryBuffers[ch].data(), inputSamples[ch], numSamples);
 		}
 
-		void operator()(double* const* samples, int numChannels, int numSamples) noexcept
+		void operator()(float* const* samples, int numChannels, int numSamples) noexcept
 		{
 			if (latency != 0)
 			{
@@ -82,31 +82,33 @@ namespace dsp
 			}
 		}
 
-	protected:
+	private:
 		AudioBuffer ring;
 		WHead wHead;
 	public:
 		int latency;
 	};
 
+	using Gain13 = Gain<13.f>;
+
 	struct MixProcessorNonlinear
 	{
 		MixProcessorNonlinear() :
-			gainIn(0.)
+			gainIn(0.f)
 		{}
 
-		void prepare(double sampleRate)
+		void prepare(float sampleRate)
 		{
 			gainIn.prepare(sampleRate);
 		}
 
-		void split(double* const* samples, double gainInDb,
+		void split(float* const* samples, float gainInDb,
 			int numChannels, int numSamples) noexcept
 		{
 			gainIn(samples, gainInDb, numChannels, numSamples);
 		}
 
-		void join(double* const* samples,
+		void join(float* const* samples,
 			int numChannels, int numSamples,
 			bool unityGain) noexcept
 		{
@@ -114,7 +116,7 @@ namespace dsp
 				gainIn.applyInverse(samples, numChannels, numSamples);
 		}
 
-		Gain<13., -120.> gainIn;
+		Gain13 gainIn;
 	};
 
 	struct MixProcessorDryWet
@@ -126,7 +128,7 @@ namespace dsp
 			gainWetOut(0.f)
 		{}
 
-		void prepare(double sampleRate)
+		void prepare(float sampleRate)
 		{
 			gainDry.prepare(sampleRate);
 			gainWetIn.prepare(sampleRate);
@@ -134,17 +136,16 @@ namespace dsp
 		}
 
 		// samples, gainDryDb, numChannels, numSamples
-		void splitLinear(double* const* samples, double gainDryDb,
+		void splitLinear(float* const* samples, float gainDryDb,
 			int numChannels, int numSamples) noexcept
 		{
 			parallelProcessor.split(samples, numChannels, numSamples);
 			const auto band = parallelProcessor.getBand(0);
-			double* bandBuf[] = { band.l, band.r };
-			gainDry(bandBuf, gainDryDb, numChannels, numSamples);
+			gainDry(band, gainDryDb, numChannels, numSamples);
 		}
 
 		// samples, gainDryDb, gainWetInDb, numChannels, numSamples
-		void splitNonlinear(double* const* samples, double gainDryDb, double gainWetInDb,
+		void splitNonlinear(float* const* samples, float gainDryDb, float gainWetInDb,
 			int numChannels, int numSamples) noexcept
 		{
 			splitLinear(samples, gainDryDb, numChannels, numSamples);
@@ -152,7 +153,7 @@ namespace dsp
 		}
 
 		// samples, gainWetDb, numChannels, numSamples 
-		void joinLinear(double* const* samples, double gainWetOutDb,
+		void joinLinear(float* const* samples, float gainWetOutDb,
 			int numChannels, int numSamples) noexcept
 		{
 			gainWetOut(samples, gainWetOutDb, numChannels, numSamples);
@@ -160,7 +161,7 @@ namespace dsp
 		}
 
 		// samples, gainWetDb, numChannels, numSamples, unityGain
-		void joinNonlinear(double* const* samples, double gainWetOutDb,
+		void joinNonlinear(float* const* samples, float gainWetOutDb,
 			int numChannels, int numSamples, bool unityGain) noexcept
 		{
 			if(unityGain)
@@ -170,42 +171,42 @@ namespace dsp
 
 	private:
 		PP2Band parallelProcessor;
-		Gain<13., -60.> gainDry, gainWetIn, gainWetOut;
+		Gain13 gainDry, gainWetIn, gainWetOut;
 	};
 
 	struct MixProcessorWetMix
 	{
 		MixProcessorWetMix() :
 			parallelProcessor(),
-			gainWetIn(0.),
-			gainWetOut(0.),
-			mixPRM(1.)
+			gainWetIn(0.f),
+			gainWetOut(0.f),
+			mixPRM(1.f)
 		{}
 
-		void prepare(double sampleRate)
+		void prepare(float sampleRate)
 		{
 			gainWetIn.prepare(sampleRate);
 			gainWetOut.prepare(sampleRate);
-			mixPRM.prepare(sampleRate, 13.);
+			mixPRM.prepare(sampleRate, 13.f);
 		}
 
 		// samples, numChannels, numSamples
-		void splitLinear(double* const* samples,
+		void splitLinear(float* const* samples,
 			int numChannels, int numSamples) noexcept
 		{
 			parallelProcessor.split(samples, numChannels, numSamples);
 		}
 
-		/* samples, gainWetInDb, numChannels, numSamples */
-		void splitNonlinear(double* const* samples, double gainWetInDb,
+		// samples, gainWetInDb, numChannels, numSamples
+		void splitNonlinear(float* const* samples, float gainWetInDb,
 			int numChannels, int numSamples) noexcept
 		{
 			splitLinear(samples, numChannels, numSamples);
 			gainWetIn(samples, gainWetInDb, numChannels, numSamples);
 		}
 
-		/* samples, mix, gainWetOutDb, numChannels, numSamples, delta  */
-		void joinLinear(double* const* samples, double mix, double gainWetOutDb,
+		// samples, mix, gainWetOutDb, numChannels, numSamples, delta 
+		void joinLinear(float* const* samples, float mix, float gainWetOutDb,
 			int numChannels, int numSamples, bool delta) noexcept
 		{
 			gainWetOut(samples, gainWetOutDb, numChannels, numSamples);
@@ -215,8 +216,8 @@ namespace dsp
 				joinMix(samples, mix, numChannels, numSamples);
 		}
 
-		/* samples, mix, gainWetOutDb, numChannels, numSamples, unityGain, delta  */
-		void joinNonlinear(double* const* samples, double mix, double gainWetOutDb,
+		// samples, mix, gainWetOutDb, numChannels, numSamples, unityGain, delta 
+		void joinNonlinear(float* const* samples, float mix, float gainWetOutDb,
 			int numChannels, int numSamples, bool unityGain, bool delta) noexcept
 		{
 			if (unityGain)
@@ -226,11 +227,11 @@ namespace dsp
 	
 	private:
 		PP2Band parallelProcessor;
-		Gain<13., -120.> gainWetIn, gainWetOut;
-		PRMD mixPRM;
+		Gain13 gainWetIn, gainWetOut;
+		PRM mixPRM;
 
-		/* samples, mix, numChannels, numSamples */
-		void joinMix(double* const* samples, double mix, int numChannels, int numSamples) noexcept
+		// samples, mix, numChannels, numSamples
+		void joinMix(float* const* samples, float mix, int numChannels, int numSamples) noexcept
 		{
 			const auto mixInfo = mixPRM(mix, numSamples);
 			if (mixInfo.smoothing)
@@ -239,8 +240,8 @@ namespace dsp
 				parallelProcessor.joinMix(samples, mixInfo.val, numChannels, numSamples);
 		}
 
-		/* samples, mix, numChannels, numSamples */
-		void joinDelta(double* const* samples, double mix, int numChannels, int numSamples) noexcept
+		// samples, mix, numChannels, numSamples
+		void joinDelta(float* const* samples, float mix, int numChannels, int numSamples) noexcept
 		{
 			const auto mixInfo = mixPRM(mix, numSamples);
 			if (mixInfo.smoothing)
@@ -254,10 +255,10 @@ namespace dsp
 	{
 		MixProcessor() :
 			mixProcessor(),
-			gainOut(0.)
+			gainOut(0.f)
 		{}
 
-		void prepare(double sampleRate)
+		void prepare(float sampleRate)
 		{
 			mixProcessor.prepare(sampleRate);
 			gainOut.prepare(sampleRate);
@@ -265,21 +266,21 @@ namespace dsp
 
 #if PPDIO == PPDIOOut
 	#if PPDIsNonlinear
-		/* samples, gainInDb, numChannels, numSamples */
-		void split(double* const* samples, double gainInDb,
+		// samples, gainInDb, numChannels, numSamples
+		void split(float* const* samples, float gainInDb,
 			int numChannels, int numSamples) noexcept
 		{
 			mixProcessor.split(samples, gainInDb, numChannels, numSamples);
 		}
-		/* samples, gainOutDb, numChannels, numSamples, unityGain */
-		void join(double* const* samples, double gainOutDb,
+		// samples, gainOutDb, numChannels, numSamples, unityGain
+		void join(float* const* samples, float gainOutDb,
 			int numChannels, int numSamples, bool unityGain) noexcept
 		{
 			mixProcessor.join(samples, numChannels, numSamples, unityGain);
 			gainOut(samples, gainOutDb, numChannels, numSamples);
 		}
 	#else
-		void join(double* const* samples, double gainOutDb,
+		void join(float* const* samples, float gainOutDb,
 			int numChannels, int numSamples) noexcept
 		{
 			gainOut(samples, gainOutDb, numChannels, numSamples);
@@ -287,30 +288,30 @@ namespace dsp
 	#endif
 #elif PPDIO == PPDIODryWet
 	#if PPDIsNonlinear
-		/* samples, gainDryDb, gainWetInDb, numChannels, numSamples */
-		void split(double* const* samples, double gainDryDb, double gainWetInDb,
+		// samples, gainDryDb, gainWetInDb, numChannels, numSamples
+		void split(float* const* samples, float gainDryDb, float gainWetInDb,
 			int numChannels, int numSamples) noexcept
 		{
 			mixProcessor.splitNonlinear(samples, gainDryDb, gainWetInDb, numChannels, numSamples);
 		}
 
-		/* samples, gainWetOutDb, gainOutDb, numChannels, numSamples, unityGain */
-		void join(double* const* samples, double gainWetOutDb, double gainOutDb,
+		// samples, gainWetOutDb, gainOutDb, numChannels, numSamples, unityGain
+		void join(float* const* samples, float gainWetOutDb, float gainOutDb,
 			int numChannels, int numSamples, bool unityGain) noexcept
 		{
 			mixProcessor.joinNonlinear(samples, gainWetOutDb, numChannels, numSamples, unityGain);
 			gainOut(samples, gainOutDb, numChannels, numSamples);
 		}
 	#else
-		/* samples, gainDryDb, numChannels, numSamples */
-		void split(double* const* samples, double gainDryDb,
+		// samples, gainDryDb, numChannels, numSamples
+		void split(float* const* samples, float gainDryDb,
 			int numChannels, int numSamples) noexcept
 		{
 			mixProcessor.splitLinear(samples, gainDryDb, numChannels, numSamples);
 		}
 
-		/* samples, gainWetOutDb, gainOutDb, numChannels, numSamples */
-		void join(double* const* samples, double gainWetOutDb, double gainOutDb,
+		// samples, gainWetOutDb, gainOutDb, numChannels, numSamples
+		void join(float* const* samples, float gainWetOutDb, float gainOutDb,
 			int numChannels, int numSamples) noexcept
 		{
 			mixProcessor.joinLinear(samples, gainWetOutDb, numChannels, numSamples);
@@ -319,30 +320,30 @@ namespace dsp
 	#endif
 #else
 	#if PPDIsNonlinear
-		/* samples, gainWetInDb, numChannels, numSamples */
-		void split(double* const* samples, double gainWetInDb,
+		// samples, gainWetInDb, numChannels, numSamples
+		void split(float* const* samples, float gainWetInDb,
 			int numChannels, int numSamples) noexcept
 		{
 			mixProcessor.splitNonlinear(samples, gainWetInDb, numChannels, numSamples);
 		}
 
-		/* samples, mix, gainWetDb, gainOutDb, numChannels, numSamples, unityGain, delta */
-		void join(double* const* samples, double mix, double gainWetDb, double gainOutDb,
+		// samples, mix, gainWetDb, gainOutDb, numChannels, numSamples, unityGain, delta
+		void join(float* const* samples, float mix, float gainWetDb, float gainOutDb,
 			int numChannels, int numSamples, bool unityGain, bool delta) noexcept
 		{
 			mixProcessor.joinNonlinear(samples, mix, gainWetDb, numChannels, numSamples, unityGain, delta);
 			gainOut(samples, gainOutDb, numChannels, numSamples);
 		}
 	#else
-		/* samples, numChannels, numSamples */
-		void split(double* const* samples,
+		// samples, numChannels, numSamples
+		void split(float* const* samples,
 			int numChannels, int numSamples) noexcept
 		{
 			mixProcessor.splitLinear(samples, numChannels, numSamples);
 		}
 
-		/* samples, mix, gainWetDb, gainOutDb, numChannels, numSamples, delta */
-		void join(double* const* samples, double mix, double gainWetDb, double gainOutDb,
+		// samples, mix, gainWetDb, gainOutDb, numChannels, numSamples, delta
+		void join(float* const* samples, float mix, float gainWetDb, float gainOutDb,
 			int numChannels, int numSamples, bool delta) noexcept
 		{
 			mixProcessor.joinLinear(samples, mix, gainWetDb, numChannels, numSamples, delta);
@@ -359,6 +360,6 @@ namespace dsp
 #else
 		MixProcessorWetMix mixProcessor;
 #endif
-		Gain<13., -60.> gainOut;
+		Gain13 gainOut;
 	};
 }

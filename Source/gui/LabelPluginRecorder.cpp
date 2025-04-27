@@ -95,16 +95,17 @@ namespace gui
 		saveWav();
 		const Var sourceDescription("pluginrecorder");
 		Point imageOffsetFromMouse(0, 0);
-		if (file.existsAsFile())
-			startDragging
-			(
-				sourceDescription,
-				this,
-				scaledImage,
-				true,
-				&imageOffsetFromMouse,
-				&mouse.source
-			);
+		if (!file.existsAsFile())
+			return;
+		startDragging
+		(
+			sourceDescription,
+			this,
+			scaledImage,
+			true,
+			&imageOffsetFromMouse,
+			&mouse.source
+		);
 	}
 
 	bool LabelPluginRecorder::shouldDropFilesWhenDraggedExternally(const DnDSrc&,
@@ -124,7 +125,7 @@ namespace gui
 		file = userDirectory.getChildFile("HnM.wav");
 	}
 
-	bool LabelPluginRecorder::saveWav(const dsp::AudioBufferF& buffer)
+	bool LabelPluginRecorder::saveWav(const dsp::AudioBuffer& buffer)
 	{
 		getTheFile();
 		if (file.existsAsFile())

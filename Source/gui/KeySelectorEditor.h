@@ -1,4 +1,5 @@
 #pragma once
+#if PPDHasTuningEditor
 #include "Button.h"
 #include "../audio/dsp/KeySelector.h"
 
@@ -27,3 +28,5 @@ namespace gui
 		void initKeyButtons();
 	};
 }
+
+#endif

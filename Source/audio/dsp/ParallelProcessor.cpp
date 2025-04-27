@@ -12,12 +12,12 @@ namespace dsp
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::split(double* const* samples, int numChannels, int numSamples) noexcept
+	void ParallelProcessor<NumBands>::split(float* const* samples, int numChannels, int numSamples) noexcept
 	{
 		for (auto b = 0; b < MaxBand; ++b)
 		{
 			const auto b2 = 2 * b;
-			double* band[] = { bands[b2].data(), bands[b2 + 1].data() };
+			float* band[] = { bands[b2].data(), bands[b2 + 1].data() };
 
 			for (auto ch = 0; ch < numChannels; ++ch)
 				SIMD::copy(band[ch], samples[ch], numSamples);
@@ -25,73 +25,63 @@ namespace dsp
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::join(double* const* samples, int numChannels, int numSamples) noexcept
+	void ParallelProcessor<NumBands>::join(float* const* samples, int numChannels, int numSamples) noexcept
 	{
 		for (auto b = 0; b < MaxBand; ++b)
 		{
 			const auto b2 = 2 * b;
-			const double* band[] = { bands[b2].data(), bands[b2 + 1].data() };
-
 			for (auto ch = 0; ch < numChannels; ++ch)
-				SIMD::add(samples[ch], band[ch], numSamples);
+				SIMD::add(samples[ch], bands[b2 + ch].data(), numSamples);
 		}
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::joinReplace(double* const* samples, int numChannels, int numSamples) noexcept
+	void ParallelProcessor<NumBands>::joinReplace(float* const* samples, int numChannels, int numSamples) noexcept
 	{
-		{
-			const double* band[] = { bands[0].data(), bands[1].data() };
-
-			for (auto ch = 0; ch < numChannels; ++ch)
-				SIMD::copy(samples[ch], band[ch], numSamples);
-		}
+		for (auto ch = 0; ch < numChannels; ++ch)
+			SIMD::copy(samples[ch], bands[ch].data(), numSamples);
 
 		for (auto b = 1; b < MaxBand; ++b)
 		{
 			const auto b2 = 2 * b;
-			const double* band[] = { bands[b2].data(), bands[b2 + 1].data() };
-
 			for (auto ch = 0; ch < numChannels; ++ch)
-				SIMD::add(samples[ch], band[ch], numSamples);
+				SIMD::add(samples[ch], bands[b2 + ch].data(), numSamples);
 		}
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::applyGain(double gain, int bandIdx, int numChannels, int numSamples) noexcept
+	void ParallelProcessor<NumBands>::applyGain(float gain, int bandIdx, int numChannels, int numSamples) noexcept
 	{
 		const auto b2 = 2 * bandIdx;
-		double* band[] = { bands[b2].data(), bands[b2 + 1].data() };
+		float* band[] = { bands[b2].data(), bands[b2 + 1].data() };
 
 		for (auto ch = 0; ch < numChannels; ++ch)
 			SIMD::multiply(band[ch], gain, numSamples);
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::applyGain(double* gain, int bandIdx, int numChannels, int numSamples) noexcept
+	void ParallelProcessor<NumBands>::applyGain(float* gain, int bandIdx, int numChannels, int numSamples) noexcept
 	{
 		const auto b2 = 2 * bandIdx;
-		double* band[] = { bands[b2].data(), bands[b2 + 1].data() };
-
 		for (auto ch = 0; ch < numChannels; ++ch)
-			SIMD::multiply(band[ch], gain, numSamples);
+			SIMD::multiply(bands[b2 + ch].data(), gain, numSamples);
 	}
 
 	template<size_t NumBands>
-	typename ParallelProcessor<NumBands>::Band ParallelProcessor<NumBands>::getBand(int bandIdx) noexcept
+	BufferView2 ParallelProcessor<NumBands>::getBand(int bandIdx) noexcept
 	{
 		const auto b2 = 2 * bandIdx;
 		return { bands[b2].data(), bands[b2 + 1].data() };
 	}
 
 	template<size_t NumBands>
-	typename ParallelProcessor<NumBands>::Band ParallelProcessor<NumBands>::operator[](int bandIdx) noexcept
+	BufferView2 ParallelProcessor<NumBands>::operator[](int bandIdx) noexcept
 	{
 		return getBand(bandIdx);
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::joinMix(double* const* samples, double* mix,
+	void ParallelProcessor<NumBands>::joinMix(float* const* samples, float* mix,
 		int numChannels, int numSamples) noexcept
 	{
 		for (auto ch = 0; ch < numChannels; ++ch)
@@ -105,7 +95,7 @@ namespace dsp
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::joinMix(double* const* samples, double mix,
+	void ParallelProcessor<NumBands>::joinMix(float* const* samples, float mix,
 		int numChannels, int numSamples) noexcept
 	{
 		for (auto ch = 0; ch < numChannels; ++ch)
@@ -119,7 +109,7 @@ namespace dsp
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::joinDelta(double* const* samples, double* gain,
+	void ParallelProcessor<NumBands>::joinDelta(float* const* samples, float* gain,
 		int numChannels, int numSamples) noexcept
 	{
 		for (auto ch = 0; ch < numChannels; ++ch)
@@ -140,7 +130,7 @@ namespace dsp
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::joinDelta(double* const* samples, double gain,
+	void ParallelProcessor<NumBands>::joinDelta(float* const* samples, float gain,
 		int numChannels, int numSamples) noexcept
 	{
 		for (auto ch = 0; ch < numChannels; ++ch)

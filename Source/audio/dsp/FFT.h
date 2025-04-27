@@ -11,7 +11,7 @@ namespace dsp
 		static constexpr int Size = 1 << Order;
 		static constexpr int Size2 = Size * 2;
 		static constexpr float Size2Inv = 1.f / Size2;
-		static constexpr float Size2InvTau = Size2Inv * TauF;
+		static constexpr float Size2InvTau = Size2Inv * Tau;
 	
 		FFT() :
 			fft(Order),

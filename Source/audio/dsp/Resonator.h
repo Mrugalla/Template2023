@@ -1,5 +1,5 @@
 #pragma once
-#include "../Using.h"
+#include "Smooth.h"
 
 namespace dsp
 {
@@ -12,17 +12,22 @@ namespace dsp
 		// fc [0, .5]
 		void setCutoffFc(double) noexcept;
 
+		// fc [0, .5]
+		void setCutoffFc(float) noexcept;
+
 		// bw [0, .5]
 		void setBandwidth(double) noexcept;
 
-		// gain [0, 1]
-		void setGain(double) noexcept;
+		// bw [0, .5]
+		void setBandwidth(float) noexcept;
 
 		virtual void update() noexcept = 0;
 
 		virtual double operator()(double) noexcept = 0;
 
-		double fc, bw, gain;
+		double operator()(float) noexcept;
+
+		double fc, bw;
 	protected:
 		double distort(double y) const noexcept;
 	};
@@ -71,6 +76,21 @@ namespace dsp
 		double z1, z2;
 	};
 
+	// like Resonator2, but with an added highpass filter
+	struct Resonator3 :
+		public Resonator2
+	{
+		void reset() noexcept override;
+
+		void update() noexcept override;
+
+		void copyFrom(const Resonator3&) noexcept;
+
+		double operator()(double) noexcept override;
+	protected:
+		smooth::LowpassG0 lp;
+	};
+
 	template<class ResoClass>
 	struct ResonatorStereo
 	{
@@ -85,13 +105,25 @@ namespace dsp
 		void setCutoffFc(double, int) noexcept;
 
 		// fc [0, .5], ch
+		void setCutoffFc(float, int) noexcept;
+
+		// fc [0, .5], ch
 		void setBandwidth(double, int) noexcept;
+
+		// bw [0, .5], ch
+		void setBandwidth(float, int) noexcept;
 
 		// gain [0, 1], ch
 		void setGain(double, int) noexcept;
 
+		// gain [0, 1], ch
+		void setGain(float, int) noexcept;
+
 		// gain [0, 1]
 		void setGain(double) noexcept;
+
+		// gain [0, 1]
+		void setGain(float) noexcept;
 
 		// ch
 		void update(int) noexcept;
@@ -101,10 +133,13 @@ namespace dsp
 		// smpl, ch
 		double operator()(double, int) noexcept;
 
+		// smpl, ch
+		double operator()(float, int) noexcept;
 	protected:
 		std::array<ResoClass, 2> resonators;
 	};
 
 	using ResonatorStereo1 = ResonatorStereo<Resonator1>;
 	using ResonatorStereo2 = ResonatorStereo<Resonator2>;
+	using ResonatorStereo3 = ResonatorStereo<Resonator3>;
 }

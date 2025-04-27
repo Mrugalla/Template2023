@@ -2,29 +2,27 @@
 
 namespace dsp
 {
-	template<typename Float>
-	PRMInfo<Float>::PRMInfo(Float* _buf, Float _val, bool _smoothing) :
+	// PRMInfo
+
+	PRMInfo::PRMInfo(float* _buf, float _val, bool _smoothing) :
 		buf(_buf),
 		val(_val),
 		smoothing(_smoothing)
 	{}
 
-	template<typename Float>
-	Float PRMInfo<Float>::operator[](int i) const noexcept
+	float PRMInfo::operator[](int i) const noexcept
 	{
 		return buf[i];
 	}
 
-	template<typename Float>
-	void PRMInfo<Float>::copyToBuffer(int numSamples) noexcept
+	void PRMInfo::copyToBuffer(int numSamples) noexcept
 	{
 		if (smoothing)
 			return;
 		SIMD::fill(buf, val, numSamples);
 	}
 
-	template<typename Float>
-	void PRMInfo<Float>::copyToBuffer(int startIdx, int endIdx) noexcept
+	void PRMInfo::copyToBuffer(int startIdx, int endIdx) noexcept
 	{
 		if (smoothing)
 			return;
@@ -32,19 +30,14 @@ namespace dsp
 		SIMD::fill(&buf[startIdx], val, numSamples);
 	}
 
-	template<typename Float>
-	PRMInfo<Float>::operator Float() const noexcept
+	PRMInfo::operator float() const noexcept
 	{
 		return val;
 	}
 
-	template struct PRMInfo<float>;
-	template struct PRMInfo<double>;
-
-	//
-
-	template<typename Float>
-	PRM<Float>::PRM(Float startVal) :
+	// PRM
+	
+	PRM::PRM(float startVal) :
 		buf(),
 		smooth(startVal),
 		value(startVal),
@@ -54,129 +47,104 @@ namespace dsp
 			b = startVal;
 	}
 	
-	template<typename Float>
-	void PRM<Float>::prepare(Float sampleRate, Float smoothLenMs) noexcept
+	void PRM::prepare(float sampleRate, float smoothLenMs) noexcept
 	{
 		smooth.makeFromDecayInMs(smoothLenMs, sampleRate);
 		smoothing = false;
 	}
 
-	template<typename Float>
-	PRMInfo<Float> PRM<Float>::operator()(Float val, int numSamples) noexcept
+	PRMInfo PRM::operator()(float val, int numSamples) noexcept
 	{
 		value = val;
 		smoothing = smooth(buf.data(), value, numSamples);
 		return { buf.data(), value, smoothing };
 	}
 
-	template<typename Float>
-	PRMInfo<Float> PRM<Float>::operator()(Float val, int startIdx, int endIdx) noexcept
+	PRMInfo PRM::operator()(float val, int startIdx, int endIdx) noexcept
 	{
 		value = val;
 		return operator()(startIdx, endIdx);
 	}
 
-	template<typename Float>
-	PRMInfo<Float> PRM<Float>::operator()(int startIdx, int endIdx) noexcept
+	PRMInfo PRM::operator()(int startIdx, int endIdx) noexcept
 	{
 		smoothing = smooth(buf.data(), value, startIdx, endIdx);
 		return { buf.data(), value, smoothing };
 	}
 
-	template<typename Float>
-	PRMInfo<Float> PRM<Float>::operator()(int numSamples) noexcept
+	PRMInfo PRM::operator()(int numSamples) noexcept
 	{
 		smoothing = smooth(buf.data(), value, numSamples);
 		return { buf.data(), value, smoothing };
 	}
 
-	template<typename Float>
-	Float PRM<Float>::operator[](int i) const noexcept
+	float PRM::operator[](int i) const noexcept
 	{
 		return buf[i];
 	}
 
-	template struct PRM<float>;
-	template struct PRM<double>;
+	// PRMBlock
 
-	//
-
-	template<typename Float>
-	PRMBlock<Float>::PRMBlock(Float _startVal) :
+	PRMBlock::PRMBlock(float _startVal) :
 		startVal(_startVal),
-		lp(startVal),
+		lp(static_cast<double>(startVal)),
 		info(nullptr, startVal, false)
 	{}
 
-	template<typename Float>
-	void PRMBlock<Float>::prepare(Float sampleRate, Float smoothLenMs) noexcept
+	void PRMBlock::prepare(float sampleRate, float smoothLenMs) noexcept
 	{
-		const auto blockSize = static_cast<Float>(BlockSize);
-		const auto smoothLenBlock = smoothLenMs / blockSize;
+		const auto smoothLenBlock = smoothLenMs / BlockSizeF;
 		lp.makeFromDecayInMs(smoothLenBlock, sampleRate);
 	}
 
-	template<typename Float>
-	void PRMBlock<Float>::reset() noexcept
+	void PRMBlock::reset() noexcept
 	{
 		reset(startVal);
 	}
 
-	template<typename Float>
-	void PRMBlock<Float>::reset(Float val) noexcept
+	void PRMBlock::reset(float val) noexcept
 	{
-		lp.reset(val);
+		lp.reset(static_cast<double>(val));
 		info.val = val;
 	}
-
-	template<typename Float>
-	PRMInfo<Float> PRMBlock<Float>::operator()(Float x) noexcept
+	
+	PRMInfo PRMBlock::operator()(float x) noexcept
 	{
 		if (info.val != x)
 		{
 			info.smoothing = true;
-			info.val = lp(x);
+			const auto lpY = lp(x);
+			info.val = static_cast<float>(lpY);
 			if (info.val == x)
 				info.smoothing = false;
 		}
 		return info;
 	}
-
-	template<typename Float>
-	PRMBlock<Float>::operator Float() const noexcept
+	
+	PRMBlock::operator float() const noexcept
 	{
 		return info;
 	}
 
-	template struct PRMBlock<float>;
-	template struct PRMBlock<double>;
-
 	//
-
-	template<typename Float>
-	PRMBlockStereo<Float>::PRMBlockStereo(Float startVal) :
+	
+	PRMBlockStereo::PRMBlockStereo(float startVal) :
 		prms{ startVal, startVal }
 	{}
-
-	template<typename Float>
-	void PRMBlockStereo<Float>::prepare(Float sampleRate, Float smoothLenMs) noexcept
+	
+	void PRMBlockStereo::prepare(float sampleRate, float smoothLenMs) noexcept
 	{
 		for (auto& prm : prms)
 			prm.prepare(sampleRate, smoothLenMs);
 	}
 
-	template<typename Float>
-	PRMInfo<Float> PRMBlockStereo<Float>::operator()(Float x, int ch) noexcept
+	PRMInfo PRMBlockStereo::operator()(float x, int ch) noexcept
 	{
 		return prms[ch](x);
 	}
 
-	template<typename Float>
-	PRMInfo<Float> PRMBlockStereo<Float>::operator[](int ch) const noexcept
+	PRMInfo PRMBlockStereo::operator[](int ch) const noexcept
 	{
 		return prms[ch].info;
 	}
-
-	template struct PRMBlockStereo<float>;
-	template struct PRMBlockStereo<double>;
 }

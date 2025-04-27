@@ -8,7 +8,7 @@ namespace dsp
 		struct Params
 		{
 			// gain[0,1], rateSync != 0, smooth[0,1], complex[1,8], dropout[0,1]
-			double rateSync, smooth, complex, dropout;
+			float rateSync, smooth, complex, dropout;
 		};
 
 		Randomizer() :
@@ -23,7 +23,8 @@ namespace dsp
 			perlin.prepare(sampleRate);
 		}
 
-		void operator()(const Params& params, const Transport::Info& transport, int numSamples) noexcept
+		void operator()(const Params& params,
+			const Transport::Info& transport, int numSamples) noexcept
 		{
 			SIMD::clear(buffer.data(), numSamples);
 
@@ -31,7 +32,7 @@ namespace dsp
 			(
 				buffer.data(),
 				numSamples, transport,
-				1. / params.rateSync,
+				1.f / params.rateSync,
 				params.complex,
 				params.dropout,
 				params.smooth * params.smooth
@@ -40,7 +41,7 @@ namespace dsp
 			meter.store(static_cast<float>(buffer[numSamples - 1]));
 		}
 
-		double operator[](int i) const noexcept
+		float operator[](int i) const noexcept
 		{
 			return buffer[i];
 		}
@@ -51,7 +52,7 @@ namespace dsp
 		}
 	private:
 		std::atomic<float> meter;
-		std::array<double, BlockSize> buffer;
+		std::array<float, BlockSize> buffer;
 		perlin::Perlin2 perlin;
 	};
 }

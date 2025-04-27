@@ -3,14 +3,15 @@
 
 namespace dsp
 {
-	template<typename Float>
+	using Smooth = smooth::Smooth;
+
 	struct PRMInfo
 	{
 		// buf, val, smoothing
-		PRMInfo(Float* = nullptr, Float = 0., bool = false);
+		PRMInfo(float* = nullptr, float = 0.f, bool = false);
 
 		// idx
-		Float operator[](int) const noexcept;
+		float operator[](int) const noexcept;
 
 		// numSamples
 		void copyToBuffer(int) noexcept;
@@ -18,95 +19,80 @@ namespace dsp
 		// startIdx, endIdx
 		void copyToBuffer(int, int) noexcept;
 
-		operator Float() const noexcept;
+		operator float() const noexcept;
 
-		Float* buf;
-		Float val;
+		float* buf;
+		float val;
 		bool smoothing;
 	};
-
-	using PRMInfoF = PRMInfo<float>;
-	using PRMInfoD = PRMInfo<double>;
 	
-	template<typename Float>
 	struct PRM
 	{
 		// startVal
-		PRM(Float = static_cast<Float>(0));
+		PRM(float = 0.f);
 		
 		// sampleRate, smoothLenMs
-		void prepare(Float sampleRate, Float smoothLenMs) noexcept;
+		void prepare(float sampleRate, float smoothLenMs) noexcept;
 
 		// value, numSamples
-		PRMInfo<Float> operator()(Float, int) noexcept;
+		PRMInfo operator()(float, int) noexcept;
 
 		// value, startIdx, endIdx
-		PRMInfo<Float> operator()(Float, int, int) noexcept;
+		PRMInfo operator()(float, int, int) noexcept;
 
 		// startIdx, endIdx
-		PRMInfo<Float> operator()(int, int) noexcept;
+		PRMInfo operator()(int, int) noexcept;
 
 		// numSamples
-		PRMInfo<Float> operator()(int) noexcept;
+		PRMInfo operator()(int) noexcept;
 
 		// idx
-		Float operator[](int) const noexcept;
+		float operator[](int) const noexcept;
 
-		std::array<Float, BlockSize> buf;
-		smooth::Smooth<Float> smooth;
-		Float value;
+		std::array<float, BlockSize> buf;
+		Smooth smooth;
+		float value;
 		bool smoothing;
 	};
 
-	using PRMF = PRM<float>;
-	using PRMD = PRM<double>;
-
-	template<typename Float>
 	struct PRMBlock
 	{
 		// startVal
-		PRMBlock(Float = static_cast<Float>(0));
+		PRMBlock(float = 0.f);
+
+		// sampleRate, smoothLenMs
+		void prepare(float, float) noexcept;
 
 		void reset() noexcept;
 
 		// val
-		void reset(Float) noexcept;
-
-		// sampleRate, smoothLenMs
-		void prepare(Float, Float) noexcept;
+		void reset(float) noexcept;
 
 		// value
-		PRMInfo<Float> operator()(Float) noexcept;
+		PRMInfo operator()(float) noexcept;
 
-		operator Float() const noexcept;
+		operator float() const noexcept;
 
-		Float startVal;
-		smooth::Lowpass<Float, false> lp;
-		PRMInfo<Float> info;
+		float startVal;
+		smooth::LowpassG0 lp;
+		PRMInfo info;
 	};
 
-	using PRMBlockF = PRMBlock<float>;
-	using PRMBlockD = PRMBlock<double>;
-
-	template<typename Float>
 	struct PRMBlockStereo
 	{
 		// startVal
-		PRMBlockStereo(Float = static_cast<Float>(0));
+		PRMBlockStereo(float = 0.f);
 
 		// sampleRate, smoothLenMs
-		void prepare(Float, Float) noexcept;
+		void prepare(float, float) noexcept;
 
 		// value, ch
-		PRMInfo<Float> operator()(Float, int) noexcept;
+		PRMInfo operator()(float, int) noexcept;
 
 		// ch
-		PRMInfo<Float> operator[](int) const noexcept;
+		PRMInfo operator[](int) const noexcept;
 
 	protected:
-		std::array<PRMBlock<Float>, 2> prms;
+		std::array<PRMBlock, 2> prms;
 	};
-
-	using PRMBlockStereoF = PRMBlockStereo<float>;
-	using PRMBlockStereoD = PRMBlockStereo<double>;
 }

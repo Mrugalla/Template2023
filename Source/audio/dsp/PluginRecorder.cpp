@@ -8,15 +8,15 @@ namespace dsp
 		writeHead(0)
 	{}
 
-	void PluginRecorder::prepare(double sampleRate)
+	void PluginRecorder::prepare(float sampleRate)
 	{
-		const auto numSamples = static_cast<int>(sampleRate * 10.);
+		const auto numSamples = static_cast<int>(sampleRate * 10.f);
 		recording.setSize(2, numSamples, false, true, false);
 		outBuffer.setSize(2, numSamples, false, true, false);
 		writeHead = 0;
 	}
 
-	void PluginRecorder::operator()(double* const* samples, int numChannels, int numSamples) noexcept
+	void PluginRecorder::operator()(float* const* samples, int numChannels, int numSamples) noexcept
 	{
 		auto recSamples = recording.getArrayOfWritePointers();
 		const auto recNumSamples = recording.getNumSamples();
@@ -33,7 +33,7 @@ namespace dsp
 		writeHead = (writeHead + numSamples) % recNumSamples;
 	}
 
-	const AudioBufferF& PluginRecorder::getRecording()
+	const AudioBuffer& PluginRecorder::getRecording()
 	{
 		const auto numChannels = 2;
 		const auto numSamples = recording.getNumSamples();
@@ -47,7 +47,7 @@ namespace dsp
 			for (auto s = 0; s < numSamples; ++s)
 			{
 				const auto rH = (rHead + s) % numSamples;
-				buf[s] = static_cast<float>(rec[rH]);
+				buf[s] = rec[rH];
 			}
 		}
 		normalize(outBuf, numChannels, numSamples);
@@ -68,7 +68,7 @@ namespace dsp
 		}
 		if (mag == 0.f || mag == 1.f)
 			return;
-		auto g = 1.f / mag;
+		const auto g = 1.f / mag;
 		for (auto ch = 0; ch < numChannels; ++ch)
 			SIMD::multiply(samples[ch], g, numSamples);
 	}

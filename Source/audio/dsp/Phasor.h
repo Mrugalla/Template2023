@@ -2,43 +2,33 @@
 
 namespace dsp
 {
-	template<typename Float>
 	struct PhaseInfo
 	{
-		/* phase, retrig */
-		PhaseInfo(Float = static_cast<Float>(0), bool = false);
+		// phase, retrig
+		PhaseInfo(double = 0., bool = false);
 
-		Float phase;
+		double phase;
 		bool retrig;
 	};
 
-	using PhaseInfoF = PhaseInfo<float>;
-	using PhaseInfoD = PhaseInfo<double>;
-
-	template<typename Float>
 	struct Phasor
 	{
-		using Phase = PhaseInfo<Float>;
+		void setFrequencyHz(double) noexcept;
 
-		void setFrequencyHz(Float) noexcept;
+		// phase, inc
+		Phasor(double = 0., double = 0.);
 
-		/* phase, inc */
-		Phasor(Float = static_cast<Float>(0), Float = static_cast<Float>(0));
+		// fsInv
+		void prepare(double) noexcept;
 
-		/* fsInv */
-		void prepare(Float) noexcept;
+		void reset(double = 0.) noexcept;
 
-		void reset(Float = static_cast<Float>(0)) noexcept;
+		PhaseInfo operator()() noexcept;
 
-		Phase operator()() noexcept;
+		// numSamples
+		PhaseInfo operator()(double) noexcept;
 
-		/* numSamples */
-		Phase operator()(int) noexcept;
-
-		Phase phase;
-		Float inc, fsInv;
+		PhaseInfo phase;
+		double inc, fsInv;
 	};
-
-	using PhasorF = Phasor<float>;
-	using PhasorD = Phasor<double>;
 }

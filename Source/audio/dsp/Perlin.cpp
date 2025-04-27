@@ -2,7 +2,7 @@
 
 namespace perlin
 {
-	void generateProceduralNoise(double* noise, int size, unsigned int seed)
+	void generateProceduralNoise(float* noise, int size, unsigned int seed)
 	{
 		std::random_device rd;
 		std::mt19937 mt(rd());
@@ -15,50 +15,51 @@ namespace perlin
 		}
 	}
 
-	double applyBias(double x, double bias) noexcept
+	float applyBias(float x, float bias) noexcept
 	{
 		if (bias == 0.)
 			return x;
-		const auto X = 2. * x * x * x * x * x;
+		const auto X = 2.f * x * x * x * x * x;
 		const auto Y = X * X * X;
-		return x + bias * (std::tanh(Y) - x);
+		return x + bias * (math::tanhApprox(Y) - x);
 	}
 
-	void applyBias(double* smpls, double bias, int numSamples) noexcept
+	void applyBias(float* smpls, float bias, int numSamples) noexcept
 	{
 		for (auto s = 0; s < numSamples; ++s)
 			smpls[s] = applyBias(smpls[s], bias);
 	}
 
-	void applyBias(double* const* samples, double bias, int numChannels, int numSamples) noexcept
+	void applyBias(float* const* samples, float bias,
+		int numChannels, int numSamples) noexcept
 	{
 		for (auto ch = 0; ch < numChannels; ++ch)
 			applyBias(samples[ch], bias, numSamples);
 	}
 
-	void applyBias(double* smpls, const double* bias, int numSamples) noexcept
+	void applyBias(float* smpls, const float* bias, int numSamples) noexcept
 	{
 		for (auto s = 0; s < numSamples; ++s)
 			smpls[s] = applyBias(smpls[s], bias[s]);
 	}
 
-	void applyBias(double* const* samples, const double* bias, int numChannels, int numSamples) noexcept
+	void applyBias(float* const* samples, const float* bias, int numChannels, int numSamples) noexcept
 	{
 		for (auto ch = 0; ch < numChannels; ++ch)
 			applyBias(samples[ch], bias, numSamples);
 	}
 
-	double getInterpolatedNN(const double* noise, double phase) noexcept
+	float getInterpolatedNN(const float* noise, float phase) noexcept
 	{
 		return noise[static_cast<int>(std::round(phase)) + 1];
 	}
 
-	double getInterpolatedLerp(const double* noise, double phase) noexcept
+	float getInterpolatedLerp(const float* noise, float phase) noexcept
 	{
-		return math::lerp(noise, phase + 1.5);
+		return math::lerp(noise, phase + 1.5f);
 	}
 
-	double getInterpolatedSpline(const double* noise, double phase) noexcept
+	float getInterpolatedSpline(const float* noise, float phase) noexcept
 	{
 		return math::cubicHermiteSpline(noise, phase);
 	}
@@ -66,20 +67,11 @@ namespace perlin
 	// PERLIN
 
 	Perlin::Perlin() :
-		// misc
-		interpolationFuncs{ &getInterpolatedNN, &getInterpolatedLerp, &getInterpolatedSpline },
-		sampleRateInv(1), sampleRate(1.),
 		// phase
 		phasor(),
 		phaseBuffer(),
 		noiseIdx(0)
 	{
-	}
-
-	void Perlin::prepare(double _sampleRate) noexcept
-	{
-		sampleRate = _sampleRate;
-		sampleRateInv = 1. / sampleRate;
 	}
 
 	void Perlin::updatePosition(double newPhase) noexcept
@@ -94,25 +86,8 @@ namespace perlin
 		phasor.inc = rateHzInv;
 	}
 
-	void Perlin::operator()(double* const* samples, const double* noise, const double* gainBuffer,
-		const PRMInfo& octavesInfo, const PRMInfo& phsInfo, const PRMInfo& widthInfo,
-		Shape shape, int numChannels, int numSamples) noexcept
-	{
-		synthesizePhasor(phsInfo, numSamples);
-		processOctaves(samples[0], octavesInfo, noise, gainBuffer, shape, numSamples);
-		if (numChannels == 2)
-			processWidth(samples, octavesInfo, widthInfo, noise, gainBuffer, shape, numSamples);
-	}
-
-	void Perlin::operator()(double* smpls, const double* noise, const double* gainBuffer,
-		const PRMInfo& octavesInfo, Shape shape, int numSamples) noexcept
-	{
-		synthesizePhasor(numSamples);
-		processOctaves(smpls, octavesInfo, noise, gainBuffer, shape, numSamples);
-	}
-
-	void Perlin::operator()(double* smpls, const double* noise, const double* gainBuffer,
-		const PRMInfo& octavesInfo, double shape, int numSamples) noexcept
+	void Perlin::operator()(float* smpls, const float* noise, const float* gainBuffer,
+		const PRMInfo& octavesInfo, float shape, int numSamples) noexcept
 	{
 		synthesizePhasor(numSamples);
 		processOctaves(smpls, octavesInfo, noise, gainBuffer, shape, numSamples);
@@ -120,6 +95,7 @@ namespace perlin
 
 	void Perlin::synthesizePhasor(const PRMInfo& phsInfo, int numSamples) noexcept
 	{
+		const auto noiseIdxF = static_cast<float>(noiseIdx);
 		if (!phsInfo.smoothing)
 			for (auto s = 0; s < numSamples; ++s)
 			{
@@ -127,7 +103,8 @@ namespace perlin
 				if (phaseInfo.retrig)
 					noiseIdx = (noiseIdx + 1) & NoiseSizeMax;
 
-				phaseBuffer[s] = phaseInfo.phase + phsInfo.val + static_cast<double>(noiseIdx);
+				const auto phaseF = static_cast<float>(phaseInfo.phase);
+				phaseBuffer[s] = phaseF + phsInfo.val + noiseIdxF;
 			}
 		else
 			for (auto s = 0; s < numSamples; ++s)
@@ -136,7 +113,8 @@ namespace perlin
 				if (phaseInfo.retrig)
 					noiseIdx = (noiseIdx + 1) & NoiseSizeMax;
 
-				phaseBuffer[s] = phaseInfo.phase + phsInfo[s] + static_cast<double>(noiseIdx);
+				const auto phaseF = static_cast<float>(phaseInfo.phase);
+				phaseBuffer[s] = phaseF + phsInfo[s] + noiseIdxF;
 			}
 	}
 
@@ -148,52 +126,36 @@ namespace perlin
 			if (phaseInfo.retrig)
 				noiseIdx = (noiseIdx + 1) & NoiseSizeMax;
 
-			phaseBuffer[s] = phaseInfo.phase + static_cast<double>(noiseIdx);
+			const auto phaseF = static_cast<float>(phaseInfo.phase);
+			phaseBuffer[s] = phaseF + static_cast<float>(noiseIdx);
 		}
 	}
 
-	double Perlin::getInterpolatedSample(const double* noise,
-		double phase, Shape shape) const noexcept
+	void Perlin::processOctaves(float* smpls, const PRMInfo& octavesInfo,
+		const float* noise, const float* gainBuffer, float shape, int numSamples) noexcept
 	{
-		const auto smpl0 = interpolationFuncs[static_cast<int>(shape)](noise, phase);
-		return smpl0;
+		if (!octavesInfo.smoothing)
+			processOctavesNotSmoothing(smpls, noise, gainBuffer, octavesInfo.val, shape, numSamples);
+		else
+			processOctavesSmoothing(smpls, octavesInfo.buf, noise, gainBuffer, shape, numSamples);
 	}
 
-	double Perlin::getInterpolatedSample(const double* noise,
-		double phase, double shape) const noexcept
+	float Perlin::getInterpolatedSample(const float* noise,
+		float phase, float shape) const noexcept
 	{
 		const auto smplNN = getInterpolatedNN(noise, phase);
 		const auto smplCubic = getInterpolatedSpline(noise, phase);
 		return smplNN + shape * (smplCubic - smplNN);
 	}
 
-	void Perlin::processOctaves(double* smpls, const PRMInfo& octavesInfo,
-		const double* noise, const double* gainBuffer, Shape shape, int numSamples) noexcept
-	{
-		if (!octavesInfo.smoothing)
-			processOctavesNotSmoothing(smpls, noise, gainBuffer, octavesInfo.val, shape, numSamples);
-		else
-			processOctavesSmoothing(smpls, octavesInfo.buf, noise, gainBuffer, shape, numSamples);
-	}
-
-	void Perlin::processOctaves(double* smpls, const PRMInfo& octavesInfo,
-		const double* noise, const double* gainBuffer, double shape, int numSamples) noexcept
-	{
-		if (!octavesInfo.smoothing)
-			processOctavesNotSmoothing(smpls, noise, gainBuffer, octavesInfo.val, shape, numSamples);
-		else
-			processOctavesSmoothing(smpls, octavesInfo.buf, noise, gainBuffer, shape, numSamples);
-	}
-
-	void Perlin::processOctavesNotSmoothing(double* smpls, const double* noise,
-		const double* gainBuffer, double octaves,
-		Shape shape, int numSamples) noexcept
+	void Perlin::processOctavesNotSmoothing(float* smpls, const float* noise,
+		const float* gainBuffer, float octaves, float shape, int numSamples) noexcept
 	{
 		const auto octFloor = std::floor(octaves);
 
 		for (auto s = 0; s < numSamples; ++s)
 		{
-			auto sample = 0.;
+			auto sample = 0.f;
 			for (auto o = 0; o < octFloor; ++o)
 			{
 				const auto phase = getPhaseOctaved(phaseBuffer[s], o);
@@ -204,12 +166,12 @@ namespace perlin
 			smpls[s] = sample;
 		}
 
-		auto gain = 0.;
+		auto gain = 0.f;
 		for (auto o = 0; o < octFloor; ++o)
 			gain += gainBuffer[o];
 
 		const auto octFrac = octaves - octFloor;
-		if (octFrac != 0.)
+		if (octFrac != 0.f)
 		{
 			const auto octFloorInt = static_cast<int>(octFloor);
 
@@ -223,59 +185,18 @@ namespace perlin
 			gain += octFrac * gainBuffer[octFloorInt];
 		}
 
-		SIMD::multiply(smpls, 1. / std::sqrt(gain), numSamples);
+		SIMD::multiply(smpls, 1.f / std::sqrt(gain), numSamples);
 	}
 
-	void Perlin::processOctavesNotSmoothing(double* smpls, const double* noise,
-		const double* gainBuffer, double octaves,
-		double shape, int numSamples) noexcept
-	{
-		const auto octFloor = std::floor(octaves);
-
-		for (auto s = 0; s < numSamples; ++s)
-		{
-			auto sample = 0.;
-			for (auto o = 0; o < octFloor; ++o)
-			{
-				const auto phase = getPhaseOctaved(phaseBuffer[s], o);
-				const auto smpl = getInterpolatedSample(noise, phase, shape);
-				sample += smpl * gainBuffer[o];
-			}
-
-			smpls[s] = sample;
-		}
-
-		auto gain = 0.;
-		for (auto o = 0; o < octFloor; ++o)
-			gain += gainBuffer[o];
-
-		const auto octFrac = octaves - octFloor;
-		if (octFrac != 0.)
-		{
-			const auto octFloorInt = static_cast<int>(octFloor);
-
-			for (auto s = 0; s < numSamples; ++s)
-			{
-				const auto phase = getPhaseOctaved(phaseBuffer[s], octFloorInt);
-				const auto smpl = getInterpolatedSample(noise, phase, shape);
-				smpls[s] += octFrac * smpl * gainBuffer[octFloorInt];;
-			}
-
-			gain += octFrac * gainBuffer[octFloorInt];
-		}
-
-		SIMD::multiply(smpls, 1. / std::sqrt(gain), numSamples);
-	}
-
-	void Perlin::processOctavesSmoothing(double* smpls, const double* octavesBuf,
-		const double* noise, const double* gainBuffer,
-		Shape shape, int numSamples) noexcept
+	void Perlin::processOctavesSmoothing(float* smpls, const float* octavesBuf,
+		const float* noise, const float* gainBuffer,
+		float shape, int numSamples) noexcept
 	{
 		for (auto s = 0; s < numSamples; ++s)
 		{
 			const auto octFloor = std::floor(octavesBuf[s]);
 
-			auto sample = 0.;
+			auto sample = 0.f;
 			for (auto o = 0; o < octFloor; ++o)
 			{
 				const auto phase = getPhaseOctaved(phaseBuffer[s], o);
@@ -285,12 +206,12 @@ namespace perlin
 
 			smpls[s] = sample;
 
-			auto gain = 0.;
+			auto gain = 0.f;
 			for (auto o = 0; o < octFloor; ++o)
 				gain += gainBuffer[o];
 
 			const auto octFrac = octavesBuf[s] - octFloor;
-			if (octFrac != 0.)
+			if (octFrac != 0.f)
 			{
 				const auto octFloorInt = static_cast<int>(octFloor);
 
@@ -305,50 +226,12 @@ namespace perlin
 		}
 	}
 
-	void Perlin::processOctavesSmoothing(double* smpls, const double* octavesBuf,
-		const double* noise, const double* gainBuffer,
-		double shape, int numSamples) noexcept
-	{
-		for (auto s = 0; s < numSamples; ++s)
-		{
-			const auto octFloor = std::floor(octavesBuf[s]);
-
-			auto sample = 0.;
-			for (auto o = 0; o < octFloor; ++o)
-			{
-				const auto phase = getPhaseOctaved(phaseBuffer[s], o);
-				const auto smpl = getInterpolatedSample(noise, phase, shape);
-				sample += smpl * gainBuffer[o];
-			}
-
-			smpls[s] = sample;
-
-			auto gain = 0.;
-			for (auto o = 0; o < octFloor; ++o)
-				gain += gainBuffer[o];
-
-			const auto octFrac = octavesBuf[s] - octFloor;
-			if (octFrac != 0.)
-			{
-				const auto octFloorInt = static_cast<int>(octFloor);
-
-				const auto phase = getPhaseOctaved(phaseBuffer[s], octFloorInt);
-				const auto smpl = getInterpolatedSample(noise, phase, shape);
-				smpls[s] += octFrac * smpl * gainBuffer[octFloorInt];
-
-				gain += octFrac * gainBuffer[octFloorInt];
-			}
-
-			smpls[s] /= std::sqrt(gain);
-		}
-	}
-
-	void Perlin::processWidth(double* const* samples, const PRMInfo& octavesInfo,
-		const PRMInfo& widthInfo, const double* noise, const double* gainBuffer,
-		Shape shape, int numSamples) noexcept
+	void Perlin::processWidth(BufferView2 samples, const PRMInfo& octavesInfo,
+		const PRMInfo& widthInfo, const float* noise, const float* gainBuffer,
+		float shape, int numSamples) noexcept
 	{
 		if (!widthInfo.smoothing)
-			if (widthInfo.val == 0.)
+			if (widthInfo.val == 0.f)
 				return SIMD::copy(samples[1], samples[0], numSamples);
 			else
 				SIMD::add(phaseBuffer.data(), widthInfo.val, numSamples);
@@ -358,28 +241,13 @@ namespace perlin
 		processOctaves(samples[1], octavesInfo, noise, gainBuffer, shape, numSamples);
 	}
 
-	void Perlin::processWidth(double* const* samples, const PRMInfo& octavesInfo,
-		const PRMInfo& widthInfo, const double* noise, const double* gainBuffer,
-		double shape, int numSamples) noexcept
-	{
-		if (!widthInfo.smoothing)
-			if (widthInfo.val == 0.)
-				return SIMD::copy(samples[1], samples[0], numSamples);
-			else
-				SIMD::add(phaseBuffer.data(), widthInfo.val, numSamples);
-		else
-			SIMD::add(phaseBuffer.data(), widthInfo.buf, numSamples);
-
-		processOctaves(samples[1], octavesInfo, noise, gainBuffer, shape, numSamples);
-	}
-
-	double Perlin::getPhaseOctaved(double phaseInfo, int o) const noexcept
+	float Perlin::getPhaseOctaved(float phaseInfo, int o) const noexcept
 	{
 		const auto ox2 = 1 << o;
-		const auto oPhase = phaseInfo * static_cast<double>(ox2);
+		const auto oPhase = phaseInfo * static_cast<float>(ox2);
 		const auto oPhaseFloor = std::floor(oPhase);
 		const auto oPhaseInt = static_cast<int>(oPhaseFloor) & NoiseSizeMax;
-		return oPhase - oPhaseFloor + static_cast<double>(oPhaseInt);
+		return oPhase - oPhaseFloor + static_cast<float>(oPhaseInt);
 	}
 
 	// debug:
@@ -425,6 +293,7 @@ namespace perlin
 		rateHz(1.),
 		inc(1.),
 		bpm(1.), bps(1.),
+		rateInv(1.),
 		// noise seed
 		seed(),
 		// project position
@@ -434,13 +303,13 @@ namespace perlin
 		for (auto s = 0; s < NoiseOvershoot; ++s)
 			noise[NoiseSize + s] = noise[s];
 		for (auto o = 0; o < gainBuffer.size(); ++o)
-			gainBuffer[o] = 1. / static_cast<double>(1 << o);
+			gainBuffer[o] = 1.f / static_cast<float>(1 << o);
 		for (auto o = 0; o < gainBufferOct.size(); ++o)
 		{
-			auto g = 0.;
+			auto g = 0.f;
 			for (auto i = 0; i < o; ++i)
 				g += gainBuffer[i];
-			gainBufferOct[o] = std::sqrt(1. / g);
+			gainBufferOct[o] = std::sqrt(1.f / g);
 		}
 	}
 
@@ -453,34 +322,29 @@ namespace perlin
 	void Perlin2::prepare(double fs)
 	{
 		sampleRateInv = 1. / fs;
-		mixer.prepare(fs, XFadeLengthMs);
-		for (auto& perlin : perlins)
-			perlin.prepare(fs);
-		octavesPRM.prepare(fs, 10.);
-		widthPRM.prepare(fs, 20.);
-		phsPRM.prepare(fs, 20.);
+		const auto fsF = static_cast<float>(fs);
+		mixer.prepare(fsF, XFadeLengthMs);
+		octavesPRM.prepare(fsF, 10.f);
+		widthPRM.prepare(fsF, 20.f);
+		phsPRM.prepare(fsF, 20.f);
 	}
 
-	void Perlin2::operator()(double** samples, int numChannels, int numSamples,
+	void Perlin2::operator()(float* smpls, int numSamples,
 		const Transport& transport,
-		double _rateHz, double _rateBeats,
-		double octaves, double width, double phs, double bias,
-		Shape shape, bool temposync) noexcept
+		float _rateBeats, float octaves, float bias,
+		float shape) noexcept
 	{
 		const auto octavesInfo = octavesPRM(octaves, numSamples);
-		const auto phsInfo = phsPRM(phs, numSamples);
-		const auto widthInfo = widthPRM(width, numSamples);
 
-		updatePerlin(transport, _rateBeats, _rateHz, numSamples, temposync);
+		updatePerlin(transport, _rateBeats, numSamples);
 
 		{
 			auto& track = mixer[0];
 
 			if (track.isEnabled())
 			{
-				auto xBuffer = mixer.getBuffer(0);
-				double* xSamples[3] = { xBuffer[0], xBuffer[1], xBuffer[2] };
-				track.synthesizeGainValues(xSamples[2], numSamples);
+				auto xBuffer = mixer(0, numSamples);
+				auto xSamples = xBuffer[0];
 
 				perlins[0]
 				(
@@ -488,83 +352,11 @@ namespace perlin
 					noise.data(),
 					gainBuffer.data(),
 					octavesInfo,
-					phsInfo,
-					widthInfo,
-					shape,
-					numChannels,
-					numSamples
-					);
-
-				track.copy(samples, xSamples, numChannels, numSamples);
-			}
-			else
-				for (auto ch = 0; ch < numChannels; ++ch)
-					SIMD::clear(samples[ch], numSamples);
-
-		}
-
-		for (auto i = 1; i < NumPerlins; ++i)
-		{
-			auto& track = mixer[i];
-
-			if (track.isEnabled())
-			{
-				auto xBuffer = mixer.getBuffer(0);
-				double* xSamples[3] = { xBuffer[0], xBuffer[1], xBuffer[2] };
-				track.synthesizeGainValues(xSamples[2], numSamples);
-
-				perlins[i]
-					(
-						xSamples,
-						noise.data(),
-						gainBuffer.data(),
-						octavesInfo,
-						phsInfo,
-						widthInfo,
-						shape,
-						numChannels,
-						numSamples
-						);
-
-					track.add(samples, xSamples, numChannels, numSamples);
-			}
-		}
-
-		if (bias != 0.)
-			processBias(samples, bias, numChannels, numSamples);
-
-		fuckingApplyGainMate(samples, octaves, numChannels, numSamples);
-	}
-
-	void Perlin2::operator()(double* smpls, int numSamples,
-		const Transport& transport,
-		double _rateBeats, double octaves, double bias,
-		Shape shape) noexcept
-	{
-		const auto octavesInfo = octavesPRM(octaves, numSamples);
-
-		updatePerlin(transport, _rateBeats, numSamples);
-
-		{
-			auto& track = mixer[0];
-
-			if (track.isEnabled())
-			{
-				auto xBuffer = mixer.getBuffer(0);
-				double* xSamples[3] = { xBuffer[0], xBuffer[1], xBuffer[2] };
-				track.synthesizeGainValues(xSamples[2], numSamples);
-
-				perlins[0]
-				(
-					*xSamples,
-					noise.data(),
-					gainBuffer.data(),
-					octavesInfo,
 					shape,
 					numSamples
-					);
+				);
 
-				track.copy(smpls, xSamples, numSamples);
+				mixer.copy(smpls, 0, numSamples);
 			}
 			else
 				SIMD::clear(smpls, numSamples);
@@ -577,90 +369,24 @@ namespace perlin
 
 			if (track.isEnabled())
 			{
-				auto xBuffer = mixer.getBuffer(0);
-				double* xSamples[3] = { xBuffer[0], xBuffer[1], xBuffer[2] };
-				track.synthesizeGainValues(xSamples[2], numSamples);
+				auto xBuffer = mixer(i, numSamples);
+				auto xSamples = xBuffer[0];
 
 				perlins[i]
-					(
-						*xSamples,
-						noise.data(),
-						gainBuffer.data(),
-						octavesInfo,
-						shape,
-						numSamples
-						);
-
-					track.add(smpls, xSamples, numSamples);
-			}
-		}
-
-		if (bias != 0.)
-			processBias(smpls, bias, numSamples);
-
-		fuckingApplyGainMate(smpls, octaves, numSamples);
-	}
-
-	void Perlin2::operator()(double* smpls, int numSamples,
-		const Transport& transport,
-		double _rateBeats, double octaves, double bias,
-		double shape) noexcept
-	{
-		const auto octavesInfo = octavesPRM(octaves, numSamples);
-
-		updatePerlin(transport, _rateBeats, numSamples);
-
-		{
-			auto& track = mixer[0];
-
-			if (track.isEnabled())
-			{
-				auto xBuffer = mixer.getBuffer(0);
-				double* xSamples[3] = { xBuffer[0], xBuffer[1], xBuffer[2] };
-				track.synthesizeGainValues(xSamples[2], numSamples);
-
-				perlins[0]
 				(
-					*xSamples,
+					xSamples,
 					noise.data(),
 					gainBuffer.data(),
 					octavesInfo,
 					shape,
 					numSamples
-					);
+				);
 
-				track.copy(smpls, xSamples, numSamples);
-			}
-			else
-				SIMD::clear(smpls, numSamples);
-
-		}
-
-		for (auto i = 1; i < NumPerlins; ++i)
-		{
-			auto& track = mixer[i];
-
-			if (track.isEnabled())
-			{
-				auto xBuffer = mixer.getBuffer(0);
-				double* xSamples[3] = { xBuffer[0], xBuffer[1], xBuffer[2] };
-				track.synthesizeGainValues(xSamples[2], numSamples);
-
-				perlins[i]
-					(
-						*xSamples,
-						noise.data(),
-						gainBuffer.data(),
-						octavesInfo,
-						shape,
-						numSamples
-						);
-
-					track.add(smpls, xSamples, numSamples);
+				mixer.add(smpls, i, numSamples);
 			}
 		}
 
-		if (bias != 0.)
+		if (bias != 0.f)
 			processBias(smpls, bias, numSamples);
 
 		fuckingApplyGainMate(smpls, octaves, numSamples);
@@ -681,9 +407,9 @@ namespace perlin
 	}
 
 	void Perlin2::updatePerlin(const Transport& transport,
-		double _rateBeats, int numSamples) noexcept
+		float _rateBeats, int numSamples) noexcept
 	{
-		updateSpeed(transport.bpm, _rateBeats, transport.timeSamples);
+		updateSpeed(transport.bpm, static_cast<double>(_rateBeats), transport.timeSamples);
 
 		if (transport.playing)
 		{
@@ -774,24 +500,24 @@ namespace perlin
 		perlins[mixer.idx].updateSpeed(inc);
 	}
 
-	void Perlin2::processBias(double* const* samples, double bias,
+	void Perlin2::processBias(float* const* samples, float bias,
 		int numChannels, int numSamples) noexcept
 	{
 		for (auto ch = 0; ch < numChannels; ++ch)
 			processBias(samples[ch], bias, numSamples);
 	}
 
-	void Perlin2::processBias(double* smpls, double bias,
+	void Perlin2::processBias(float* smpls, float bias,
 		int numSamples) noexcept
 	{
 		for (auto s = 0; s < numSamples; ++s)
 		{
 			const auto x = smpls[s];
-			const auto a = std::abs(2. * (x - .5));
-			const auto b = (1. + bias * 12.) * Pi;
+			const auto a = std::abs(2.f * (x - .5f));
+			const auto b = (1.f + bias * 12.f) * Pi;
 			const auto c = b * a;
-			if (c == 0.)
-				smpls[s] = 1.;
+			if (c == 0.f)
+				smpls[s] = 1.f;
 			else
 			{
 				const auto d = std::sin(c) / c;
@@ -801,7 +527,7 @@ namespace perlin
 		}
 	}
 
-	void Perlin2::fuckingApplyGainMate(double** samples, double octaves,
+	void Perlin2::fuckingApplyGainMate(float** samples, float octaves,
 		int numChannels, int numSamples) noexcept
 	{
 		const auto oFloor = std::floor(octaves);
@@ -817,11 +543,11 @@ namespace perlin
 			auto smpls = samples[ch];
 			SIMD::multiply(smpls, oGain, numSamples);
 			for (auto s = 0; s < numSamples; ++s)
-				smpls[s] = math::limit(0., 1., smpls[s]);
+				smpls[s] = math::limit(0.f, 1.f, smpls[s]);
 		}
 	}
 
-	void Perlin2::fuckingApplyGainMate(double* smpls, double octaves, int numSamples) noexcept
+	void Perlin2::fuckingApplyGainMate(float* smpls, float octaves, int numSamples) noexcept
 	{
 		const auto oFloor = std::floor(octaves);
 		const auto o0 = static_cast<int>(oFloor);
@@ -833,6 +559,6 @@ namespace perlin
 		const auto oGain = og0 + oFrac * ogRange;
 		SIMD::multiply(smpls, oGain, numSamples);
 		for (auto s = 0; s < numSamples; ++s)
-			smpls[s] = math::limit(0., 1., smpls[s]);
+			smpls[s] = math::limit(0.f, 1.f, smpls[s]);
 	}
 }

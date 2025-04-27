@@ -92,10 +92,9 @@ namespace gui
         {
             const auto pID = randomizable->id;
             if (pID != PID::Power
-                && pID != PID::SoftClip
+                && pID != PID::GainWet
                 && pID != PID::GainOut
-                && pID != PID::Macro
-                && pID != PID::XenSnap)
+                && pID != PID::Macro)
             {
                 const auto& range = randomizable->range;
 
@@ -153,8 +152,8 @@ namespace gui
     String ButtonRandomizer::makeTooltip()
     {
         Random rand;
-        static constexpr float count = 268.f;
-        const auto v = static_cast<int>(std::round(rand.nextFloat() * count));
+        static constexpr auto count = 269;
+        const auto v = rand.nextInt(count + 1);
         switch (v)
         {
         case 0: return "Do it!";
@@ -425,6 +424,7 @@ namespace gui
         case 266: return "I wouldn't randomize now if I were you.. but I mean, it's your music.";
         case 267: return "This is not my final form yet.";
         case 268: return "Making plugins is easy, but it's kinda hard.";
+        case 269: return "Let's do it! :)";
         default: "Are you sure?";
         }
         return "You are not supposed to read this message!";

@@ -5,7 +5,8 @@
 
 namespace arch
 {
-	static constexpr double MaxXen = 48.;
+	static constexpr int MaxXen = 48;
+	static constexpr float MaxXenF = static_cast<float>(MaxXen);
 
 	struct XenManager
 	{
@@ -13,7 +14,14 @@ namespace arch
 		{
 			bool operator==(const Info&) const noexcept;
 
-			double xen, masterTune, anchor, pitchbendRange;
+			template<typename Float>
+			Float noteToFreqHz(Float) const noexcept;
+
+			template<typename Float>
+			Float freqHzToNote(Float) const noexcept;
+
+			float xen, masterTune, anchor, pitchbendRange;
+			std::array<float, MaxXen> temperaments;
 		};
 
 		// xenInfo, numChannels
@@ -35,14 +43,6 @@ namespace arch
 		Float freqHzToNote(Float) const noexcept;
 
 		const Info& getInfo() const noexcept;
-
-		double getXen() const noexcept;
-
-		double getPitchbendRange() const noexcept;
-
-		double getAnchor() const noexcept;
-
-		double getMasterTune() const noexcept;
 
 		UpdateFunc updateFunc;
 	protected:

@@ -8,16 +8,14 @@ namespace dsp
 		PluginRecorder();
 
 		// sampleRate
-		void prepare(double);
+		void prepare(float);
 
 		// samples, numChannels, numSamples
-		void operator()(double* const*, int, int) noexcept;
+		void operator()(float* const*, int, int) noexcept;
 
-		const AudioBufferF& getRecording();
-
+		const AudioBuffer& getRecording();
 	private:
-		AudioBuffer recording;
-		AudioBufferF outBuffer;
+		AudioBuffer recording, outBuffer;
 		int writeHead;
 
 		// samples, numChannels, numSamples

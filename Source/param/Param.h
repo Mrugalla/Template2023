@@ -44,12 +44,15 @@ namespace param
 		MasterTune,
 		AnchorPitch,
 		PitchbendRange,
+		TempC, TempDb, TempD, TempEb, TempE, TempF, TempGb, TempG, TempAb, TempA, TempBb, TempB,
+		TempC2, TempDb2, TempD2, TempEb2, TempE2, TempF2, TempGb2, TempG2, TempAb2, TempA2, TempBb2, TempB2,
+		TempC3, TempDb3, TempD3, TempEb3, TempE3, TempF3, TempGb3, TempG3, TempAb3, TempA3, TempBb3, TempB3,
+		TempC4, TempDb4, TempD4, TempEb4, TempE4, TempF4, TempGb4, TempG4, TempAb4, TempA4, TempBb4, TempB4,
 #endif
-		SoftClip,
 		Power,
 
 		// low level parameters
-		ModalNumFilters,
+		Sidechain,
 		//
 		
 		NumParams
@@ -58,17 +61,17 @@ namespace param
 	static constexpr int MinLowLevelIdx = static_cast<int>(PID::Power) + 1;
 	static constexpr int NumLowLevelParams = NumParams - MinLowLevelIdx;
 
-	/* pID, offset */
+	// pID, offset
 	PID ll(PID, int) noexcept;
 
-	/* pID, offset */
+	// pID, offset
 	PID offset(PID, int) noexcept;
 
 	String toString(PID);
 
 	PID toPID(const String&);
 
-	/* pIDs, text, seperatorChr */
+	// pIDs, text, seperatorChr
 	void toPIDs(std::vector<PID>&, const String&, const String&);
 
 	String toTooltip(PID);
@@ -123,6 +126,18 @@ namespace param
 	{
 		static constexpr float BiasEps = .000001f;
 	public:
+		struct CB
+		{
+			float denorm() const noexcept
+			{
+				return param.range.convertFrom0to1(norm);
+			}
+
+			const Param& param;
+			float norm;
+			int numChannels;
+		};
+		using ParameterChangedCallback = std::function<void(CB)>;
 
 		struct Mod
 		{
@@ -131,16 +146,18 @@ namespace param
 			std::atomic<float> depth, bias;
 		};
 
-		/* pID, range, valDenormDefault, valToStr, strToVal, unit */
+		// pID, range, valDenormDefault, valToStr, strToVal, unit
 		Param(const PID, const Range&, const float,
 			const ValToStrFunc&, const StrToValFunc&,
 			const Unit = Unit::NumUnits);
+
+		void prepare() noexcept;
 
 		void savePatch(State&) const;
 
 		void loadPatch(const State&);
 
-		//called by host, normalized, thread-safe
+		// called by host, normalized, thread-safe
 		float getValue() const override;
 
 		float getValueDenorm() const noexcept;
@@ -154,7 +171,8 @@ namespace param
 		// called by editor
 		bool isInGesture() const noexcept;
 
-		void setValueWithGesture(float/*norm*/);
+		// norm
+		void setValueWithGesture(float);
 
 		void beginGesture();
 
@@ -164,7 +182,7 @@ namespace param
 
 		void setModDepth(float) noexcept;
 
-		/* modSource */
+		// modSource
 		float calcValModOf(float) const noexcept;
 
 		float getValMod() const noexcept;
@@ -177,14 +195,15 @@ namespace param
 
 		void setModulationDefault() noexcept;
 
-		/* norm */
+		// norm
 		void setDefaultValue(float) noexcept;
 
 		void startModulation() noexcept;
 
 		void modulate(float) noexcept;
 
-		void endModulation() noexcept;
+		// numChannels
+		void endModulation(int) noexcept;
 
 		float getDefaultValue() const override;
 
@@ -212,13 +231,14 @@ namespace param
 
 		void setModDepthAbsolute(bool) noexcept;
 
-		/* start, end, bias[0,1], x */
+		// start, end, bias[0,1], x
 		static float biased(float, float, float, float) noexcept;
 
 		const PID id;
 		const Range range;
+		ParameterChangedCallback callback;
 	protected:
-		float valDenormDefault, valInternal;
+		float valDenormDefault, valInternal, curValMod;
 		Mod mod;
 		std::atomic<float> valNorm, valMod;
 		ValToStrFunc valToStr;
@@ -241,15 +261,19 @@ namespace param
 #endif
 		);
 
+		void prepare() noexcept;
+
 		void loadPatch(const State&);
 
 		void savePatch(State&) const;
 
-		int getParamIdx(const String& /*nameOrID*/) const;
+		// nameOrID
+		int getParamIdx(const String&) const;
 
 		size_t numParams() const noexcept;
 
-		void modulate(float modSrc) noexcept;
+		// modSrc, numChannels
+		void modulate(float, int) noexcept;
 
 		bool isModDepthAbsolute() const noexcept;
 		void setModDepthAbsolute(bool) noexcept;

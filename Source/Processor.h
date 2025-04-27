@@ -1,7 +1,6 @@
 #pragma once
 #include "audio/PluginProcessor.h"
 #include "audio/dsp/MixProcessor.h"
-#include "audio/dsp/Oversampler.h"
 
 namespace audio
 {
@@ -11,13 +10,14 @@ namespace audio
     using AudioBufferD = juce::AudioBuffer<double>;
     using Timer = juce::Timer;
     using SIMD = juce::FloatVectorOperations;
+	using String = juce::String;
+	using MemoryBlock = juce::MemoryBlock;
     
 	using XenManager = arch::XenManager;
     using State = arch::State;
     using Param = param::Param;
     using Params = param::Params;
     using PID = param::PID;
-    using PRM = dsp::PRMD;
     
     struct Processor :
         public juce::AudioProcessor,
@@ -37,16 +37,10 @@ namespace audio
         
         void processBlock(AudioBufferF&, MidiBuffer&) override;
         void processBlockBypassed(AudioBufferF&, MidiBuffer&) override;
-        void processBlock(AudioBufferD&, MidiBuffer&) override;
-        void processBlockBypassed(AudioBufferD&, MidiBuffer&) override;
-
-        void processBlockOversampler(double* const*,
-            MidiBuffer&, const dsp::Transport::Info&,
-            int, int) noexcept;
         
         juce::AudioProcessorEditor* createEditor() override;
         bool hasEditor() const override;
-        const juce::String getName() const override;
+        const String getName() const override;
         bool acceptsMidi() const override;
         bool producesMidi() const override;
         bool isMidiEffect() const override;
@@ -54,9 +48,9 @@ namespace audio
         int getNumPrograms() override;
         int getCurrentProgram() override;
         void setCurrentProgram(int) override;
-        const juce::String getProgramName(int) override;
-        void changeProgramName(int, const juce::String&) override;
-        void getStateInformation(juce::MemoryBlock&) override;
+        const String getProgramName(int) override;
+        void changeProgramName(int, const String&) override;
+        void getStateInformation(MemoryBlock&) override;
         void setStateInformation(const void*, int) override;
         void timerCallback() override;
         bool supportsDoublePrecisionProcessing() const override;
@@ -67,18 +61,10 @@ namespace audio
 #endif
         Params params;
         State state;
-
         dsp::Transport transport;
         dsp::PluginProcessor pluginProcessor;
-        AudioBufferD audioBufferD;
-        MidiBuffer midiSubBuffer, midiOutBuffer;
-
+        MidiBuffer midiSubBuffer;
         dsp::MixProcessor mixProcessor;
-#if PPDHasHQ
-        dsp::Oversampler oversampler;
-#endif
-        double sampleRateUp;
-        int blockSizeUp;
 
         //JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Processor)
     };

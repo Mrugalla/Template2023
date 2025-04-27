@@ -4,6 +4,14 @@
 
 ~~~ todo ~~~
 
+sidechain needs to be a global parameter
+	because it's part of the outter processor
+    needs its own class for handling the buffer weirdness
+
+resonator improvements
+    resonator with better autogained q
+    resonatorbank with SIMD
+
 ToThink
     -
 

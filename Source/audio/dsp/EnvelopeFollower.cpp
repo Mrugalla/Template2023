@@ -3,28 +3,28 @@
 namespace dsp
 {
 	EnvelopeFollower::EnvelopeFollower() :
-		meter(0.),
+		meter(0.f),
 		buffer(),
 		MinDb(math::dbToAmp(-60.)),
-		gainPRM(1.),
+		gainPRM(1.f),
 		envLP(0.),
-		smooth(0.),
+		smooth(0.f),
 		sampleRate(1.), smoothMs(-1.),
 		attackState(false)
 	{
 	}
 
-	void EnvelopeFollower::prepare(double Fs) noexcept
+	void EnvelopeFollower::prepare(float Fs) noexcept
 	{
-		meter.store(0.);
-		sampleRate = Fs;
-		gainPRM.prepare(sampleRate, 4.);
+		meter.store(0.f);
+		sampleRate = static_cast<double>(Fs);
+		gainPRM.prepare(Fs, 4.);
 		smooth.reset();
 		smoothMs = -1.;
 		envLP.reset();
 	}
 
-	void EnvelopeFollower::operator()(double* smpls,
+	void EnvelopeFollower::operator()(float* smpls,
 		const Params& params, int numSamples) noexcept
 	{
 		rectify(smpls, numSamples);
@@ -34,7 +34,7 @@ namespace dsp
 		processMeter();
 	}
 
-	void EnvelopeFollower::operator()(double** samples, const Params& params,
+	void EnvelopeFollower::operator()(float** samples, const Params& params,
 		int numChannels, int numSamples) noexcept
 	{
 		copyMid(samples, numChannels, numSamples);
@@ -46,32 +46,32 @@ namespace dsp
 		return !attackState && envLP.y1 < MinDb;
 	}
 
-	double EnvelopeFollower::operator[](int i) const noexcept
+	float EnvelopeFollower::operator[](int i) const noexcept
 	{
 		return buffer[i];
 	}
 
-	double EnvelopeFollower::getMeter() const noexcept
+	float EnvelopeFollower::getMeter() const noexcept
 	{
 		return meter.load();
 	}
 
-	void EnvelopeFollower::copyMid(double** samples, int numChannels, int numSamples) noexcept
+	void EnvelopeFollower::copyMid(float** samples, int numChannels, int numSamples) noexcept
 	{
 		SIMD::copy(buffer.data(), samples[0], numSamples);
 		if (numChannels == 1)
 			return;
 		SIMD::add(buffer.data(), samples[1], numSamples);
-		SIMD::multiply(buffer.data(), .5, numSamples);
+		SIMD::multiply(buffer.data(), .5f, numSamples);
 	}
 
-	void EnvelopeFollower::rectify(double* smpls, int numSamples) noexcept
+	void EnvelopeFollower::rectify(float* smpls, int numSamples) noexcept
 	{
 		for (auto s = 0; s < numSamples; ++s)
 			buffer[s] = std::abs(smpls[s]);
 	}
 
-	void EnvelopeFollower::applyGain(double gainDb, int numSamples) noexcept
+	void EnvelopeFollower::applyGain(float gainDb, int numSamples) noexcept
 	{
 		const auto gain = math::dbToAmp(gainDb);
 		const auto gainInfo = gainPRM(gain, numSamples);
@@ -86,11 +86,11 @@ namespace dsp
 		for (auto s = 0; s < numSamples; ++s)
 		{
 			const auto s0 = envLP.y1;
-			const auto s1 = buffer[s];
+			const auto s1 = static_cast<double>(buffer[s]);
 			if (attackState)
-				buffer[s] = processAttack(params, s0, s1);
+				buffer[s] = static_cast<float>(processAttack(params, s0, s1));
 			else
-				buffer[s] = processDecay(params, s0, s1);
+				buffer[s] = static_cast<float>(processDecay(params, s0, s1));
 		}
 	}
 

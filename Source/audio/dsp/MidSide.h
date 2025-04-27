@@ -2,6 +2,9 @@
 
 namespace dsp
 {
-	void midSideEncode(double* const*, int) noexcept;
-	void midSideDecode(double* const*, int) noexcept;
+	template<typename Float>
+	void midSideEncode(Float* const*, int) noexcept;
+
+	template<typename Float>
+	void midSideDecode(Float* const*, int) noexcept;
 }

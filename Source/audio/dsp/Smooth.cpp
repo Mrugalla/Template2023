@@ -5,33 +5,32 @@ namespace dsp
 	namespace smooth
 	{
 		// Block
-		template<typename Float>
-		Block<Float>::Block(Float startVal) :
+		Block::Block(float startVal) :
 			curVal(startVal)
 		{
 		}
 
-		template<typename Float>
-		void Block<Float>::operator()(Float* bufferOut, Float* bufferIn, int numSamples) noexcept
+		/*
+		void Block::operator()(float* bufferOut, float* bufferIn, int numSamples) noexcept
 		{
-			auto x = static_cast<Float>(0);
-			const auto inc = static_cast<Float>(1) / static_cast<Float>(numSamples);
+			auto x = 0.f;
+			const auto inc = 1.f / static_cast<float>(numSamples);
 
 			for (auto s = 0; s < numSamples; ++s, x += inc)
 			{
-				curVal += inc;
 				const auto sIn = bufferIn[s];
-				bufferOut[s] = curVal + x * (sIn - curVal);
+				const auto sOut = bufferOut[s];
+				bufferOut[s] = sIn + x * (sOut - sIn);
 			}
 
 			curVal = bufferOut[numSamples - 1];
 		}
+		*/
 
-		template<typename Float>
-		void Block<Float>::operator()(Float* buffer, Float dest, int numSamples) noexcept
+		void Block::operator()(float* buffer, float dest, int numSamples) noexcept
 		{
 			const auto dist = dest - curVal;
-			const auto inc = dist / static_cast<Float>(numSamples);
+			const auto inc = dist / static_cast<float>(numSamples);
 
 			for (auto s = 0; s < numSamples; ++s)
 			{
@@ -40,97 +39,93 @@ namespace dsp
 			}
 		}
 
-		template<typename Float>
-		void Block<Float>::operator()(Float* buffer, int numSamples) noexcept
+		void Block::operator()(float* buffer, int numSamples) noexcept
 		{
 			SIMD::fill(buffer, curVal, numSamples);
 		}
 
-		template struct Block<float>;
-		template struct Block<double>;
+		// Lowpass static
 
-		// Lowpass
-
-		template<typename Float, bool AutoGain>
-		Float Lowpass<Float, AutoGain>::getXFromFc(Float fc) noexcept
+		template<bool AutoGain>
+		double Lowpass<AutoGain>::getXFromFc(double fc) noexcept
 		{
-			return std::exp(static_cast<Float>(-Tau) * fc);
+			return std::exp(-TauD * fc);
 		}
 
-		template<typename Float, bool AutoGain>
-		Float Lowpass<Float, AutoGain>::getXFromHz(Float hz, Float Fs) noexcept
+		template<bool AutoGain>
+		double Lowpass<AutoGain>::getXFromHz(double hz, double Fs) noexcept
 		{
 			return getXFromFc(hz / Fs);
 		}
 
-		//
+		// Lowpass
 
-		template<typename Float, bool AutoGain>
-		void Lowpass<Float, AutoGain>::makeFromDecayInSamples(Float d) noexcept
+		template<bool AutoGain>
+		void Lowpass<AutoGain>::makeFromDecayInSamples(double d) noexcept
 		{
-			setX(std::exp(static_cast<Float>(-1) / d));
+			setX(std::exp(-1. / d));
 		}
 
-		template<typename Float, bool AutoGain>
-		void Lowpass<Float, AutoGain>::makeFromDecayInSecs(Float d, Float Fs) noexcept
+		template<bool AutoGain>
+		void Lowpass<AutoGain>::makeFromDecayInSecs(double d, double Fs) noexcept
 		{
 			makeFromDecayInSamples(d * Fs);
 		}
 
-		template<typename Float, bool AutoGain>
-		void Lowpass<Float, AutoGain>::makeFromDecayInFc(Float fc) noexcept
+		template<bool AutoGain>
+		void Lowpass<AutoGain>::makeFromDecayInFc(double fc) noexcept
 		{
 			setX(getXFromFc(fc));
 		}
 
-		template<typename Float, bool AutoGain>
-		void Lowpass<Float, AutoGain>::makeFromDecayInHz(Float hz, Float Fs) noexcept
+		template<bool AutoGain>
+		void Lowpass<AutoGain>::makeFromDecayInHz(double hz, double Fs) noexcept
 		{
 			setX(getXFromHz(hz, Fs));
 		}
 
-		template<typename Float, bool AutoGain>
-		void Lowpass<Float, AutoGain>::makeFromDecayInMs(Float d, Float Fs) noexcept
+		template<bool AutoGain>
+		void Lowpass<AutoGain>::makeFromDecayInMs(double d, double Fs) noexcept
 		{
-			makeFromDecayInSamples(d * Fs * static_cast<Float>(.001));
+			makeFromDecayInSamples(d * Fs * .001);
 		}
 
-		template<typename Float, bool AutoGain>
-		void Lowpass<Float, AutoGain>::copyCutoffFrom(const Lowpass<Float, AutoGain>& other) noexcept
+		template<bool AutoGain>
+		void Lowpass<AutoGain>::copyCutoffFrom(const Lowpass<AutoGain>& other) noexcept
 		{
 			a0 = other.a0;
 			b1 = other.b1;
 		}
 
-		template<typename Float, bool AutoGain>
-		Lowpass<Float, AutoGain>::Lowpass(const Float _startVal) :
-			a0(static_cast<Float>(1)),
-			b1(static_cast<Float>(0)),
+		template<bool AutoGain>
+		Lowpass<AutoGain>::Lowpass(double _startVal) :
+			a0(1.),
+			b1(0.),
 			y1(_startVal),
 			startVal(_startVal)
 		{}
 
-		template<typename Float, bool AutoGain>
-		void Lowpass<Float, AutoGain>::reset()
+		template<bool AutoGain>
+		void Lowpass<AutoGain>::reset()
 		{
 			reset(startVal);
 		}
 
-		template<typename Float, bool AutoGain>
-		void Lowpass<Float, AutoGain>::reset(Float v)
+		template<bool AutoGain>
+		void Lowpass<AutoGain>::reset(double v)
 		{
 			y1 = v;
 		}
 
-		template<typename Float, bool AutoGain>
-		void Lowpass<Float, AutoGain>::operator()(Float* buffer, Float val, int numSamples) noexcept
+		template<bool AutoGain>
+		void Lowpass<AutoGain>::operator()(double* buffer, double val, int numSamples) noexcept
 		{
 			for (auto s = 0; s < numSamples; ++s)
 				buffer[s] = processSample(val);
 		}
 
-		template<typename Float, bool AutoGain>
-		void Lowpass<Float, AutoGain>::operator()(Float* buffer, int numSamples) noexcept
+		template<bool AutoGain>
+		void Lowpass<AutoGain>::operator()(double* buffer, int numSamples) noexcept
 		{
 			for (auto s = 0; s < numSamples; ++s)
 			{
@@ -139,85 +134,93 @@ namespace dsp
 			}
 		}
 
-		template<typename Float, bool AutoGain>
-		Float Lowpass<Float, AutoGain>::operator()(Float sample) noexcept
+		template<bool AutoGain>
+		void Lowpass<AutoGain>::operator()(float* buffer, int numSamples) noexcept
+		{
+			for (auto s = 0; s < numSamples; ++s)
+			{
+				const auto y = processSample(buffer[s]);
+				buffer[s] = static_cast<float>(y);
+			}
+		}
+
+		template<bool AutoGain>
+		double Lowpass<AutoGain>::operator()(double sample) noexcept
 		{
 			return processSample(sample);
 		}
 
-		template<typename Float, bool AutoGain>
-		Float Lowpass<Float, AutoGain>::processSample(Float x0) noexcept
+		template<bool AutoGain>
+		double Lowpass<AutoGain>::processSample(double x0) noexcept
 		{
 			y1 = x0 * a0 + y1 * b1;
 			return y1;
 		}
 
-		template<typename Float, bool AutoGain>
-		void Lowpass<Float, AutoGain>::setX(Float x) noexcept
+		template<bool AutoGain>
+		double Lowpass<AutoGain>::processSample(float x0) noexcept
 		{
-			const auto one = static_cast<Float>(1);
-			a0 = one - x;
+			return processSample(static_cast<double>(x0));
+		}
+
+		template<bool AutoGain>
+		void Lowpass<AutoGain>::setX(double x) noexcept
+		{
+			a0 = 1. - x;
 
 			if constexpr (AutoGain)
-				b1 = x * (one - a0);
+				b1 = x * (1. - a0);
 			else
 				b1 = x;
 		}
 
-		template struct Lowpass<float, true>;
-		template struct Lowpass<double, true>;
-		template struct Lowpass<float, false>;
-		template struct Lowpass<double, false>;
+		template struct Lowpass<true>;
+		template struct Lowpass<false>;
 
 		// Smooth
 
-		template<typename Float>
-		void Smooth<Float>::makeFromDecayInMs(Float smoothLenMs, Float Fs) noexcept
+		void Smooth::makeFromDecayInMs(float smoothLenMs, float Fs) noexcept
 		{
-			lowpass.makeFromDecayInMs(smoothLenMs, Fs);
+			lowpass.makeFromDecayInMs(static_cast<double>(smoothLenMs), static_cast<double>(Fs));
 		}
 
-		template<typename Float>
-		void Smooth<Float>::makeFromFreqInHz(Float hz, Float Fs) noexcept
+		void Smooth::makeFromFreqInHz(float hz, float Fs) noexcept
 		{
-			lowpass.makeFromDecayInHz(hz, Fs);
+			lowpass.makeFromDecayInHz(static_cast<double>(hz), static_cast<double>(Fs));
 		}
 
-		template<typename Float>
-		Smooth<Float>::Smooth(Float startVal) :
+		Smooth::Smooth(float startVal) :
 			block(startVal),
-			lowpass(startVal),
+			lowpass(static_cast<double>(startVal)),
 			cur(startVal),
 			dest(startVal),
 			smoothing(false)
 		{
 		}
 
-		template<typename Float>
-		bool Smooth<Float>::operator()(Float* bufferOut, Float _dest, int numSamples) noexcept
+		bool Smooth::operator()(float* bufferOut, float _dest, int numSamples) noexcept
 		{
 			dest = _dest;
 			return operator()(bufferOut, numSamples);
 		}
 
-		template<typename Float>
-		bool Smooth<Float>::operator()(Float* bufferOut, Float _dest, int startIdx, int endIdx) noexcept
+		bool Smooth::operator()(float* bufferOut, float _dest,
+			int startIdx, int endIdx) noexcept
 		{
 			dest = _dest;
 			auto numSamples = endIdx - startIdx;
-
 			return operator()(&bufferOut[startIdx], numSamples);
 		}
 
-		template<typename Float>
-		void Smooth<Float>::operator()(Float* bufferOut, Float* bufferIn, int numSamples) noexcept
+		/*
+		void Smooth::operator()(float* bufferOut, float* bufferIn, int numSamples) noexcept
 		{
 			block(bufferOut, bufferIn, numSamples);
 			lowpass(bufferOut, numSamples);
 		}
+		*/
 
-		template<typename Float>
-		bool Smooth<Float>::operator()(Float* bufferOut, int numSamples) noexcept
+		bool Smooth::operator()(float* bufferOut, int numSamples) noexcept
 		{
 			if (!smoothing && cur == dest)
 				return false;
@@ -228,7 +231,7 @@ namespace dsp
 			lowpass(bufferOut, numSamples);
 
 			cur = bufferOut[numSamples - 1];
-			const auto eps = static_cast<Float>(1e-6);
+			const auto eps = 1e-6f;
 			const auto dist = dest - cur;
 			const auto distSquared = dist * dist;
 			if (distSquared < eps)
@@ -239,13 +242,9 @@ namespace dsp
 			return smoothing;
 		}
 
-		template<typename Float>
-		Float Smooth<Float>::operator()(Float _dest) noexcept
+		float Smooth::operator()(float _dest) noexcept
 		{
-			return lowpass(_dest);
+			return static_cast<float>(lowpass(_dest));
 		}
-
-		template struct Smooth<float>;
-		template struct Smooth<double>;
 	}
 }

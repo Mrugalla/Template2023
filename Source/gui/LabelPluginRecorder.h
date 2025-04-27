@@ -8,6 +8,8 @@ namespace gui
 		public Label,
 		public DragAndDropContainer
 	{
+		using AudioBuffer = dsp::AudioBuffer;
+
 		enum { kHoverAni, kNumAnis };
 
 		struct ImgData
@@ -47,7 +49,7 @@ namespace gui
 
 		void getTheFile();
 
-		bool saveWav(const dsp::AudioBufferF&);
+		bool saveWav(const AudioBuffer&);
 
 		void saveWav();
 	};

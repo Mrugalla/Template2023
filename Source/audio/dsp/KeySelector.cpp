@@ -1,5 +1,6 @@
 #include "KeySelector.h"
 
+#if PPDHasTuningEditor
 namespace dsp
 {
 	KeySelector::KeySelector() :
@@ -170,3 +171,4 @@ namespace dsp
 		requestUpdate.store(false);
 	}
 }
+#endif

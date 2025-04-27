@@ -1,4 +1,6 @@
 #pragma once
+#if PPDHasTuningEditor
+
 #include "../Using.h"
 #include "../../arch/XenManager.h"
 #include "../../arch/State.h"
@@ -50,3 +52,5 @@ namespace dsp
 		void updateActives() noexcept;
 	};
 }
+
+#endif
