@@ -55,7 +55,6 @@ namespace audio
         void timerCallback() override;
         bool supportsDoublePrecisionProcessing() const override;
         void forcePrepare();
-
 #if PPDHasTuningEditor
         XenManager xenManager;
 #endif

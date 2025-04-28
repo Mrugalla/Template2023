@@ -16,23 +16,24 @@ namespace dsp
 	}
 
 	template<float SmoothLengthMs>
-	void Gain<SmoothLengthMs>::operator()(float* const* samples, float gainDb,
-		int numChannels, int numSamples) noexcept
+	void Gain<SmoothLengthMs>::operator()(ProcessorBufferView& view, float gainDb) noexcept
 	{
+		const auto numChannels = view.getNumChannelsMain();
+		const auto numSamples = view.getNumSamples();
 		const auto gainAmp = math::dbToAmp(gainDb, MinDb);
 		gainInfo = gainPRM(gainAmp, numSamples);
 		if (gainInfo.smoothing)
 		{
 			for (auto ch = 0; ch < numChannels; ++ch)
-				SIMD::multiply(samples[ch], gainInfo.buf, numSamples);
+				SIMD::multiply(view.getSamplesMain(ch), gainInfo.buf, numSamples);
 			return;
 		}
 		if (gainInfo.val == 0.f)
 			for (auto ch = 0; ch < numChannels; ++ch)
-				SIMD::clear(samples[ch], numSamples);
+				SIMD::clear(view.getSamplesMain(ch), numSamples);
 		else if (gainInfo.val != 1.f)
 			for (auto ch = 0; ch < numChannels; ++ch)
-				SIMD::multiply(samples[ch], gainInfo.val, numSamples);
+				SIMD::multiply(view.getSamplesMain(ch), gainInfo.val, numSamples);
 	}
 
 	template<float SmoothLengthMs>
@@ -60,13 +61,14 @@ namespace dsp
 	}
 
 	template<float SmoothLengthMs>
-	void Gain<SmoothLengthMs>::applyInverse(float* const* samples,
-		int numChannels, int numSamples) noexcept
+	void Gain<SmoothLengthMs>::applyInverse(ProcessorBufferView& view) noexcept
 	{
+		const auto numChannels = view.getNumChannelsMain();
+		const auto numSamples = view.getNumSamples();
 		if (gainInfo.smoothing)
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
-				auto smpls = samples[ch];
+				auto smpls = view.getSamplesMain(ch);
 				for (auto s = 0; s < numSamples; ++s)
 					smpls[s] /= gainInfo.buf[s];
 			}
@@ -75,7 +77,7 @@ namespace dsp
 			gainInfo.val = 1.f / gainInfo.val;
 			for (auto ch = 0; ch < numChannels; ++ch)
 			{
-				auto smpls = samples[ch];
+				auto smpls = view.getSamplesMain(ch);
 				SIMD::multiply(smpls, gainInfo.val, numSamples);
 			}
 		}

@@ -27,6 +27,10 @@ namespace param
 		switch (pID)
 		{
 		case PID::Macro: return "Macro";
+#if PPDHasSidechain
+		case PID::Sidechain: return "Sidechain";
+		case PID::SCGain: return "SC Gain";
+#endif
 #if PPDIsNonlinear
 		case PID::GainIn: return "Gain In";
 		case PID::UnityGain: return "Unity Gain";
@@ -110,7 +114,6 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
-		case PID::Sidechain: return "Sidechain";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -144,6 +147,10 @@ namespace param
 		switch (pID)
 		{
 		case PID::Macro: return "Dial in the desired amount of macro modulation depth.";
+#if PPDHasSidechain
+		case PID::Sidechain: return "Dis/Enable the sidechain input.";
+		case PID::SCGain: return "Apply gain to the sidechain signal.";
+#endif
 #if PPDIsNonlinear
 		case PID::GainIn: return "Apply gain to the input signal.";
 		case PID::UnityGain: return "Compensates for the added input gain.";
@@ -1413,9 +1420,12 @@ namespace param
 	{
 		{ // HIGH LEVEL PARAMS:
 			params.push_back(makeParam(PID::Macro, 1.f));
-
+#if PPDHasSidechain
+			params.push_back(makeParam(PID::Sidechain, 0.f, makeRange::toggle(), Unit::Power));
+			params.push_back(makeParam(PID::SCGain, 0.f, makeRange::lin(-24, 24), Unit::Decibel));
+#endif
 #if PPDIsNonlinear
-			const auto gainInRange = makeRange::withCentre(PPDGainInMin, PPDGainInMax, 0.f);
+			const auto gainInRange = makeRange::withCentre(-24, 24, 0);
 			params.push_back(makeParam(PID::GainIn, 0.f, gainInRange, Unit::Decibel));
 			params.push_back(makeParam(PID::UnityGain, 1.f, makeRange::toggle(), Unit::Polarity));
 #endif
@@ -1426,15 +1436,13 @@ namespace param
 			params.push_back(makeParam(PID::GainDry, PPDGainDryMin, gainDryRange, Unit::Decibel));
 			params.push_back(makeParam(PID::GainWet, -18.f, gainWetRange, Unit::Decibel));
 #elif PPDIO == PPDIOWetMix
-			const auto gainWetRange = makeRange::lin(PPDGainWetMin, PPDGainWetMax);
-			params.push_back(makeParam(PID::GainWet, 0.f, gainWetRange, Unit::Decibel));
+			params.push_back(makeParam(PID::GainWet, 0.f, makeRange::lin(-24, 24), Unit::Decibel));
 			params.push_back(makeParam(PID::Mix, 1.f));
 #if PPDHasDelta
 			params.push_back(makeParam(PID::Delta, 0.f, makeRange::toggle(), Unit::Power));
 #endif
 #endif
-			const auto gainOutRange = makeRange::lin(PPDGainOutMin, PPDGainOutMax);
-			params.push_back(makeParam(PID::GainOut, 0.f, gainOutRange, Unit::Decibel));
+			params.push_back(makeParam(PID::GainOut, 0.f, makeRange::lin(-60, 0), Unit::Decibel));
 #if PPDHasStereoConfig
 			params.push_back(makeParam(PID::StereoConfig, 0.f, makeRange::toggle(), Unit::StereoConfig));
 #endif
@@ -1461,7 +1469,6 @@ namespace param
 		}
 
 		// LOW LEVEL PARAMS:
-		params.push_back(makeParam(PID::Sidechain, 0.f, makeRange::toggle(), Unit::Power));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

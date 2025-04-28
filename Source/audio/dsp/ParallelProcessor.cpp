@@ -12,40 +12,46 @@ namespace dsp
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::split(float* const* samples, int numChannels, int numSamples) noexcept
+	void ParallelProcessor<NumBands>::split(ProcessorBufferView& view) noexcept
 	{
+		const auto numChannels = view.getNumChannelsMain();
+		const auto numSamples = view.getNumSamples();
 		for (auto b = 0; b < MaxBand; ++b)
 		{
 			const auto b2 = 2 * b;
 			float* band[] = { bands[b2].data(), bands[b2 + 1].data() };
 
 			for (auto ch = 0; ch < numChannels; ++ch)
-				SIMD::copy(band[ch], samples[ch], numSamples);
+				SIMD::copy(band[ch], view.getSamplesMain(ch), numSamples);
 		}
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::join(float* const* samples, int numChannels, int numSamples) noexcept
+	void ParallelProcessor<NumBands>::join(ProcessorBufferView& view) noexcept
 	{
+		const auto numChannels = view.getNumChannelsMain();
+		const auto numSamples = view.getNumSamples();
 		for (auto b = 0; b < MaxBand; ++b)
 		{
 			const auto b2 = 2 * b;
 			for (auto ch = 0; ch < numChannels; ++ch)
-				SIMD::add(samples[ch], bands[b2 + ch].data(), numSamples);
+				SIMD::add(view.getSamplesMain(ch), bands[b2 + ch].data(), numSamples);
 		}
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::joinReplace(float* const* samples, int numChannels, int numSamples) noexcept
+	void ParallelProcessor<NumBands>::joinReplace(ProcessorBufferView& view) noexcept
 	{
+		const auto numChannels = view.getNumChannelsMain();
+		const auto numSamples = view.getNumSamples();
 		for (auto ch = 0; ch < numChannels; ++ch)
-			SIMD::copy(samples[ch], bands[ch].data(), numSamples);
+			SIMD::copy(view.getSamplesMain(ch), bands[ch].data(), numSamples);
 
 		for (auto b = 1; b < MaxBand; ++b)
 		{
 			const auto b2 = 2 * b;
 			for (auto ch = 0; ch < numChannels; ++ch)
-				SIMD::add(samples[ch], bands[b2 + ch].data(), numSamples);
+				SIMD::add(view.getSamplesMain(ch), bands[b2 + ch].data(), numSamples);
 		}
 	}
 
@@ -81,12 +87,13 @@ namespace dsp
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::joinMix(float* const* samples, float* mix,
-		int numChannels, int numSamples) noexcept
+	void ParallelProcessor<NumBands>::joinMix(ProcessorBufferView& view, float* mix) noexcept
 	{
+		const auto numChannels = view.getNumChannelsMain();
+		const auto numSamples = view.getNumSamples();
 		for (auto ch = 0; ch < numChannels; ++ch)
 		{
-			auto smpls = samples[ch];
+			auto smpls = view.getSamplesMain(ch);
 			auto band = bands[ch].data();
 
 			for (auto s = 0; s < numSamples; ++s)
@@ -95,12 +102,13 @@ namespace dsp
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::joinMix(float* const* samples, float mix,
-		int numChannels, int numSamples) noexcept
+	void ParallelProcessor<NumBands>::joinMix(ProcessorBufferView& view, float mix) noexcept
 	{
+		const auto numChannels = view.getNumChannelsMain();
+		const auto numSamples = view.getNumSamples();
 		for (auto ch = 0; ch < numChannels; ++ch)
 		{
-			auto smpls = samples[ch];
+			auto smpls = view.getSamplesMain(ch);
 			auto band = bands[ch].data();
 
 			for (auto s = 0; s < numSamples; ++s)
@@ -109,12 +117,13 @@ namespace dsp
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::joinDelta(float* const* samples, float* gain,
-		int numChannels, int numSamples) noexcept
+	void ParallelProcessor<NumBands>::joinDelta(ProcessorBufferView& view, float* gain) noexcept
 	{
+		const auto numChannels = view.getNumChannelsMain();
+		const auto numSamples = view.getNumSamples();
 		for (auto ch = 0; ch < numChannels; ++ch)
 		{
-			auto smpls = samples[ch];
+			auto smpls = view.getSamplesMain(ch);
 			auto band = bands[ch].data();
 
 			for (auto s = 0; s < numSamples; ++s)
@@ -130,12 +139,13 @@ namespace dsp
 	}
 
 	template<size_t NumBands>
-	void ParallelProcessor<NumBands>::joinDelta(float* const* samples, float gain,
-		int numChannels, int numSamples) noexcept
+	void ParallelProcessor<NumBands>::joinDelta(ProcessorBufferView& view, float gain) noexcept
 	{
+		const auto numChannels = view.getNumChannelsMain();
+		const auto numSamples = view.getNumSamples();
 		for (auto ch = 0; ch < numChannels; ++ch)
 		{
-			auto smpls = samples[ch];
+			auto smpls = view.getSamplesMain(ch);
 			auto band = bands[ch].data();
 
 			for (auto s = 0; s < numSamples; ++s)

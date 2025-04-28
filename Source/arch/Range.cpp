@@ -64,14 +64,24 @@ namespace makeRange
 		};
 	}
 
+	Range biasedSatisfy(int start, int end, float bias) noexcept
+	{
+		return biasedSatisfy(static_cast<float>(start), static_cast<float>(end), bias);
+	}
+
 	Range stepped(float start, float end, float steps) noexcept
 	{
 		return { start, end, steps };
 	}
 
+	Range stepped(int start, int end, int steps) noexcept
+	{
+		return { static_cast<float>(start), static_cast<float>(end), static_cast<float>(steps) };
+	}
+
 	Range toggle() noexcept
 	{
-		return stepped(0.f, 1.f);
+		return stepped(0, 1);
 	}
 
 	Range lin(float start, float end) noexcept
@@ -97,12 +107,22 @@ namespace makeRange
 		};
 	}
 
+	Range lin(int start, int end) noexcept
+	{
+		return lin(static_cast<float>(start), static_cast<float>(end));
+	}
+
 	Range withCentre(float start, float end, float centre) noexcept
 	{
 		const auto r = end - start;
 		const auto v = (centre - start) / r;
 
 		return makeRange::biased(start, end, 2.f * v - 1.f);
+	}
+
+	Range withCentre(int start, int end, int centre) noexcept
+	{
+		return withCentre(static_cast<float>(start), static_cast<float>(end), static_cast<float>(centre));
 	}
 
 	Range foleysLogRange(float min, float max) noexcept
@@ -133,6 +153,11 @@ namespace makeRange
 		};
 	}
 
+	Range foleysLogRange(int min, int max) noexcept
+	{
+		return foleysLogRange(static_cast<float>(min), static_cast<float>(max));
+	}
+
 	Range quad(float min, float max, int numSteps) noexcept
 	{
 		return
@@ -156,6 +181,11 @@ namespace makeRange
 				return juce::jlimit(start, end, x);
 			}
 		};
+	}
+
+	Range quad(int min, int max, int numSteps) noexcept
+	{
+		return quad(static_cast<float>(min), static_cast<float>(max), numSteps);
 	}
 
 	Range beats(float minDenominator, float maxDenominator, bool withZero)

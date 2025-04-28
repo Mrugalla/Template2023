@@ -102,18 +102,15 @@ namespace dsp
 			gainIn.prepare(sampleRate);
 		}
 
-		void split(float* const* samples, float gainInDb,
-			int numChannels, int numSamples) noexcept
+		void split(ProcessorBufferView& view, float gainInDb) noexcept
 		{
-			gainIn(samples, gainInDb, numChannels, numSamples);
+			gainIn(view, gainInDb);
 		}
 
-		void join(float* const* samples,
-			int numChannels, int numSamples,
-			bool unityGain) noexcept
+		void join(ProcessorBufferView& view, bool unityGain) noexcept
 		{
 			if(unityGain)
-				gainIn.applyInverse(samples, numChannels, numSamples);
+				gainIn.applyInverse(view);
 		}
 
 		Gain13 gainIn;
@@ -136,37 +133,35 @@ namespace dsp
 		}
 
 		// samples, gainDryDb, numChannels, numSamples
-		void splitLinear(float* const* samples, float gainDryDb,
-			int numChannels, int numSamples) noexcept
+		void splitLinear(ProcessorBufferView& view, float gainDryDb) noexcept
 		{
-			parallelProcessor.split(samples, numChannels, numSamples);
+			parallelProcessor.split(view);
 			const auto band = parallelProcessor.getBand(0);
-			gainDry(band, gainDryDb, numChannels, numSamples);
+			gainDry(band, gainDryDb, view.getNumChannelsMain(), view.getNumSamples());
 		}
 
 		// samples, gainDryDb, gainWetInDb, numChannels, numSamples
-		void splitNonlinear(float* const* samples, float gainDryDb, float gainWetInDb,
-			int numChannels, int numSamples) noexcept
+		void splitNonlinear(ProcessorBufferView& view,
+			float gainDryDb, float gainWetInDb) noexcept
 		{
-			splitLinear(samples, gainDryDb, numChannels, numSamples);
-			gainWetIn(samples, gainWetInDb, numChannels, numSamples);
+			splitLinear(view, gainDryDb);
+			gainWetIn(view, gainWetInDb);
 		}
 
 		// samples, gainWetDb, numChannels, numSamples 
-		void joinLinear(float* const* samples, float gainWetOutDb,
-			int numChannels, int numSamples) noexcept
+		void joinLinear(ProcessorBufferView& view, float gainWetOutDb) noexcept
 		{
-			gainWetOut(samples, gainWetOutDb, numChannels, numSamples);
-			parallelProcessor.join(samples, numChannels, numSamples);
+			gainWetOut(view, gainWetOutDb);
+			parallelProcessor.join(view);
 		}
 
 		// samples, gainWetDb, numChannels, numSamples, unityGain
-		void joinNonlinear(float* const* samples, float gainWetOutDb,
-			int numChannels, int numSamples, bool unityGain) noexcept
+		void joinNonlinear(ProcessorBufferView& view,
+			float gainWetOutDb, bool unityGain) noexcept
 		{
 			if(unityGain)
-				gainWetIn.applyInverse(samples, numChannels, numSamples);
-			joinLinear(samples, gainWetOutDb, numChannels, numSamples);
+				gainWetIn.applyInverse(view);
+			joinLinear(view, gainWetOutDb);
 		}
 
 	private:
@@ -190,39 +185,37 @@ namespace dsp
 			mixPRM.prepare(sampleRate, 13.f);
 		}
 
-		// samples, numChannels, numSamples
-		void splitLinear(float* const* samples,
-			int numChannels, int numSamples) noexcept
+		// view
+		void splitLinear(ProcessorBufferView& view) noexcept
 		{
-			parallelProcessor.split(samples, numChannels, numSamples);
+			parallelProcessor.split(view);
 		}
 
-		// samples, gainWetInDb, numChannels, numSamples
-		void splitNonlinear(float* const* samples, float gainWetInDb,
-			int numChannels, int numSamples) noexcept
+		// view, gainWetInDb
+		void splitNonlinear(ProcessorBufferView& view, float gainWetInDb) noexcept
 		{
-			splitLinear(samples, numChannels, numSamples);
-			gainWetIn(samples, gainWetInDb, numChannels, numSamples);
+			splitLinear(view);
+			gainWetIn(view, gainWetInDb);
 		}
 
-		// samples, mix, gainWetOutDb, numChannels, numSamples, delta 
-		void joinLinear(float* const* samples, float mix, float gainWetOutDb,
-			int numChannels, int numSamples, bool delta) noexcept
+		// view, mix, gainWetOutDb, delta 
+		void joinLinear(ProcessorBufferView& view,
+			float mix, float gainWetOutDb, bool delta) noexcept
 		{
-			gainWetOut(samples, gainWetOutDb, numChannels, numSamples);
+			gainWetOut(view, gainWetOutDb);
 			if (delta)
-				joinDelta(samples, mix, numChannels, numSamples);
+				joinDelta(view, mix);
 			else
-				joinMix(samples, mix, numChannels, numSamples);
+				joinMix(view, mix);
 		}
 
-		// samples, mix, gainWetOutDb, numChannels, numSamples, unityGain, delta 
-		void joinNonlinear(float* const* samples, float mix, float gainWetOutDb,
-			int numChannels, int numSamples, bool unityGain, bool delta) noexcept
+		// view, mix, gainWetOutDb, unityGain, delta 
+		void joinNonlinear(ProcessorBufferView& view,
+			float mix, float gainWetOutDb, bool unityGain, bool delta) noexcept
 		{
 			if (unityGain)
-				gainWetIn.applyInverse(samples, numChannels, numSamples);
-			joinLinear(samples, mix, gainWetOutDb, numChannels, numSamples, delta);
+				gainWetIn.applyInverse(view);
+			joinLinear(view, mix, gainWetOutDb, delta);
 		};
 	
 	private:
@@ -230,24 +223,26 @@ namespace dsp
 		Gain13 gainWetIn, gainWetOut;
 		PRM mixPRM;
 
-		// samples, mix, numChannels, numSamples
-		void joinMix(float* const* samples, float mix, int numChannels, int numSamples) noexcept
+		// view, mix
+		void joinMix(ProcessorBufferView& view, float mix) noexcept
 		{
+			const auto numSamples = view.getNumSamples();
 			const auto mixInfo = mixPRM(mix, numSamples);
 			if (mixInfo.smoothing)
-				parallelProcessor.joinMix(samples, mixInfo.buf, numChannels, numSamples);
+				parallelProcessor.joinMix(view, mixInfo.buf);
 			else
-				parallelProcessor.joinMix(samples, mixInfo.val, numChannels, numSamples);
+				parallelProcessor.joinMix(view, mixInfo.val);
 		}
 
-		// samples, mix, numChannels, numSamples
-		void joinDelta(float* const* samples, float mix, int numChannels, int numSamples) noexcept
+		// view, mix
+		void joinDelta(ProcessorBufferView& view, float mix) noexcept
 		{
+			const auto numSamples = view.getNumSamples();
 			const auto mixInfo = mixPRM(mix, numSamples);
 			if (mixInfo.smoothing)
-				parallelProcessor.joinDelta(samples, mixInfo.buf, numChannels, numSamples);
+				parallelProcessor.joinDelta(view, mixInfo.buf);
 			else
-				parallelProcessor.joinDelta(samples, mixInfo.val, numChannels, numSamples);
+				parallelProcessor.joinDelta(view, mixInfo.val);
 		}
 	};
 
@@ -320,19 +315,18 @@ namespace dsp
 	#endif
 #else
 	#if PPDIsNonlinear
-		// samples, gainWetInDb, numChannels, numSamples
-		void split(float* const* samples, float gainWetInDb,
-			int numChannels, int numSamples) noexcept
+		// view, gainWetInDb
+		void split(ProcessorBufferView& view, float gainWetInDb) noexcept
 		{
-			mixProcessor.splitNonlinear(samples, gainWetInDb, numChannels, numSamples);
+			mixProcessor.splitNonlinear(view, gainWetInDb);
 		}
 
 		// samples, mix, gainWetDb, gainOutDb, numChannels, numSamples, unityGain, delta
-		void join(float* const* samples, float mix, float gainWetDb, float gainOutDb,
-			int numChannels, int numSamples, bool unityGain, bool delta) noexcept
+		void join(ProcessorBufferView& view, float mix,
+			float gainWetDb, float gainOutDb, bool unityGain, bool delta) noexcept
 		{
-			mixProcessor.joinNonlinear(samples, mix, gainWetDb, numChannels, numSamples, unityGain, delta);
-			gainOut(samples, gainOutDb, numChannels, numSamples);
+			mixProcessor.joinNonlinear(view, mix, gainWetDb, unityGain, delta);
+			gainOut(view, gainOutDb);
 		}
 	#else
 		// samples, numChannels, numSamples

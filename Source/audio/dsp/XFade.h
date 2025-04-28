@@ -137,10 +137,10 @@ namespace dsp
             tracks[idx].gain = 1.;
         }
 
-        BufferView2 operator()(int idx, int numSamples) noexcept
+        BufferView2 operator()(int i, int numSamples) noexcept
         {
-            auto& track = tracks[idx];
-            const auto idx3 = idx * 3;
+            auto& track = tracks[i];
+            const auto idx3 = i * 3;
 			auto xBuf = buffer[idx3 + 2].data();
 			track.synthesizeGainValues(xBuf, numSamples);
 			return { buffer[idx3].data(), buffer[idx3 + 1].data() };

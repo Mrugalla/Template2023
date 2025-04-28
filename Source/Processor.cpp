@@ -239,21 +239,47 @@ namespace audio
 
         juce::ScopedNoDenormals noDenormals;
 
-        const auto macroVal = params(PID::Macro).getValue();
-        const auto numChannels = buffer.getNumChannels();
-        params.modulate(macroVal, numChannels);
+        auto mainBus = getBus(true, 0);
+        auto mainBuffer = mainBus->getBusBuffer(buffer);
+        dsp::ProcessorBufferView bufferView;
+		bufferView.assignMain
+        (
+            mainBuffer.getArrayOfWritePointers(),
+            mainBuffer.getNumChannels(),
+            mainBuffer.getNumSamples()
+        );
+#if PPDHasSidechain
+        if (wrapperType != wrapperType_Standalone)
+        {
+            auto scBus = getBus(true, 1);
+            if (scBus)
+                if (scBus->isEnabled())
+                {
+                    const auto scEnabled = params(PID::Sidechain).getValue() > .5f;
+                    const auto& scGainParam = params(PID::SCGain);
+                    const auto scGainDb = scGainParam.getValModDenorm();
+                    const auto scGain = math::dbToAmp(scGainDb);
 
-        const auto numSamplesMain = buffer.getNumSamples();
+                    auto scBuffer = scBus->getBusBuffer(buffer);
+                    auto scSamples = scBuffer.getArrayOfWritePointers();
+                    const auto numChannelsSC = scBuffer.getNumChannels();
+                    bufferView.assignSC(scSamples, scGain, numChannelsSC, scEnabled);
+                }
+        }
+        bufferView.useMainForSCIfRequired();
+#endif
+
+        const auto macroVal = params(PID::Macro).getValue();
+        params.modulate(macroVal, bufferView.getNumChannelsMain());
+
         {
             const auto totalNumInputChannels = getTotalNumInputChannels();
             const auto totalNumOutputChannels = getTotalNumOutputChannels();
             for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-                buffer.clear(i, 0, numSamplesMain);
+                buffer.clear(i, 0, bufferView.getNumSamples());
         }
-        if (numSamplesMain == 0)
+        if (bufferView.getNumSamples() == 0)
             return;
-        auto samplesMain = buffer.getArrayOfWritePointers();
-
         transport(playHead);
 #if PPDHasStereoConfig
         bool midSide = false;
@@ -261,10 +287,9 @@ namespace audio
         {
             midSide = params(PID::StereoConfig).getValue() > .5f;
             if (midSide)
-                dsp::midSideEncode(samplesMain, numSamplesMain);
+                dsp::midSideEncode(samplesMain, bufferView.getNumSamples());
         }
 #endif
-
 #if PPDIsNonlinear
         const auto gainInDb = params(PID::GainIn).getValModDenorm();
         const auto unityGain = params(PID::UnityGain).getValMod() > .5f;
@@ -278,7 +303,7 @@ namespace audio
 #if PPDHasDelta
         const auto delta = params(PID::Delta).getValMod() > .5f;
 #else
-        const bool delta = false;
+        static constexpr bool delta = false;
 #endif
 #endif
         const auto gainOutDb = params(PID::GainOut).getValModDenorm();
@@ -294,12 +319,11 @@ namespace audio
         xenManager({ xen, masterTune, anchor, pitchbendRange }, numChannels);
 #endif
 
-        for (auto s = 0; s < numSamplesMain; s += dsp::BlockSize)
+        for (auto s = 0; s < bufferView.getNumSamples(); s += dsp::BlockSize)
         {
-            float* samples[] = { &samplesMain[0][s], &samplesMain[1][s] };
-            const auto dif = numSamplesMain - s;
-            const auto numSamples = dif < dsp::BlockSize ? dif : dsp::BlockSize;
-
+            dsp::ProcessorBufferView bufferViewBlock;
+			bufferViewBlock.fillBlock(bufferView, s);
+			const auto numSamples = bufferViewBlock.getNumSamples();
 #if PPDIO == PPDIOOut
 #if PPDIsNonlinear
             mixProcessor.split
@@ -321,10 +345,7 @@ namespace audio
 #endif
 #else
 #if PPDIsNonlinear
-            mixProcessor.split
-            (
-                samples, gainInDb, numChannels, numSamples
-            );
+            mixProcessor.split(bufferViewBlock, gainInDb);
 #else
             mixProcessor.split
             (
@@ -342,7 +363,7 @@ namespace audio
             const auto sysexDummy = juce::MidiMessage::programChange(1, 0);
             midiSubBuffer.addEvent(sysexDummy, numSamples);
 
-            pluginProcessor(samples, midiSubBuffer, transport.info, numChannels, numSamples);
+            pluginProcessor(bufferViewBlock, midiSubBuffer, transport.info);
             transport(numSamples);
 
             midiMessages.clear();
@@ -377,7 +398,7 @@ namespace audio
 #if PPDIsNonlinear
             mixProcessor.join
             (
-                samples, mix, gainWetDb, gainOutDb, numChannels, numSamples, unityGain, delta
+                bufferViewBlock, mix, gainWetDb, gainOutDb, unityGain, delta
             );
 #else
             mixProcessor.join

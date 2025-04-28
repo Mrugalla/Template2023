@@ -9,10 +9,14 @@ namespace makeRange
 	// start, end, steps = 1
 	Range stepped(float, float, float = 1.f) noexcept;
 
+	Range stepped(int, int, int = 1) noexcept;
+
 	Range toggle() noexcept;
 
 	// start, end
 	Range lin(float, float) noexcept;
+
+	Range lin(int, int) noexcept;
 
 	// start, end, bias[-1, 1]
 	Range biased(float, float, float) noexcept;
@@ -20,15 +24,23 @@ namespace makeRange
 	// start, end, centre
 	Range withCentre(float, float, float) noexcept;
 
+	Range withCentre(int, int, int) noexcept;
+
 	// start, end, bias[-1, 1]
 	// optimally round™
 	Range biasedSatisfy(float, float, float) noexcept;
 
+	Range biasedSatisfy(int, int, float) noexcept;
+
 	// min, max
 	Range foleysLogRange(float, float) noexcept;
 
+	Range foleysLogRange(int, int) noexcept;
+
 	// min, max, numSteps ]1, N]
 	Range quad(float, float, int) noexcept;
+
+	Range quad(int, int, int) noexcept;
 
 	// minDenominator, maxDenominator, withZero, flipped
 	// for example { 16, .5, true }

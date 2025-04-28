@@ -7,7 +7,7 @@
               pluginName="Template2023" pluginDesc="Plugin Template" pluginManufacturer="Mrugalla"
               pluginManufacturerCode="BBBB" pluginCode="BBBB" pluginVST3Category="Fx"
               pluginAAXCategory="0" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
-              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=true&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=0&#10;PPDHasSidechain=1&#10;PPDHasLookahead=0&#10;PPDHasTuningEditor=0&#10;&#10;PPDGainInMin=-30&#10;PPDGainInMax=30&#10;PPDGainDryMin=-12&#10;PPDGainDryMax=12&#10;PPDGainWetMin=-12&#10;PPDGainWetMax=12&#10;PPDGainOutMin=-60&#10;PPDGainOutMax=0"
+              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=true&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=0&#10;PPDHasSidechain=1&#10;PPDHasLookahead=0&#10;PPDHasTuningEditor=0"
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'" maxBinaryFileSize="20971520">
   <MAINGROUP id="WYhkvs" name="Template2023">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">

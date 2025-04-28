@@ -11,14 +11,14 @@ namespace dsp
 
 		ParallelProcessor();
 
-		// samples, numChannels, numSamples
-		void split(float* const*, int, int) noexcept;
+		// view
+		void split(ProcessorBufferView&) noexcept;
 
-		// samples, numChannels, numSamples
-		void join(float* const*, int, int) noexcept;
+		// view
+		void join(ProcessorBufferView&) noexcept;
 
-		// samples, numChannels, numSamples
-		void joinReplace(float* const*, int, int) noexcept;
+		// view
+		void joinReplace(ProcessorBufferView&) noexcept;
 
 		// gain, bandIdx, numChannels, numSamples
 		void applyGain(float, int, int, int) noexcept;
@@ -31,20 +31,20 @@ namespace dsp
 		BufferView2 operator[](int) noexcept;
 
 		// only for parallel processors with exactly 2 bands
-		//samples, mix, numChannels, numSamples
-		void joinMix(float* const*, float*, int, int) noexcept;
+		// view, mix
+		void joinMix(ProcessorBufferView&, float*) noexcept;
 
 		// only for parallel processors with exactly 2 bands
-		//samples, mix, numChannels, numSamples
-		void joinMix(float* const*, float, int, int) noexcept;
+		// view, mix
+		void joinMix(ProcessorBufferView&, float) noexcept;
 
 		// only for parallel processors with exactly 2 bands
-		//samples, gain, numChannels, numSamples
-		void joinDelta(float* const*, float*, int, int) noexcept;
+		// view, gain
+		void joinDelta(ProcessorBufferView&, float*) noexcept;
 
 		//only for parallel processors with exactly 2 bands
-		//samples, gain, numChannels, numSamples
-		void joinDelta(float* const*, float, int, int) noexcept;
+		// view, gain
+		void joinDelta(ProcessorBufferView&, float) noexcept;
 
 		// bandIdx
 		bool isSleepy(int) const noexcept;

@@ -48,6 +48,111 @@ namespace dsp
 
 	using BufferView2 = std::array<float*, 2>;
 	using BufferView3 = std::array<float*, 3>;
+	using BufferView4 = std::array<float*, 4>;
+
+	struct BufferView2X
+	{
+		BufferView2X() :
+			view(),
+			numChannels(0)
+		{}
+
+		void assign(float* const* samples, int _numChannels) noexcept
+		{
+			for (auto ch = 0; ch < _numChannels; ++ch)
+			{
+				auto smpls = samples[ch];
+				view[ch] = smpls;
+			}
+			numChannels = _numChannels;
+		}
+
+		void applyGain(float gain, int numSamples) noexcept
+		{
+			for (auto ch = 0; ch < numChannels; ++ch)
+				SIMD::multiply(view[ch], gain, numSamples);
+		}
+
+		BufferView2 view;
+		int numChannels;
+	};
+
+	struct ProcessorBufferView
+	{
+		ProcessorBufferView() :
+			main(),
+			sc(),
+			numSamples(0),
+			scEnabled(false)
+		{
+		}
+
+		void assignMain(float* const* samples, int numChannels, int _numSamples) noexcept
+		{
+			main.assign(samples, numChannels);
+			numSamples = _numSamples;
+			scEnabled = false;
+		}
+
+		void assignSC(float* const* samples, float scGain, int numChannels, bool enabled) noexcept
+		{
+			sc.assign(samples, numChannels);
+			if (scGain == 0.f)
+			{
+				scEnabled = false;
+				return;
+			}
+			if (scGain != 1.f)
+				sc.applyGain(scGain, numSamples);
+			scEnabled = enabled;
+		}
+
+		void useMainForSCIfRequired() noexcept
+		{
+			if (scEnabled)
+				return;
+			for (auto ch = 0; ch < main.numChannels; ++ch)
+				sc.view[ch] = main.view[ch];
+			sc.numChannels = main.numChannels;
+		}
+
+		void fillBlock(ProcessorBufferView& buffer, int s) noexcept
+		{
+			const auto dif = buffer.numSamples - s;
+			numSamples = dif < dsp::BlockSize ? dif : dsp::BlockSize;
+			main.numChannels = buffer.main.numChannels;
+			for (auto ch = 0; ch < main.numChannels; ++ch)
+				main.view[ch] = &buffer.main.view[ch][s];
+			sc.numChannels = buffer.sc.numChannels;
+			for (auto ch = 0; ch < sc.numChannels; ++ch)
+				sc.view[ch] = &buffer.sc.view[ch][s];
+			scEnabled = buffer.scEnabled;
+		}
+
+		float* getSamplesMain(int ch) noexcept
+		{
+			return main.view[ch];
+		}
+
+		float* getSamplesSC(int ch) noexcept
+		{
+			return sc.view[ch];
+		}
+
+		int getNumChannelsMain() const noexcept
+		{
+			return main.numChannels;
+		}
+
+		int getNumSamples() const noexcept
+		{
+			return numSamples;
+		}
+
+		BufferView2X main, sc;
+		int numSamples;
+		bool scEnabled;
+	};
 
 	// returns the sampleRate of the wav file
 	inline double loadFromMemory(AudioBuffer& buffer, const char* data, int size)

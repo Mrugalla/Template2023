@@ -13,6 +13,10 @@ namespace param
 	{
 		// high level parameters
 		Macro,
+#if PPDHasSidechain
+		Sidechain,
+		SCGain,
+#endif
 #if PPDIsNonlinear
 		GainIn,
 		UnityGain,
@@ -52,7 +56,6 @@ namespace param
 		Power,
 
 		// low level parameters
-		Sidechain,
 		//
 		
 		NumParams

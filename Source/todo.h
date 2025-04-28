@@ -4,9 +4,8 @@
 
 ~~~ todo ~~~
 
-sidechain needs to be a global parameter
-	because it's part of the outter processor
-    needs its own class for handling the buffer weirdness
+sidechain
+    should also handle midi and transport blocks
 
 resonator improvements
     resonator with better autogained q

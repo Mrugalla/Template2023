@@ -17,11 +17,10 @@ namespace dsp
 		// bufferView, gainDb, numChannels, numSamples
 		void operator()(BufferView2, float, int, int) noexcept;
 
-		// samples, gainDb, numChannels, numSamples
-		void operator()(float* const*, float, int, int) noexcept;
+		void operator()(ProcessorBufferView&, float) noexcept;
 
-		// samples, numChannels, numSamples
-		void applyInverse(float* const*, int, int) noexcept;
+		// view
+		void applyInverse(ProcessorBufferView&) noexcept;
 
 		// smpls, numSamples
 		void applyInverse(float*, int) noexcept;

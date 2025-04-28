@@ -16,11 +16,12 @@ namespace dsp
 		sampleRate = _sampleRate;
 	}
 
-	void PluginProcessor::operator()(float** samples,
-		MidiBuffer&, const Transport::Info&,
-		int numChannels, int numSamples) noexcept
+	void PluginProcessor::operator()(ProcessorBufferView& buffer,
+		MidiBuffer&, const Transport::Info&) noexcept
 	{
-		
+		if(buffer.scEnabled)
+			for (auto ch = 0; ch < buffer.getNumChannelsMain(); ++ch)
+				SIMD::multiply(buffer.getSamplesMain(ch), buffer.getSamplesSC(ch), buffer.numSamples);
 	}
 
 	void PluginProcessor::processBlockBypassed(float**, MidiBuffer&, int, int) noexcept
