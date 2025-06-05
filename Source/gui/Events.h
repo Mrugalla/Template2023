@@ -19,6 +19,7 @@ namespace gui
             ParameterEditorShowUp,
             ParameterEditorAssignParam,
 			ParameterEditorVanish,
+            UpdateEditLayout,
             NumTypes
         };
 
@@ -49,7 +50,7 @@ namespace gui
 
             System();
 
-            /* type, stuff */
+            // type, stuff
             void notify(const Type, const void* = nullptr);
 
         protected:

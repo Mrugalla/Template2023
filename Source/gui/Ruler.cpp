@@ -64,6 +64,7 @@ namespace gui
 
 	void Ruler::resized()
 	{
+		Comp::resized();
 		update();
 	}
 
@@ -104,7 +105,7 @@ namespace gui
 			labels.emplace_back(new Label(utils));
 			auto& label = *labels.back();
 			makeTextLabel(label, valToStrFunc(val), font, just, cID, "");
-			label.setBounds(x + xOff, 0, 100, h);
+			label.setBounds({ x + xOff, 0, 100, h });
 			label.setMaxHeight();
 			val += inc;
 			xF = val * lenInv * wF;

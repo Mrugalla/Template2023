@@ -36,7 +36,7 @@ namespace gui
 
 	void EnvelopeGeneratorMultiVoiceEditor::EnvGenView::resized()
 	{
-		layout.resized(getLocalBounds().toFloat());
+		Comp::resized();
 		layout.place(ruler, 0, 0, 1, 1);
 		updateCurve();
 	}
@@ -201,13 +201,32 @@ namespace gui
 	
 	//EnvelopeGeneratorMultiVoiceEditor
 
-	EnvelopeGeneratorMultiVoiceEditor::EnvelopeGeneratorMultiVoiceEditor(Utils& u, const String& title,
-		PID atk, PID dcy, PID sus, PID rls, PID isTemposync, PIDsTemposync* temposyncPIDs) :
-		Comp(u),
-		labels{ Label(u), Label(u), Label(u), Label(u), Label(u) },
-		envGenView(u, sus),
-		knobs{ Knob(u), Knob(u), Knob(u), Knob(u) },
-		modDials{ ModDial(u), ModDial(u), ModDial(u), ModDial(u) },
+	EnvelopeGeneratorMultiVoiceEditor::EnvelopeGeneratorMultiVoiceEditor(Utils& u, const String& uID,
+		const String& title, PID atk, PID dcy, PID sus, PID rls, PID isTemposync, PIDsTemposync* temposyncPIDs) :
+		Comp(u, uID),
+		labels
+		{
+			Label(u),
+			Label(u),
+			Label(u),
+			Label(u),
+			Label(u)
+		},
+		envGenView(u, uID + "view", sus),
+		knobs
+		{
+			Knob(u),
+			Knob(u),
+			Knob(u),
+			Knob(u)
+		},
+		modDials
+		{
+			ModDial(u),
+			ModDial(u),
+			ModDial(u),
+			ModDial(u)
+		},
 		adsrLabelsGroup(),
 		temposync(u),
 		buttonRandomizer(u, "randenv" + title),
@@ -326,7 +345,7 @@ namespace gui
 	void EnvelopeGeneratorMultiVoiceEditor::resized()
 	{
 		const auto thicc = utils.thicc;
-		layout.resized(getLocalBounds().toFloat());
+		Comp::resized();
 		layout.place(labels[kTitle], 0, 0, 2, 1);
 		labels[kTitle].setMaxHeight(thicc);
 		envGenView.setBounds(layout(0, 1, 4, 1).reduced(thicc).toNearestInt());

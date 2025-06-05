@@ -1,9 +1,6 @@
 #pragma once
 #include "dsp/Transport.h"
 #include "../param/Param.h"
-
-#include "dsp/Resonator.h"
-
 namespace dsp
 {
 	using Params = param::Params;
@@ -22,7 +19,7 @@ namespace dsp
 		);
 
 		// sampleRate
-		void prepare(float);
+		void prepare(double);
 
 		// samples, midiBuffer, transport
 		void operator()(ProcessorBufferView& buffer, MidiBuffer&, const Transport::Info&) noexcept;
@@ -34,6 +31,6 @@ namespace dsp
 		
 		void loadPatch(const State&);
 
-		float sampleRate;
+		double sampleRate;
 	};
 }

@@ -2,8 +2,8 @@
 
 namespace gui
 {
-	RadioButton::RadioButton(Utils& u) :
-		Comp(u),
+	RadioButton::RadioButton(Utils& u, const String& uID) :
+		Comp(u, uID),
 		buttons(),
 		labelGroup()
 	{
@@ -37,6 +37,7 @@ namespace gui
 
 	void RadioButton::resized()
 	{
+		Comp::resized();
 		const auto numButtons = buttons.size();
 		const auto w = static_cast<float>(getWidth());
 		const auto h = static_cast<float>(getHeight());

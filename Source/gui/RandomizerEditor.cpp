@@ -37,6 +37,7 @@ namespace gui
 
 	void RandomizerEditor::Visualizer::resized()
 	{
+		Comp::resized();
 		if (img.isValid())
 		{
 			img = img.rescaled(getWidth(), getHeight(), Graphics::lowResamplingQuality);
@@ -55,7 +56,7 @@ namespace gui
 
 	// Editor
 
-	RandomizerEditor::RandomizerEditor(const RandMod& randMod, Utils& u,
+	RandomizerEditor::RandomizerEditor(Utils& u, const String& uID, const RandMod& randMod,
 		PID pRateSync, PID pSmooth, PID pComplex, PID pDropout) :
 		Comp(u),
 		visualizer(u, randMod),

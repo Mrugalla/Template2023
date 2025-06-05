@@ -2,7 +2,7 @@
 
 namespace dsp
 {
-	PluginProcessor::PluginProcessor(Params& params
+	PluginProcessor::PluginProcessor(Params&
 #if PPDHasTuningEditor
 		, XenManager& xen
 #endif
@@ -11,17 +11,14 @@ namespace dsp
 	{
 	}
 
-	void PluginProcessor::prepare(float _sampleRate)
+	void PluginProcessor::prepare(double _sampleRate)
 	{
 		sampleRate = _sampleRate;
 	}
 
-	void PluginProcessor::operator()(ProcessorBufferView& buffer,
-		MidiBuffer&, const Transport::Info&) noexcept
+	void PluginProcessor::operator()(ProcessorBufferView& view,
+		MidiBuffer&, const Transport::Info& trans) noexcept
 	{
-		if(buffer.scEnabled)
-			for (auto ch = 0; ch < buffer.getNumChannelsMain(); ++ch)
-				SIMD::multiply(buffer.getSamplesMain(ch), buffer.getSamplesSC(ch), buffer.numSamples);
 	}
 
 	void PluginProcessor::processBlockBypassed(float**, MidiBuffer&, int, int) noexcept

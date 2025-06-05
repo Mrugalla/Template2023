@@ -4,6 +4,10 @@
 
 ~~~ todo ~~~
 
+oversampling?
+
+linear phase eq lowpass for pre-sc rm as blend alternative
+
 sidechain
     should also handle midi and transport blocks
 

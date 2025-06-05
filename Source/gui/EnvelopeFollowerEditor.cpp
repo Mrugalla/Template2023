@@ -4,8 +4,9 @@ namespace gui
 {
 	// Visualizer
 
-	EnvelopeFollowerEditor::Visualizer::Visualizer(Utils& u, const EnvFol& envelopeFollower) :
-		Comp(u),
+	EnvelopeFollowerEditor::Visualizer::Visualizer(Utils& u, const String& uID,
+		const EnvFol& envelopeFollower) :
+		Comp(u, uID),
 		img(),
 		y0(0.f)
 	{
@@ -37,6 +38,7 @@ namespace gui
 
 	void EnvelopeFollowerEditor::Visualizer::resized()
 	{
+		Comp::resized();
 		if (img.isValid())
 		{
 			img = img.rescaled(getWidth(), getHeight(), Graphics::lowResamplingQuality);
@@ -136,7 +138,7 @@ namespace gui
 	void EnvelopeFollowerEditor::resized()
 	{
 		const auto thicc = utils.thicc;
-		layout.resized(getLocalBounds().toFloat());
+		Comp::resized();
 		layout.place(title, 0, 0, 2, 1);
 		title.setMaxHeight(thicc);
 		visualizer.setBounds(layout(0, 1, 4, 1).reduced(thicc).toNearestInt());

@@ -2,8 +2,8 @@
 
 namespace gui
 {
-	Label::Label(Utils& u, bool _autoMaxHeight) :
-		Comp(u),
+	Label::Label(Utils& u, const String& uID, bool _autoMaxHeight) :
+		Comp(u, uID),
 		text(""),
 		font(FontOptions()),
 		just(Just::centred),
@@ -18,6 +18,7 @@ namespace gui
 
 	void Label::resized()
 	{
+		Comp::resized();
 		if (autoMaxHeight)
 			setMaxHeight();
 	}
@@ -116,10 +117,11 @@ namespace gui
 	//////
 
 	Toast::Toast(Utils& u) :
-		Label(u, true),
+		Label(u),
 		events(),
 		alphaAniWeight(false)
 	{
+		autoMaxHeight = true;
 		makeTextLabel(*this, "", font::dosisBold(), Just::centred, CID::Txt);
 
 		const auto fpsToast = cbFPS::k30;

@@ -138,7 +138,7 @@ namespace gui
 
 	void KeySelectorEditor::resized()
 	{
-		layout.resized(getLocalBounds().toFloat());
+		Comp::resized();
 		layout.place(keysEnabled, 0, 0, 1, 1);
 
 		bool sharps[12] =
@@ -165,7 +165,8 @@ namespace gui
 
 	const int KeySelectorEditor::getXen() const noexcept
 	{
-		auto x = utils.audioProcessor.xenManager.getXen();
+		const auto& info = utils.audioProcessor.xenManager.getInfo();
+		const auto x = info.xen;
 		return static_cast<int>(std::round(x));
 	}
 

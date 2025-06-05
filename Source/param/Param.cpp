@@ -28,8 +28,8 @@ namespace param
 		{
 		case PID::Macro: return "Macro";
 #if PPDHasSidechain
-		case PID::Sidechain: return "Sidechain";
 		case PID::SCGain: return "SC Gain";
+		case PID::SCListen: return "SC Listen";
 #endif
 #if PPDIsNonlinear
 		case PID::GainIn: return "Gain In";
@@ -148,8 +148,8 @@ namespace param
 		{
 		case PID::Macro: return "Dial in the desired amount of macro modulation depth.";
 #if PPDHasSidechain
-		case PID::Sidechain: return "Dis/Enable the sidechain input.";
 		case PID::SCGain: return "Apply gain to the sidechain signal.";
+		case PID::SCListen: return "Listen to the sidechain signal.";
 #endif
 #if PPDIsNonlinear
 		case PID::GainIn: return "Apply gain to the input signal.";
@@ -273,6 +273,18 @@ namespace param
 		}
 	}
 
+	// PARAM::CB:
+
+	float Param::CB::denorm() const noexcept
+	{
+		return param.range.convertFrom0to1(norm);
+	}
+
+	bool Param::CB::getBool() const noexcept
+	{
+		return norm > .5f;
+	}
+
 	// PARAM:
 
 	Param::Mod::Mod() :
@@ -281,7 +293,7 @@ namespace param
 	{}
 
 	Param::Param(const PID pID, const Range& _range, const float _valDenormDefault,
-		const ValToStrFunc& _valToStr, const StrToValFunc& _strToVal, const Unit _unit) :
+		const ValToStrFunc& _valToStr, const StrToValFunc& _strToVal, const Unit _unit, bool _modulatable) :
 		AudioProcessorParameter(),
 		id(pID),
 		range(_range),
@@ -292,7 +304,8 @@ namespace param
 		mod(),
 		valNorm(valInternal), valMod(valNorm.load()),
 		valToStr(_valToStr), strToVal(_strToVal), unit(_unit),
-		locked(false), inGesture(false), modDepthAbsolute(false)
+		locked(false), inGesture(false), modDepthAbsolute(false),
+		modulatable(_modulatable)
 	{
 	}
 
@@ -356,7 +369,7 @@ namespace param
 		if (isLocked())
 			return;
 
-		if (!modDepthAbsolute)
+		if (!modDepthAbsolute || !modulatable)
 			return valNorm.store(normalized);
 
 		const auto pLast = valNorm.load();
@@ -388,9 +401,9 @@ namespace param
 	{
 		if (isInGesture())
 			return;
-		beginChangeGesture();
+		beginGesture();
 		setValueFromEditor(norm);
-		endChangeGesture();
+		endGesture();
 	}
 
 	void Param::beginGesture()
@@ -412,7 +425,7 @@ namespace param
 
 	void Param::setModDepth(float v) noexcept
 	{
-		if (isLocked())
+		if (isLocked() || !modulatable)
 			return;
 
 		mod.depth.store(juce::jlimit(-1.f, 1.f, v));
@@ -440,7 +453,7 @@ namespace param
 
 	void Param::setModBias(float b) noexcept
 	{
-		if (isLocked())
+		if (isLocked() || !modulatable)
 			return;
 		b = BiasEps + b * (1.f - 2.f * BiasEps);
 		b = juce::jlimit(BiasEps, 1.f - BiasEps, b);
@@ -475,16 +488,20 @@ namespace param
 
 	void Param::modulate(float modSrc) noexcept
 	{
+		if (!modulatable)
+			return;
 		valInternal += calcValModOf(modSrc);
 	}
 
 	void Param::endModulation(int numChannels) noexcept
 	{
-		const auto limited = math::limit(0.f, 1.f, valInternal);
-		if (curValMod == limited)
+		auto y = valInternal;
+		if (modulatable)
+			y = math::limit(0.f, 1.f, y);
+		if (curValMod == y)
 			return;
-		curValMod = limited;
-		valMod.store(limited);
+		curValMod = y;
+		valMod.store(curValMod);
 		callback({ *this, curValMod, numChannels });
 	}
 
@@ -521,12 +538,6 @@ namespace param
 	float Param::getValForTextDenorm(const String& text) const
 	{
 		return strToVal(text);
-	}
-
-	String Param::_toString()
-	{
-		auto v = getValue();
-		return getName(10) + ": " + String(v) + "; " + getText(v, 10);
 	}
 
 	int Param::getNumSteps() const
@@ -900,6 +911,18 @@ namespace param::strToVal
 			return noteFunc(txt);
 		};
 	}
+#else
+	StrToValFunc pitch()
+	{
+		return[hzFunc = hz(), noteFunc = note()](const String& txt)
+		{
+			auto freqHz = hzFunc(txt);
+			if (freqHz != 0.f)
+				return math::freqHzToNote(freqHz);
+
+			return noteFunc(txt);
+		};
+	}
 #endif
 
 	StrToValFunc q()
@@ -1143,21 +1166,7 @@ namespace param::valToStr
 #endif
 			};
 	}
-#if PPDHasTuningEditor
-	ValToStrFunc xen(const Params& params)
-	{
-		return [&prms = params](float v)
-			{
-				const auto& snapParam = prms(PID::XenSnap);
-				const auto snap = snapParam.getValMod() > .5f;
-				if (snap)
-					v = std::round(v);
-				else
-					v = std::round(v * 100.f) * .01f;
-				return String(v) + " " + toString(Unit::Xen);
-			};
-	}
-#endif
+
 	ValToStrFunc note()
 	{
 		return [](float v)
@@ -1176,14 +1185,47 @@ namespace param::valToStr
 	}
 
 #if PPDHasTuningEditor
-	ValToStrFunc pitch(const Xen& xenManager)
+	ValToStrFunc xen(const Params& params)
 	{
-		return [noteFunc = note(), hzFunc = hz(), &xen = xenManager](float v)
+		return [&prms = params](float v)
 			{
-				return noteFunc(v) + "; " + hzFunc(xen.noteToFreqHz(v));
+				const auto& snapParam = prms(PID::XenSnap);
+				const auto snap = snapParam.getValMod() > .5f;
+				if (snap)
+					v = std::round(v);
+				else
+					v = std::round(v * 100.f) * .01f;
+				return String(v) + " " + toString(Unit::Xen);
+			};
+	}
+
+	ValToStrFunc pitch(const Xen& xenManager, bool showsPitch)
+	{
+		return [noteFunc = note(), hzFunc = hz(), &xen = xenManager, showsPitch](float v)
+		{
+			auto hzStr = hzFunc(xen.noteToFreqHz(v));
+			if(showsPitch)
+				return noteFunc(v) + "; " + hzStr;
+			else
+				return hzStr;
+		};
+	}
+#else
+	ValToStrFunc pitch(bool showsPitch)
+	{
+		if(showsPitch)
+			return [noteFunc = note(), hzFunc = hz()](float v)
+			{
+				return noteFunc(v) + "; " + hzFunc(math::noteToFreqHz(v));
+			};
+		else
+			return [hzFunc = hz()](float v)
+			{
+				return hzFunc(math::noteToFreqHz(v));
 			};
 	}
 #endif
+	
 
 	ValToStrFunc q()
 	{
@@ -1268,7 +1310,7 @@ namespace param
 {
 	// pID, valDenormDefault, range, Unit
 	Param* makeParam(PID id, float valDenormDefault = 1.f,
-		const Range& range = { 0.f, 1.f }, Unit unit = Unit::Percent)
+		const Range& range = { 0.f, 1.f }, Unit unit = Unit::Percent, bool modulatable = true)
 	{
 		ValToStrFunc valToStrFunc;
 		StrToValFunc strToValFunc;
@@ -1368,7 +1410,7 @@ namespace param
 			break;
 		}
 
-		return new Param(id, range, valDenormDefault, valToStrFunc, strToValFunc, unit);
+		return new Param(id, range, valDenormDefault, valToStrFunc, strToValFunc, unit, modulatable);
 	}
 
 	// pID, params
@@ -1377,7 +1419,7 @@ namespace param
 		ValToStrFunc valToStrFunc = valToStr::pan(params);
 		StrToValFunc strToValFunc = strToVal::pan(params);
 
-		return new Param(id, { -1.f, 1.f }, 0.f, valToStrFunc, strToValFunc, Unit::Pan);
+		return new Param(id, { -1.f, 1.f }, 0.f, valToStrFunc, strToValFunc, Unit::Pan, true);
 	}
 
 #if PPDHasTuningEditor
@@ -1391,6 +1433,14 @@ namespace param
 		return new Param(id, range, valDenormDefault, valToStrFunc, strToValFunc, Unit::Pitch);
 	}
 
+	Param* makeParamPitch(PID id, float valDenormDefault, const Xen& xen)
+	{
+		const auto lowestPitch = math::freqHzToNote2(20.f);
+		const auto highestPitch = math::freqHzToNote2(20000.f);
+		const auto pitchRange = makeRange::lin(lowestPitch, highestPitch);
+		return makeParamPitch(id, valDenormDefault, pitchRange, xen);
+	}
+
 	Param* makeParamXen(const Params& params)
 	{
 		constexpr auto MaxXen = static_cast<float>(arch::MaxXen);
@@ -1400,12 +1450,30 @@ namespace param
 		StrToValFunc strToValFunc = strToVal::xen();
 		return new Param(PID::Xen, range, DefaultXen, valToStrFunc, strToValFunc, Unit::Xen);
 	}
+#else
+	// pID, valDenormDefault, start, end, showsPitch
+	Param* makeParamPitch(PID id, float valDenormDefault,
+		float start, float end, bool showsPitch)
+	{
+		ValToStrFunc valToStrFunc = valToStr::pitch(showsPitch);
+		StrToValFunc strToValFunc = strToVal::pitch();
+
+		return new Param(id, makeRange::lin(start, end), valDenormDefault, valToStrFunc, strToValFunc, Unit::Pitch, true);
+	}
+
+	// pID, valDenormDefault, showsPitch
+	Param* makeParamPitch(PID id, float valDenormDefault, bool showsPitch)
+	{
+		const auto lowestPitch = math::freqHzToNote2(20.f);
+		const auto highestPitch = math::freqHzToNote2(20000.f);
+		return makeParamPitch(id, valDenormDefault, lowestPitch, highestPitch, showsPitch);
+	}
 #endif
 
 	Param* makeParam(PID id, float valDenormDefault, const Range& range,
-		const ValToStrFunc& valToStrFunc, const StrToValFunc& strToValFunc = strToVal::standard(0.f))
+		const ValToStrFunc& valToStrFunc, const StrToValFunc& strToValFunc = strToVal::standard(0.f), bool modulatable = true)
 	{
-		return new Param(id, range, valDenormDefault, valToStrFunc, strToValFunc, Unit::Custom);
+		return new Param(id, range, valDenormDefault, valToStrFunc, strToValFunc, Unit::Custom, modulatable);
 	}
 
 	// PARAMS
@@ -1419,15 +1487,15 @@ namespace param
 		modDepthAbsolute(false)
 	{
 		{ // HIGH LEVEL PARAMS:
-			params.push_back(makeParam(PID::Macro, 1.f));
+			params.push_back(makeParam(PID::Macro, 1.f, makeRange::lin(0, 1), Unit::Percent, false));
 #if PPDHasSidechain
-			params.push_back(makeParam(PID::Sidechain, 0.f, makeRange::toggle(), Unit::Power));
 			params.push_back(makeParam(PID::SCGain, 0.f, makeRange::lin(-24, 24), Unit::Decibel));
+			params.push_back(makeParam(PID::SCListen, 0.f, makeRange::toggle(), Unit::Power, false));
 #endif
 #if PPDIsNonlinear
 			const auto gainInRange = makeRange::withCentre(-24, 24, 0);
 			params.push_back(makeParam(PID::GainIn, 0.f, gainInRange, Unit::Decibel));
-			params.push_back(makeParam(PID::UnityGain, 1.f, makeRange::toggle(), Unit::Polarity));
+			params.push_back(makeParam(PID::UnityGain, 1.f, makeRange::toggle(), Unit::Polarity, false));
 #endif
 #if PPDIO == PPDIODryWet
 			const auto gainRangeCentre = -20.f;
@@ -1465,10 +1533,10 @@ namespace param
 				params.push_back(makeParam(id, 0.f, makeRange::lin(-1.f, 1.f), Unit::Fine));
 			}
 #endif
-			params.push_back(makeParam(PID::Power, 1.f, makeRange::toggle(), Unit::Power));
+			params.push_back(makeParam(PID::Power, 1.f, makeRange::toggle(), Unit::Power, false));
 		}
 
-		// LOW LEVEL PARAMS:
+		// LOW LEVEL PARAMS:		
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

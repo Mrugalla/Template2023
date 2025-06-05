@@ -24,7 +24,7 @@ namespace gui
 		};
 
 		// randMod, u, rateSync, smooth, complex, dropout
-		RandomizerEditor(const RandMod&, Utils&,
+		RandomizerEditor(Utils&, const String&, const RandMod&,
 			PID, PID, PID, PID);
 
 		void paint(Graphics&);

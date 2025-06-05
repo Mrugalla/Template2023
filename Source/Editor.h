@@ -1,6 +1,7 @@
 #pragma once
 #include "gui/Tooltip.h"
-#include "gui/Knob.h"
+#include "gui/ParameterEditor.h"
+#include "gui/EditorComp.h"
 
 namespace gui
 {
@@ -23,6 +24,13 @@ namespace gui
         evt::Member evtMember;
         
         Tooltip tooltip;
+        Toast toast;
+        ParameterEditor parameterEditor;
+        Callback callback;
+        Label title;
+        LayoutEditor layoutEditor;
+        CompPower powerComp;
+		EditorComp editorComp;
 
         //JUCE_HEAVYWEIGHT_LEAK_DETECTOR(Editor)
     };

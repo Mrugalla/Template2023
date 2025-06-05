@@ -121,7 +121,7 @@ namespace gui
 
 		void Patch::resized()
 		{
-			layout.resized(getLocalBounds().toFloat());
+			Comp::resized();
 			layout.place(buttonLoad, 0, 0, 1, 1);
 			buttonLoad.label.setMaxHeight(utils.thicc);
 			layout.place(buttonDelete, 1, 0, 1, 1);
@@ -225,7 +225,7 @@ namespace gui
 
 		void Patches::resized()
 		{
-			layout.resized(getLocalBounds().toFloat());
+			Comp::resized();
 			layout.place(scrollBar, 1, 0, 1, 1);
 
 			const auto w = layout.getW(0);
@@ -405,7 +405,7 @@ namespace gui
 
 		// ButtonSavePatch
 
-		ButtonSavePatch::ButtonSavePatch(Utils& u, const TextEditor& editorName,
+		ButtonSavePatch::ButtonSavePatch(const TextEditor& editorName,
 			const TextEditor& editorAuthor) :
 			Button(u)
 		{
@@ -478,8 +478,8 @@ namespace gui
 
 		// ButtonReveal
 
-		ButtonReveal::ButtonReveal(Utils& u, Patches& patches) :
-			Button(u)
+		ButtonReveal::ButtonReveal(Patches& patches) :
+			Button(patches.utils)
 		{
 			onClick = [&, &p = patches](const Mouse&)
 				{
@@ -552,8 +552,8 @@ namespace gui
 			editorAuthor(u, "enter author"),
 			editorName(u, "enter name"),
 			patches(u),
-			saveButton(u, editorName, editorAuthor),
-			revealButton(u, patches),
+			saveButton(editorName, editorAuthor),
+			revealButton(patches),
 			nameText(""),
 			authorText("")
 		{
@@ -626,7 +626,7 @@ namespace gui
 
 		void Browser::resized()
 		{
-			layout.resized(getLocalBounds().toFloat());
+			Comp::resized();
 			layout.place(title, 0, 0, 4, 1);
 			layout.place(editorName, 0, 1, 1, 1);
 			layout.place(editorAuthor, 1, 1, 1, 1);
@@ -637,7 +637,7 @@ namespace gui
 
 		// BrowserButton
 
-		BrowserButton::BrowserButton(Utils& u, Browser& browser) :
+		BrowserButton::BrowserButton(Browser& browser) :
 			Button(u)
 		{
 			makeTextButton(*this, "Patches", "Click here to save, browse or manage patches.", CID::Interact);
@@ -663,8 +663,8 @@ namespace gui
 
 		// NextPatchButton
 
-		NextPatchButton::NextPatchButton(Utils& u, Browser& browser, bool next) :
-			Button(u)
+		NextPatchButton::NextPatchButton(Browser& browser, bool next) :
+			Button(browser.utils, "browser" + (next ? "+" : "-"))
 		{
 			const String text(next ? ">" : "<");
 			makeTextButton(*this, text, "Click here to load the " + text + " patch.", CID::Interact);
