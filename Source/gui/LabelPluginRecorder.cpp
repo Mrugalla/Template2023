@@ -8,16 +8,15 @@ namespace gui
 	}
 
 	LabelPluginRecorder::LabelPluginRecorder(Utils& u, Recorder& _recorder) :
-		Label(u, "labelpluginrecorder"),
-		bgImg(Image::RGB, 1, 1, true),
+		Label(u, "pluginrecorder"),
+		bgImg(),
 		recorder(_recorder),
 		dragImage(Image::ARGB, 20, 20, true),
 		scaledImage(dragImage),
 		file(),
 		imgData(nullptr, 0)
 	{
-		setOpaque(true);
-		setTooltip("I wonder what happens when you drag this into your DAW or the material editor!");
+		setTooltip("I wonder what happens when you drag this into your DAW! ;)");
 
 		const auto fps = cbFPS::k15;
 		add(Callback([&, inc = msToInc(AniLengthMs, fps)]()
@@ -67,15 +66,17 @@ namespace gui
 
 	void LabelPluginRecorder::paint(Graphics& g)
 	{
-		g.fillAll(getColour(CID::Bg));
-
-		const auto thicc = utils.thicc;
-		const auto thicc2 = thicc * 2.f;
-
-		const auto hoverAni = callbacks[kHoverAni].phase;
-		const auto reduced = thicc2 + hoverAni * (thicc - thicc2);
-
-		g.drawImage(bgImg, getLocalBounds().toFloat().reduced(reduced), RectanglePlacement::stretchToFit, false);
+		if (bgImg.isValid())
+		{
+			g.fillAll(getColour(CID::Bg));
+			const auto thicc = utils.thicc;
+			const auto thicc2 = thicc * 2.f;
+			const auto hoverAni = callbacks[kHoverAni].phase;
+			const auto reduced = thicc2 + hoverAni * (thicc - thicc2);
+			g.drawImage(bgImg, getLocalBounds().toFloat().reduced(reduced), RectanglePlacement::stretchToFit, false);
+			return;
+		}
+		Label::paint(g);
 	}
 
 	void LabelPluginRecorder::mouseEnter(const Mouse& mouse)
@@ -122,7 +123,7 @@ namespace gui
 		const auto& user = *utils.audioProcessor.state.props.getUserSettings();
 		const auto settingsFile = user.getFile();
 		const auto userDirectory = settingsFile.getParentDirectory();
-		file = userDirectory.getChildFile("HnM.wav");
+		file = userDirectory.getChildFile("muggie bounce.wav");
 	}
 
 	bool LabelPluginRecorder::saveWav(const dsp::AudioBuffer& buffer)

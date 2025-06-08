@@ -4,8 +4,8 @@ namespace gui
 {
 	// ZoomImage
 
-	Credits::ZoomImage::ZoomImage(Utils& u, const String& uID) :
-		Comp(u, uID),
+	Credits::ZoomImage::ZoomImage(Utils& u) :
+		Comp(u),
 		img(),
 		pos(),
 		zoomFactor(1.f)
@@ -87,8 +87,8 @@ namespace gui
 
 	// LinksPage
 
-	Credits::LinksPage::LinksPage(Utils& u, const String& uID) :
-		Comp(u, uID)
+	Credits::LinksPage::LinksPage(Utils& u) :
+		Comp(u)
 	{
 	}
 
@@ -150,9 +150,9 @@ namespace gui
 		addAndMakeVisible(idx);
 		addAndMakeVisible(footer);
 		addAndMakeVisible(linksPage);
-		makeTextLabel(info, "", font::dosisMedium(), Just::topLeft, CID::Txt);
-		makeTextLabel(idx, "", font::dosisMedium(), Just::centred, CID::Hover);
-		makeTextLabel(footer, "", font::dosisMedium(), Just::topLeft, CID::Txt);
+		makeTextLabel(info, "", font::text(), Just::topLeft, CID::Txt);
+		makeTextLabel(idx, "", font::text(), Just::centred, CID::Hover);
+		makeTextLabel(footer, "", font::text(), Just::topLeft, CID::Txt);
 		info.autoMaxHeight = true;
 		idx.autoMaxHeight = true;
 		footer.autoMaxHeight = true;
@@ -218,7 +218,7 @@ namespace gui
 		addAndMakeVisible(next);
 		addAndMakeVisible(entry);
 
-		makeTextLabel(titleLabel, "Credits", font::nel(), Just::centred, CID::Txt);
+		makeTextLabel(titleLabel, "Credits", font::headline(), Just::centred, CID::Txt);
 		makeTextButton(previous, "<", "Click here to look at the previous page.", CID::Interact);
 		makeTextButton(next, ">", "Click here to look at the next page.", CID::Interact);
 

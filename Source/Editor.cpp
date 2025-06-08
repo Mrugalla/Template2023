@@ -12,7 +12,7 @@ namespace gui
                 return e.repaint();
             case evt::Type::ClickedEmpty:
                 e.parameterEditor.setActive(false);
-                e.editorComp.setVisible(true);
+                e.editor2.setVisible(true);
                 //e.patchBrowser.setVisible(false);
                 e.giveAwayKeyboardFocus();
                 return;
@@ -64,41 +64,45 @@ namespace gui
         utils(*this, p),
         layout(),
         evtMember(utils.eventSystem, makeEvt(*this)),
+        texture(utils, BinaryData::texture_png, BinaryData::texture_pngSize, .1f, 4),
+        coloursEditor(utils),
+        manifest(utils),
+        header(coloursEditor, manifest),
         tooltip(utils),
         toast(utils),
-		parameterEditor(utils),
+        parameterEditor(utils),
         callback([&]()
         {
         }, 0, cbFPS::k_1_875, false),
-        title(utils, "title"),
-        layoutEditor(utils),
         powerComp(utils),
-        editorComp(powerComp, layoutEditor)
+        editor2(utils)
     {
         layout.init
         (
             { 1 },
-            { 1, 13, 1 }
+            { 4, 32, 2 }
         );
         
-		addAndMakeVisible(title);
+        addAndMakeVisible(texture);
+        addAndMakeVisible(header);
         addAndMakeVisible(tooltip);
-		addAndMakeVisible(editorComp);
-        addChildComponent(layoutEditor);
-        layoutEditor.init(&editorComp);
+		addAndMakeVisible(editor2);
+		addChildComponent(coloursEditor);
+		addChildComponent(manifest);
         addChildComponent(parameterEditor);
         addChildComponent(toast);
 		addChildComponent(powerComp);
-        makeTextLabel(title, "Absorbiere, by Florian Mrugalla", font::flx(), Just::centred, CID::Txt, "");
-        title.autoMaxHeight = true;
+
         utils.add(&callback);
         loadSize(*this);
     }
 
     void Editor::paint(Graphics& g)
     {
-		const auto bgCol = getColour(CID::Bg);
-        g.fillAll(bgCol);
+        g.fillAll(getColour(CID::Bg));
+        const auto top = layout.top();
+        setCol(g, CID::Darken);
+        g.fillRect(top);
     }
     
     void Editor::paintOverChildren(Graphics&)
@@ -111,16 +115,15 @@ namespace gui
 		if (!canResize(*this))
 			return;
         saveSize(*this);
-		layoutEditor.setBounds(getLocalBounds());
-        powerComp.setBounds(getLocalBounds());
-
         utils.resized();
         layout.resized(getLocalBounds());
         tooltip.setBounds(layout.bottom().toNearestInt());
-
-		layout.place(title, 0, 0, 1, 1);
-		layout.place(editorComp, 0, 1, 1, 1);
-		layout.place(layoutEditor, 0, 1, 1, 1);
+		header.setBounds(layout.top().toNearestInt());
+		layout.place(editor2, 0, 1, 1, 1);
+        texture.setBounds(editor2.getBounds());
+        powerComp.setBounds(editor2.getBounds());
+		coloursEditor.setBounds(editor2.getBounds());
+		manifest.setBounds(editor2.getBounds());
 
         const auto toastWidth = static_cast<int>(utils.thicc * 36.f);
         const auto toastHeight = toastWidth * 3 / 4;

@@ -16,6 +16,7 @@ namespace gui
 		},
 		buttonRevert(u),
 		buttonDefault(u),
+		labelGroup(),
 		cIdx(0),
 		lastColour(Colours::c(cIdx))
 	{
@@ -120,6 +121,11 @@ namespace gui
 			u.pluginTop.repaint();
 			notifyUpdate(cID);
 		}, 0, fps, true));
+
+		for (auto& b : buttonsColour)
+			labelGroup.add(b.label);
+		labelGroup.add(buttonRevert.label);
+		labelGroup.add(buttonDefault.label);
 	}
 
 	void ColoursEditor::resized()
@@ -155,6 +161,8 @@ namespace gui
 			x += wButton;
 			buttonDefault.setBounds(BoundsF(x, y, wButton, h).toNearestInt());
 		}
+
+		labelGroup.setMaxHeight(utils.thicc);
 	}
 
 	void ColoursEditor::paint(Graphics& g)
@@ -163,7 +171,7 @@ namespace gui
 	}
 
 	ButtonColours::ButtonColours(ColoursEditor& menu) :
-		Button(menu.utils, "buttonColours"),
+		Button(menu.utils),
 		img()
 	{
 		value = 0.f;

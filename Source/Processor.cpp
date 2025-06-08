@@ -37,7 +37,7 @@ namespace audio
 		params(*this),
 #endif
         state(),
-        
+        pluginRecorder(),
         transport(),
         pluginProcessor
         (
@@ -125,11 +125,7 @@ namespace audio
 
     bool Processor::isMidiEffect() const
     {
-#if JucePlugin_IsMidiEffect
-        return true;
-#else
         return false;
-#endif
     }
 
     double Processor::getTailLengthSeconds() const
@@ -165,6 +161,7 @@ namespace audio
         auto latency = 0;
         const auto sampleRateF = static_cast<float>(sampleRate);
         params.prepare();
+        pluginRecorder.prepare(sampleRateF);
         mixProcessor.prepare(sampleRateF);
         transport.prepare(1. / sampleRate);
         pluginProcessor.prepare(sampleRateF);
@@ -205,7 +202,7 @@ namespace audio
 
     bool Processor::hasEditor() const
     {
-        return false;
+        return true;
     }
 
     juce::AudioProcessorEditor* Processor::createEditor()
@@ -283,11 +280,11 @@ namespace audio
         transport(playHead);
 #if PPDHasStereoConfig
         bool midSide = false;
-        if (numChannels == 2)
+        if (bufferView.getNumChannelsMain() == 2)
         {
             midSide = params(PID::StereoConfig).getValue() > .5f;
             if (midSide)
-                dsp::midSideEncode(samplesMain, bufferView.getNumSamples());
+                dsp::midSideEncode(bufferView);
         }
 #endif
 #if PPDIsNonlinear
@@ -374,12 +371,12 @@ namespace audio
 #if PPDIsNonlinear
             mixProcessor.join
             (
-                samples, gainOutDb, numChannels, numSamples, unityGain
+                bufferViewBlock, gainOutDb, unityGain
             );
 #else
             mixProcessor.join
             (
-                samples, gainOutDb, numChannels, numSamples
+                bufferViewBlock, gainOutDb
             );
 #endif
 #elif PPDIO == PPDIODryWet
@@ -412,8 +409,9 @@ namespace audio
 
 #if PPDHasStereoConfig
         if (midSide)
-            dsp::midSideDecode(samplesMain, numSamplesMain);
+            dsp::midSideDecode(bufferView);
 #endif
+        pluginRecorder(bufferView);
 #if JUCE_DEBUG && false
         for (auto ch = 0; ch < numChannels; ++ch)
         {

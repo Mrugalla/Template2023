@@ -2,8 +2,8 @@
 
 namespace gui
 {
-	Label::Label(Utils& u, const String& uID, bool _autoMaxHeight) :
-		Comp(u, uID),
+	Label::Label(Utils& u, bool _autoMaxHeight) :
+		Comp(u),
 		text(""),
 		font(FontOptions()),
 		just(Just::centred),
@@ -97,7 +97,8 @@ namespace gui
 		label.font = font;
 		label.just = just;
 		label.cID = cID;
-		label.setTooltip(tooltip);
+		if (tooltip.isNotEmpty())
+			label.setTooltip(tooltip);
 	}
 
 	void makePaintLabel(Label& label, const Label::OnPaint& onPaint, const String& tooltip)
@@ -122,7 +123,7 @@ namespace gui
 		alphaAniWeight(false)
 	{
 		autoMaxHeight = true;
-		makeTextLabel(*this, "", font::dosisBold(), Just::centred, CID::Txt);
+		makeTextLabel(*this, "", font::text(), Just::centred, CID::Txt);
 
 		const auto fpsToast = cbFPS::k30;
 		const auto speedIn = msToInc(AniLengthMs, fpsToast);
@@ -182,7 +183,7 @@ namespace gui
 			else if (t == evt::Type::ToastColour)
 			{
 				const auto cID = *static_cast<const CID*>(stuff);
-				makeTextLabel(*this, "", font::dosisBold(), Just::centred, cID);
+				makeTextLabel(*this, "", font::text(), Just::centred, cID);
 			}
 		});
 	}
@@ -239,6 +240,7 @@ namespace gui
 
 	void LabelGroup::add(Label& label)
 	{
+		label.autoMaxHeight = false;
 		labels.push_back(&label);
 	}
 

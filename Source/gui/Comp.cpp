@@ -2,21 +2,13 @@
 
 namespace gui
 {
-	Comp::Comp(Utils& u, const String& uID) :
+	Comp::Comp(Utils& u) :
 		utils(u),
 		layout(),
 		tooltip(""),
 		members(),
-		callbacks(),
-		transformInfo(*this)
+		callbacks()
 	{
-		setName(uID);
-#if !PPDResetsLayoutEditor
-		const auto& props = utils.getProps();
-		const auto transformString = props.getValue("cmp_" + getName(), "");
-		setTransformFromString(transformString);
-#endif
-
 		setMouseCursor(makeCursor());
 
 		addEvt([this](const evt::Type type, const void* stuff)
@@ -33,19 +25,10 @@ namespace gui
 	Comp::~Comp()
 	{
 		deregisterCallbacks();
-#if !PPDResetsLayoutEditor
-		const auto transformString = getTransformString();
-		const auto name = getName();
-		auto& props = utils.getProps();
-		props.setValue("cmp_" + name, transformString);
-#endif
 	}
 
 	void Comp::resized()
 	{
-#if PPDHasLayoutEditor
-		transformInfo.updateTranslation();
-#endif
 		layout.resized(getLocalBounds());
 	}
 
@@ -53,46 +36,11 @@ namespace gui
 	{
 		addChildComponent(comp);
 		comp.setVisible(visible);
-		childComps.push_back(&comp);
 	}
 
 	void Comp::remove(Comp& comp)
 	{
 		removeChildComponent(&comp);
-		childComps.erase(std::remove(childComps.begin(), childComps.end(), &comp), childComps.end());
-	}
-
-	int Comp::getNumChildren() const noexcept
-	{
-		return static_cast<int>(childComps.size());
-	}
-
-	const Comp& Comp::getChild(int i) const noexcept
-	{
-		return *childComps[i];
-	}
-
-	Comp& Comp::getChild(int i) noexcept
-	{
-		return *childComps[i];
-	}
-
-	Comp* Comp::getHovered(Point screenPos)
-	{
-		const auto numChildren = getNumChildren();
-		for (auto i = numChildren - 1; i >= 0; --i)
-		{
-			auto& child = getChild(i);
-			if (child.isShowing())
-			{
-				const auto screenBounds = child.getScreenBounds();
-				if (screenBounds.contains(screenPos))
-					return child.getHovered(screenPos);
-			}
-		}
-		if (getName().isEmpty())
-			return nullptr;
-		return this;
 	}
 
 	void Comp::setLocked(bool e)

@@ -12,8 +12,8 @@ namespace gui
 		using Voices = std::array<bool, NumVoices>;
 		using UpdateFunc = std::function<bool(Voices&)>;
 
-		// u, uID
-		VoiceGrid(Utils&, const String&);
+		// u
+		VoiceGrid(Utils&);
 
 		void init(const UpdateFunc&);
 

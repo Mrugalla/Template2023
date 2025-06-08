@@ -23,8 +23,8 @@ namespace gui
 			float y0;
 		};
 
-		// randMod, u, rateSync, smooth, complex, dropout
-		RandomizerEditor(Utils&, const String&, const RandMod&,
+		// randMod, u, randMod, rateSync, smooth, complex, dropout
+		RandomizerEditor(Utils&, const RandMod&,
 			PID, PID, PID, PID);
 
 		void paint(Graphics&);

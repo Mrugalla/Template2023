@@ -56,7 +56,7 @@ namespace gui
 
 	// Editor
 
-	RandomizerEditor::RandomizerEditor(Utils& u, const String& uID, const RandMod& randMod,
+	RandomizerEditor::RandomizerEditor(Utils& u, const RandMod& randMod,
 		PID pRateSync, PID pSmooth, PID pComplex, PID pDropout) :
 		Comp(u),
 		visualizer(u, randMod),
@@ -95,12 +95,12 @@ namespace gui
 		complexMod.attach(pComplex);
 		dropoutMod.attach(pDropout);
 
-		const auto fontKnobs = font::dosisBold();
+		const auto fontKnobs = font::text();
 		makeTextLabel(rateSyncLabel, "Rate", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(smoothLabel, "Smooth", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(complexLabel, "Complex", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(dropoutLabel, "Dropout", fontKnobs, Just::centred, CID::Txt);
-		makeTextLabel(title, "Mod Envelope:", font::dosisMedium(), Just::centredLeft, CID::Txt);
+		makeTextLabel(title, "Mod Envelope:", font::headline(), Just::centredLeft, CID::Txt);
 		labelGroup.add(rateSyncLabel);
 		labelGroup.add(smoothLabel);
 		labelGroup.add(complexLabel);
@@ -133,10 +133,10 @@ namespace gui
 		layout.place(title, 0, 0, 2, 1);
 		title.setMaxHeight(thicc);
 		visualizer.setBounds(layout(0, 1, 4, 1).reduced(thicc).toNearestInt());
-		layout.place(rateSync, 0, 2, 1, 1); locateAtKnob(rateSyncMod, rateSync);
-		layout.place(smooth, 1, 2, 1, 1); locateAtKnob(smoothMod, smooth);
-		layout.place(complex, 2, 2, 1, 1); locateAtKnob(complexMod, complex);
-		layout.place(dropout, 3, 2, 1, 1); locateAtKnob(dropoutMod, dropout);
+		layout.place(rateSync, 0, 2, 1, 1); followKnob(rateSyncMod, rateSync);
+		layout.place(smooth, 1, 2, 1, 1); followKnob(smoothMod, smooth);
+		layout.place(complex, 2, 2, 1, 1); followKnob(complexMod, complex);
+		layout.place(dropout, 3, 2, 1, 1); followKnob(dropoutMod, dropout);
 		layout.place(rateSyncLabel, 0, 3, 1, 1);
 		layout.place(smoothLabel, 1, 3, 1, 1);
 		layout.place(complexLabel, 2, 3, 1, 1);

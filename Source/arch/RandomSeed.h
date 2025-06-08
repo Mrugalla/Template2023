@@ -12,7 +12,7 @@ namespace arch
 		using RandJUCE = juce::Random;
 
 		// user props, id
-		RandSeed(Props&, String&&);
+		RandSeed(Props&, const String&);
 
 		// seedUp
 		void updateSeed(bool);

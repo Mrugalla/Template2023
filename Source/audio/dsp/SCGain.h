@@ -1,6 +1,6 @@
 #pragma once
-#include "../Using.h"
-#include "../../param/Param.h"
+#include "Using.h"
+#include "../../arch/Param.h"
 
 namespace dsp
 {

@@ -86,7 +86,7 @@ namespace gui
 			return;
 
 		const auto just = Just::centredLeft;
-		const auto font = font::dosisRegular();
+		const auto font = font::text();
 
 		const auto xOff = static_cast<int>(utils.thicc * 2.f);
 		const auto w = getWidth();

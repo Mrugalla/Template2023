@@ -18,7 +18,8 @@ namespace gui
         enum kCBs { kEnterExitCB, kDownUpCB, kUpdateParameterCB, kNumCallbacks };
         enum kVals { Value, ValMod, ModDepth, ModBias, NumValTypes };
 
-        Knob(Utils&, const String& uID);
+        // utils
+        Knob(Utils&);
 
         bool hitTest(int x, int y) override
         {
@@ -108,11 +109,22 @@ namespace gui
     // pID, knob
     void makeTextKnob(PID, Knob&);
 
+	enum class KnobStyle
+    {
+		Knob,
+		Slider,
+		TextKnob
+	};
+
+    void makeKnob(PID, Knob&, KnobStyle);
+
     // modDial, knob
-    void locateAtKnob(ModDial&, const Knob&);
+    void followKnob(ModDial&, const Knob&);
 
     // modDial, horizontalSlider
-    void locateAtSlider(ModDial&, const Knob&);
+    void followSlider(ModDial&, const Knob&);
+
+    void followKnob(ModDial&, const Knob&, KnobStyle);
 }
 
 /*

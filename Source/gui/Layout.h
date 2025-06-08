@@ -169,10 +169,4 @@ namespace gui
 	// lrud = left, right, up, down [0, 1, 2, 3]
 	void closePathOverBounds(Path&, const BoundsF&, const PointF&,
 		float, int, int, int, int);
-
-	namespace imgPP
-	{
-		// img, g, iterations
-		void blur(Image&, Graphics&, int = 3) noexcept;
-	}
 }

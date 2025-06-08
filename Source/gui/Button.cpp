@@ -2,9 +2,9 @@
 
 namespace gui
 {
-	Button::Button(Utils& u, const String& uID) :
-		Comp(u, uID),
-		label(u, uID + "l"),
+	Button::Button(Utils& u) :
+		Comp(u),
+		label(u),
 		onPaint([](Graphics&, const Button&) {}),
 		onClick([](const Mouse&) {}),
 		onWheel([](const Mouse&, const MouseWheel&) {}),
@@ -246,62 +246,60 @@ namespace gui
 
 	Button::OnPaint makeButtonOnPaintSwap()
 	{
-		return [op = makeButtonOnPaint(false, getColour(CID::Bg))](Graphics& g, const Button& b)
-			{
-				op(g, b);
+		return [](Graphics& g, const Button& b)
+		{
+			const auto& utils = b.utils;
+			const auto thicc = utils.thicc;
+			const auto thicc2 = thicc * 2.f;
+			const auto thicc4 = thicc * 4.f;
 
-				const auto& utils = b.utils;
-				const auto thicc = utils.thicc;
-				const auto thicc2 = thicc * 2.f;
-				const auto thicc4 = thicc * 4.f;
+			const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
+			const auto clickPhase = b.callbacks[Button::kClickAniCB].phase;
+			const auto togglePhase = b.callbacks[Button::kToggleStateCB].phase;
 
-				const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
-				const auto clickPhase = b.callbacks[Button::kClickAniCB].phase;
-				const auto togglePhase = b.callbacks[Button::kToggleStateCB].phase;
+			const auto lineThiccness = thicc + togglePhase * (thicc2 - thicc);
+			const auto margin = thicc4 - lineThiccness - hoverPhase * thicc;
+			const auto bounds = maxQuadIn(b.getLocalBounds().toFloat()).reduced(margin);
 
-				const auto lineThiccness = thicc + togglePhase * (thicc2 - thicc);
-				const auto margin = thicc4 - lineThiccness - hoverPhase * thicc;
-				const auto bounds = maxQuadIn(b.getLocalBounds().toFloat()).reduced(margin);
-
-				auto linesColour = getColour(CID::Interact).overlaidWith(getColour(CID::Txt).withAlpha(clickPhase));
-				g.setColour(linesColour);
+			auto linesColour = getColour(CID::Interact).overlaidWith(getColour(CID::Txt).withAlpha(clickPhase));
+			g.setColour(linesColour);
 				
-				float xVal[2] =
-				{
-					bounds.getRight(),
-					bounds.getX()
-				};
-
-				for (auto i = 0; i < 2; ++i)
-				{
-					const auto iF = static_cast<float>(i);
-					const auto r = (iF + 1.f) * .33333f;
-
-					const auto y = bounds.getY() + bounds.getHeight() * r;
-					const auto x0 = xVal[i];
-					const auto x1 = xVal[(i + 1) % 2];
-
-					const LineF line(x0, y, x1, y);
-					g.drawLine(line, thicc);
-
-					const auto pt = line.getEnd();
-
-					const auto ang0 = iF * PiHalf;
-
-					for (auto j = 0; j < 2; ++j)
-					{
-						const auto jF = static_cast<float>(j);
-						const auto jF2 = jF * 2.f;
-
-						const auto angle = (1.f + jF2) * PiQuart + ang0 * (-1.f + jF2);
-
-						const auto tick = LineF::fromStartAndAngle(pt, thicc, angle)
-							.withLengthenedStart(thicc * .5f)
-							.withLengthenedEnd(thicc);
-						g.drawLine(tick, thicc);
-					}
-				}
+			float xVal[2] =
+			{
+				bounds.getRight(),
+				bounds.getX()
 			};
+
+			for (auto i = 0; i < 2; ++i)
+			{
+				const auto iF = static_cast<float>(i);
+				const auto r = (iF + 1.f) * .33333f;
+
+				const auto y = bounds.getY() + bounds.getHeight() * r;
+				const auto x0 = xVal[i];
+				const auto x1 = xVal[(i + 1) % 2];
+
+				const LineF line(x0, y, x1, y);
+				g.drawLine(line, thicc);
+
+				const auto pt = line.getEnd();
+
+				const auto ang0 = iF * PiHalf;
+
+				for (auto j = 0; j < 2; ++j)
+				{
+					const auto jF = static_cast<float>(j);
+					const auto jF2 = jF * 2.f;
+
+					const auto angle = (1.f + jF2) * PiQuart + ang0 * (-1.f + jF2);
+
+					const auto tick = LineF::fromStartAndAngle(pt, thicc, angle)
+						.withLengthenedStart(thicc * .5f)
+						.withLengthenedEnd(thicc);
+					g.drawLine(tick, thicc);
+				}
+			}
+		};
 	}
 
 	Button::OnPaint makeButtonOnPaintClip()
@@ -390,7 +388,7 @@ namespace gui
 
 	void makeTextButton(Button& btn, const String& txt, const String& tooltip, CID cID, Colour bgCol)
 	{
-		makeTextLabel(btn.label, txt, font::dosisBold(), Just::centred, cID);
+		makeTextLabel(btn.label, txt, font::text(), Just::centred, cID);
 		btn.tooltip = tooltip;
 		btn.onPaint = makeButtonOnPaint(true, bgCol);
 	}
@@ -432,7 +430,7 @@ namespace gui
 		}
 	}
 
-	void makeParameter(Button& button, PID pID)
+	void makeButton(PID pID, Button& button)
 	{
 		auto& utils = button.utils;
 		auto& param = utils.getParam(pID);
@@ -481,9 +479,9 @@ namespace gui
 		};
 	}
 
-	void makeParameter(Button& button, PID pID, Button::Type type, const String& text)
+	void makeButton(PID pID, Button& button, Button::Type type, const String& text)
 	{
-		makeParameter(button, pID);
+		makeButton(pID, button);
 
 		button.type = type;
 		button.setName(param::toString(pID));
@@ -506,9 +504,9 @@ namespace gui
 		}, Button::kUpdateParameterCB, cbFPS::k15, true));
 	}
 
-	void makeParameter(Button& button, PID pID, Button::Type type, Button::OnPaint onPaint)
+	void makeButton(PID pID, Button& button, Button::Type type, Button::OnPaint onPaint)
 	{
-		makeParameter(button, pID);
+		makeButton(pID, button);
 
 		button.type = type;
 		button.onPaint = onPaint;
@@ -527,7 +525,7 @@ namespace gui
 		}, Button::kUpdateParameterCB, cbFPS::k15, true));
 	}
 
-	void makeParameter(std::vector<std::unique_ptr<Button>>& buttons, PID pID)
+	void makeButtons(PID pID, std::vector<std::unique_ptr<Button>>& buttons)
 	{
 		auto& utils = buttons[0]->utils;
 		auto& param = utils.getParam(pID);

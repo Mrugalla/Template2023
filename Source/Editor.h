@@ -1,7 +1,9 @@
 #pragma once
+#include "gui/CompTexture.h"
+#include "gui/HeaderEditor.h"
 #include "gui/Tooltip.h"
 #include "gui/ParameterEditor.h"
-#include "gui/EditorComp.h"
+#include "Editor2.h"
 
 namespace gui
 {
@@ -11,7 +13,6 @@ namespace gui
         public AudioProcessorEditor
     {
         Editor(Processor&);
-
 		void paint(Graphics&) override;
         void paintOverChildren(Graphics&) override;
         void resized() override;
@@ -22,15 +23,17 @@ namespace gui
         Utils utils;
         Layout layout;
         evt::Member evtMember;
-        
+        CompTexture texture;
+
+        ColoursEditor coloursEditor;
+        ManifestOfWisdom manifest;
+		HeaderEditor header;
         Tooltip tooltip;
         Toast toast;
         ParameterEditor parameterEditor;
         Callback callback;
-        Label title;
-        LayoutEditor layoutEditor;
         CompPower powerComp;
-		EditorComp editorComp;
+		Editor2 editor2;
 
         //JUCE_HEAVYWEIGHT_LEAK_DETECTOR(Editor)
     };

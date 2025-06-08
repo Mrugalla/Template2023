@@ -16,13 +16,15 @@ namespace dsp
 		writeHead = 0;
 	}
 
-	void PluginRecorder::operator()(float* const* samples, int numChannels, int numSamples) noexcept
+	void PluginRecorder::operator()(const ProcessorBufferView& view) noexcept
 	{
 		auto recSamples = recording.getArrayOfWritePointers();
 		const auto recNumSamples = recording.getNumSamples();
+		const auto numChannels = view.getNumChannelsMain();
+		const auto numSamples = view.numSamples;
 		for (auto ch = 0; ch < numChannels; ++ch)
 		{
-			const auto smpls = samples[ch];
+			const auto smpls = view.getSamplesMain(ch);
 			auto recSmpls = recSamples[ch];
 			for (auto s = 0; s < numSamples; ++s)
 			{

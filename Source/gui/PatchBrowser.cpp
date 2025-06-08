@@ -86,7 +86,7 @@ namespace gui
 			author = _author;
 			file = _file;
 			makeTextButton(buttonLoad, name + " by " + author, "Click here to load " + name + ".", CID::Interact);
-			buttonLoad.label.font = font::flx();
+			buttonLoad.label.font = font::text();
 			makePaintButton(buttonDelete, [](Graphics& g, const Button& b)
 				{
 					const auto thicc = b.utils.thicc;
@@ -407,7 +407,7 @@ namespace gui
 
 		ButtonSavePatch::ButtonSavePatch(const TextEditor& editorName,
 			const TextEditor& editorAuthor) :
-			Button(u)
+			Button(editorName.utils)
 		{
 			onClick = [&, &eName = editorName, &eAuthor = editorAuthor](const Mouse&)
 				{
@@ -579,7 +579,7 @@ namespace gui
 			(
 				title,
 				"Patch Browser",
-				font::dosisLight(),
+				font::text(),
 				Just::centred, CID::Txt,
 				"You have entered the patch browser. no shit."
 			);
@@ -638,7 +638,7 @@ namespace gui
 		// BrowserButton
 
 		BrowserButton::BrowserButton(Browser& browser) :
-			Button(u)
+			Button(browser.utils)
 		{
 			makeTextButton(*this, "Patches", "Click here to save, browse or manage patches.", CID::Interact);
 			label.autoMaxHeight = true;
@@ -664,7 +664,7 @@ namespace gui
 		// NextPatchButton
 
 		NextPatchButton::NextPatchButton(Browser& browser, bool next) :
-			Button(browser.utils, "browser" + (next ? "+" : "-"))
+			Button(browser.utils)
 		{
 			const String text(next ? ">" : "<");
 			makeTextButton(*this, text, "Click here to load the " + text + " patch.", CID::Interact);

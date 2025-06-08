@@ -3,7 +3,7 @@
 namespace gui
 {
 	CompPower::CompPower(Utils& u) :
-		Comp(u, "")
+		Comp(u)
 	{
 		setInterceptsMouseClicks(false, false);
 		add(Callback([&]()
@@ -21,10 +21,10 @@ namespace gui
 
 	//
 
-	ButtonPower::ButtonPower(CompPower& editor) :
-		Button(editor.utils, "buttonpower")
+	ButtonPower::ButtonPower(Utils& u) :
+		Button(u)
 	{
-		makeParameter(*this, PID::Power, Button::Type::kToggle, makeButtonOnPaintPower());
+		makeButton(PID::Power, *this, Button::Type::kToggle, makeButtonOnPaintPower());
 		type = Button::Type::kToggle;
 		value = std::round(utils.audioProcessor.params(PID::Power).getValMod());
 	}

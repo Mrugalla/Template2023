@@ -34,6 +34,7 @@ namespace gui
 		bool shouldDropFilesWhenDraggedExternally(const DnDSrc&,
 			StringArray&, bool&) override;
 
+		// data, size
 		void setImage(const void*, int);
 
 		void updateImage();

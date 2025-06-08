@@ -2,7 +2,7 @@
 
 namespace arch
 {
-	RandSeed::RandSeed(Props& _props, String&& _id) :
+	RandSeed::RandSeed(Props& _props, const String& _id) :
 		user(_props),
 		id(_id.removeCharacters(" ").toLowerCase()),
 		mt(rd()),

@@ -201,9 +201,9 @@ namespace gui
 	
 	//EnvelopeGeneratorMultiVoiceEditor
 
-	EnvelopeGeneratorMultiVoiceEditor::EnvelopeGeneratorMultiVoiceEditor(Utils& u, const String& uID,
+	EnvelopeGeneratorMultiVoiceEditor::EnvelopeGeneratorMultiVoiceEditor(Utils& u,
 		const String& title, PID atk, PID dcy, PID sus, PID rls, PID isTemposync, PIDsTemposync* temposyncPIDs) :
-		Comp(u, uID),
+		Comp(u),
 		labels
 		{
 			Label(u),
@@ -212,7 +212,7 @@ namespace gui
 			Label(u),
 			Label(u)
 		},
-		envGenView(u, uID + "view", sus),
+		envGenView(u, sus),
 		knobs
 		{
 			Knob(u),
@@ -250,7 +250,7 @@ namespace gui
 		if (temposyncPIDs)
 		{
 			addAndMakeVisible(temposync);
-			makeParameter(temposync, temposyncPIDs->temposync, Button::Type::kToggle, "Sync");
+			makeButton(temposyncPIDs->temposync, temposync, Button::Type::kToggle, "Sync");
 
 			const auto& temposyncParam = u.getParam(isTemposync);
 			temposyncEnabled = temposyncParam.getValMod() > .5f;
@@ -307,12 +307,12 @@ namespace gui
 		makeKnob(sus, knobs[kSustain]);
 		modDials[kSustain].attach(sus);
 
-		const auto fontKnobs = font::dosisBold();
+		const auto fontKnobs = font::text();
 		makeTextLabel(labels[kAttack], "A", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(labels[kDecay], "D", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(labels[kSustain], "S", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(labels[kRelease], "R", fontKnobs, Just::centred, CID::Txt);
-		makeTextLabel(labels[kTitle], title, font::dosisMedium(), Just::centredLeft, CID::Txt);
+		makeTextLabel(labels[kTitle], title, font::headline(), Just::centredLeft, CID::Txt);
 		for (auto i = 0; i < kNumParameters; ++i)
 			adsrLabelsGroup.add(labels[i]);
 
@@ -353,7 +353,7 @@ namespace gui
 		{
 			auto& knob = knobs[i];
 			layout.place(knob, i, 2, 1, 1);
-			locateAtKnob(modDials[i], knob);
+			followKnob(modDials[i], knob);
 			layout.place(labels[i], i, 3, 1, 1);
 		}
 		adsrLabelsGroup.setMaxHeight();

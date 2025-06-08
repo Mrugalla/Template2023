@@ -4,8 +4,8 @@ namespace gui
 {
     // Knob
 
-    Knob::Knob(Utils& u, const String& uID) :
-        Comp(u, uID),
+    Knob::Knob(Utils& u) :
+        Comp(u),
         pIDs(),
         values(),
         onEnter([]() {}), onExit([]() {}), onDown([]() {}), onDoubleClick([]() {}),
@@ -747,7 +747,7 @@ namespace gui
 			const auto text = param.getText(valMain, 1);
             if (enterExitPhase != 0.f)
             {
-                auto tFont = font::dosisBold();
+                auto tFont = font::text();
                 const auto fHeight = findMaxHeight(tFont, text, width, height);
                 tFont.setHeight(fHeight * enterExitPhase + downUpPhase * thicc3);
                 g.setFont(tFont);
@@ -756,7 +756,7 @@ namespace gui
             }
             if (enterExitPhase != 1.f)
             {
-                auto tFont = font::dosisExtraLight();
+                auto tFont = font::text();
                 const auto fHeight = findMaxHeight(tFont, text, width, height);
 				tFont.setHeight(fHeight * (1.f - enterExitPhase));
 				g.setFont(tFont);
@@ -805,7 +805,18 @@ namespace gui
 		makeTextKnob(knob);
 	}
 
-    void locateAtKnob(ModDial& modDial, const Knob& knob)
+    void makeKnob(PID pID, Knob& knob, KnobStyle style)
+    {
+        switch (style)
+        {
+        case KnobStyle::Knob: return makeKnob(pID, knob);
+        case KnobStyle::Slider: return makeSlider(pID, knob);
+        case KnobStyle::TextKnob: return makeTextKnob(pID, knob);
+        default: break;
+        }
+    }
+
+    void followKnob(ModDial& modDial, const Knob& knob)
     {
         const auto w0 = static_cast<float>(knob.getWidth());
         const auto w = w0 * .25f;
@@ -816,7 +827,7 @@ namespace gui
         modDial.setBounds(nBounds);
     }
 
-    void locateAtSlider(ModDial& modDial, const Knob& sliderHorizontal)
+    void followSlider(ModDial& modDial, const Knob& sliderHorizontal)
     {
         const auto thicc = modDial.utils.thicc;
         const auto x = static_cast<float>(sliderHorizontal.getRight());
@@ -825,5 +836,16 @@ namespace gui
         const auto h = static_cast<float>(sliderHorizontal.getHeight());
         const BoundsF bounds(x, y, w, h);
         modDial.setBounds(maxQuadIn(bounds).toNearestInt());
+    }
+
+    void followKnob(ModDial& modDial, const Knob& knob, KnobStyle style)
+    {
+        switch (style)
+        {
+        case KnobStyle::Knob: return followKnob(modDial, knob);
+        case KnobStyle::Slider: return followSlider(modDial, knob);
+		case KnobStyle::TextKnob: followKnob(modDial, knob);
+        default: break;
+        }
     }
 }

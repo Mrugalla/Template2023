@@ -1,5 +1,6 @@
 #pragma once
 #include "audio/PluginProcessor.h"
+#include "audio/dsp/PluginRecorder.h"
 #include "audio/dsp/MixProcessor.h"
 
 namespace audio
@@ -60,6 +61,7 @@ namespace audio
 #endif
         Params params;
         State state;
+        dsp::PluginRecorder pluginRecorder;
         dsp::Transport transport;
         dsp::PluginProcessor pluginProcessor;
         MidiBuffer midiSubBuffer;

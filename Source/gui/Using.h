@@ -109,15 +109,7 @@ namespace gui
     {
         Font nel();
         Font flx();
-        Font lobster();
-        Font msMadi();
-        Font dosisSemiBold();
-        Font dosisBold();
-        Font dosisExtraBold();
-        Font dosisLight();
-        Font dosisExtraLight();
-        Font dosisMedium();
-        Font dosisRegular();
-        Font dosisVariable();
+        Font text();
+        Font headline();
     }
 }

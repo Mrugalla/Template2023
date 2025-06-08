@@ -669,45 +669,6 @@ namespace gui
 		p.closeSubPath();
 	}
 
-	void imgPP::blur(Image& img, Graphics& g, int its) noexcept
-	{
-		const auto w = img.getWidth();
-		const auto h = img.getHeight();
-
-		std::array<Point, 4> pt
-		({
-			Point{-1, -1}, Point{-1, -0},
-			Point{-0, -1}, Point{-0, -0}
-		});
-
-		std::array<float, 3> rgb = { 0.f, 0.f, 0.f };
-		enum { R, G, B };
-
-		Image::BitmapData bitmap(img, Image::BitmapData::ReadWriteMode::readWrite);
-
-		for (auto j = 0; j < its; ++j)
-			for (auto y = 1; y < h; ++y)
-				for (auto x = 1; x < w; ++x)
-				{
-					rgb[R] = rgb[G] = rgb[B] = 0.f;
-					for (auto i = 0; i < pt.size(); ++i)
-					{
-						const auto pxl = bitmap.getPixelColour(x + pt[i].x, y + pt[i].y);
-						rgb[R] += pxl.getFloatRed();
-						rgb[G] += pxl.getFloatGreen();
-						rgb[B] += pxl.getFloatBlue();
-					}
-					for (auto i = 0; i < rgb.size(); ++i)
-						rgb[i] *= .25f;
-
-					const auto nPxl = Colour::fromFloatRGBA(rgb[R], rgb[G], rgb[B], 1.f);
-
-					bitmap.setPixelColour(x, y, nPxl);
-				}
-
-		g.drawImageAt(img, 0, 0, false);
-	}
-
 	template void Layout::label<int, int>(Graphics&, String&&, int, int, int, int, bool) const;
 	template void Layout::label<float, int>(Graphics&, String&&, float, int, float, int, bool) const;
 	template void Layout::label<int, float>(Graphics&, String&&, int, float, int, float, bool) const;

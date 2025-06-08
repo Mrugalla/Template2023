@@ -4,9 +4,9 @@ namespace gui
 {
 	// Visualizer
 
-	EnvelopeFollowerEditor::Visualizer::Visualizer(Utils& u, const String& uID,
+	EnvelopeFollowerEditor::Visualizer::Visualizer(Utils& u,
 		const EnvFol& envelopeFollower) :
-		Comp(u, uID),
+		Comp(u),
 		img(),
 		y0(0.f)
 	{
@@ -104,12 +104,12 @@ namespace gui
 		decayMod.attach(pDecay);
 		smoothMod.attach(pSmooth);
 
-		const auto fontKnobs = font::dosisBold();
+		const auto fontKnobs = font::text();
 		makeTextLabel(gainLabel, "Gain", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(attackLabel, "Attack", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(decayLabel, "Decay", fontKnobs, Just::centred, CID::Txt);
 		makeTextLabel(smoothLabel, "Smooth", fontKnobs, Just::centred, CID::Txt);
-		makeTextLabel(title, "Mod Envelope:", font::dosisMedium(), Just::centredLeft, CID::Txt);
+		makeTextLabel(title, "Mod Envelope:", font::headline(), Just::centredLeft, CID::Txt);
 		labelGroup.add(gainLabel);
 		labelGroup.add(attackLabel);
 		labelGroup.add(decayLabel);
@@ -142,10 +142,10 @@ namespace gui
 		layout.place(title, 0, 0, 2, 1);
 		title.setMaxHeight(thicc);
 		visualizer.setBounds(layout(0, 1, 4, 1).reduced(thicc).toNearestInt());
-		layout.place(gain, 0, 2, 1, 1); locateAtKnob(gainMod, gain);
-		layout.place(attack, 1, 2, 1, 1); locateAtKnob(attackMod, attack);
-		layout.place(decay, 2, 2, 1, 1); locateAtKnob(decayMod, decay);
-		layout.place(smooth, 3, 2, 1, 1); locateAtKnob(smoothMod, smooth);
+		layout.place(gain, 0, 2, 1, 1); followKnob(gainMod, gain);
+		layout.place(attack, 1, 2, 1, 1); followKnob(attackMod, attack);
+		layout.place(decay, 2, 2, 1, 1); followKnob(decayMod, decay);
+		layout.place(smooth, 3, 2, 1, 1); followKnob(smoothMod, smooth);
 		layout.place(gainLabel, 0, 3, 1, 1);
 		layout.place(attackLabel, 1, 3, 1, 1);
 		layout.place(decayLabel, 2, 3, 1, 1);

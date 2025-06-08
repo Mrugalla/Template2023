@@ -1,6 +1,6 @@
 #pragma once
 #include "dsp/Transport.h"
-#include "../param/Param.h"
+#include "../arch/Param.h"
 namespace dsp
 {
 	using Params = param::Params;

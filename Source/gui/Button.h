@@ -12,8 +12,8 @@ namespace gui
 		enum class Type { kTrigger, kToggle, kChoice, kNumTypes };
 		enum { kHoverAniCB, kClickAniCB, kToggleStateCB, kUpdateParameterCB, kNumCallbacks };
 
-		// u, uID
-		Button(Utils&, const String&);
+		// u
+		Button(Utils&);
 
 		void paint(Graphics&) override;
 
@@ -67,14 +67,14 @@ namespace gui
 
 	////// PARAMETER ATTACHMENT:
 
-	// button, PID
-	void makeParameter(Button&, PID);
+	// PID, button
+	void makeButton(PID, Button&);
 
-	// button, PID, type, name
-	void makeParameter(Button&, PID, Button::Type, const String& = "");
+	// PID, button, type, name
+	void makeButton(PID, Button&, Button::Type, const String& = "");
 
-	// button, PID, type, onPaint
-	void makeParameter(Button&, PID, Button::Type, Button::OnPaint);
+	// PID, button, type, onPaint
+	void makeButton(PID, Button&, Button::Type, Button::OnPaint);
 
-	void makeParameter(std::vector<std::unique_ptr<Button>>&, PID);
+	void makeButtons(PID, std::vector<std::unique_ptr<Button>>&);
 }

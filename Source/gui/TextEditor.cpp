@@ -2,8 +2,8 @@
 
 namespace gui
 {
-	TextEditor::TextEditor(Utils& u, const String& uID, const String& emptyString) :
-			Button(u, uID),
+	TextEditor::TextEditor(Utils& u, const String& emptyString) :
+			Button(u),
 			labelEmpty(u),
 			txt(""),
 			txtEmpty(emptyString),
@@ -14,10 +14,10 @@ namespace gui
 			onKeyPress([](const KeyPress&) {})
 		{
 			addAndMakeVisible(labelEmpty);
-			makeTextLabel(labelEmpty, emptyString, font::dosisMedium(), Just::centred, CID::Hover);
+			makeTextLabel(labelEmpty, emptyString, font::text(), Just::centred, CID::Hover);
 			labelEmpty.setInterceptsMouseClicks(false, false);
 
-			makeTextButton(*this, "", "Pro tip: Use the keyboard to enter text!", CID::Txt);
+			makeTextButton(*this, "", "Pro tip: Use the keyboard to enter text!", CID::Txt, Colour(0x00000000));
 
 			add(Callback([&]()
 			{

@@ -1,5 +1,5 @@
 #pragma once
-#include "../Using.h"
+#include "Using.h"
 
 namespace dsp
 {
@@ -10,8 +10,7 @@ namespace dsp
 		// sampleRate
 		void prepare(float);
 
-		// samples, numChannels, numSamples
-		void operator()(float* const*, int, int) noexcept;
+		void operator()(const ProcessorBufferView&) noexcept;
 
 		const AudioBuffer& getRecording();
 	private:

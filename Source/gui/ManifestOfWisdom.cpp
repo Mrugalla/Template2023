@@ -167,17 +167,17 @@ namespace gui
 		(
 			title,
 			"Manifest of Wisdom",
-			font::nel(), Just::centred, CID::Txt,
+			font::headline(), Just::centred, CID::Txt,
 			"This is the glorious manifest of wisdom!"
 		);
 		makeTextLabel
 		(
 			subTitle,
 			"Manifest your wisdom in the manifest of wisdom\nor get inspired by arcane wisdom from the manifest of wisdom!",
-			font::flx(), Just::centred, CID::Hover,
+			font::flx(), Just::centred, CID::Txt,
 			"The manifest of wisdom grants you access to arcane wisdom in most of my plugins!"
 		);
-		makeTextLabel(alert, "", font::dosisMedium(), Just::centred, CID::Hover);
+		makeTextLabel(alert, "", font::text(), Just::centred, CID::Hover);
 		makeTextButton(manifest, "Manifest", "Click here to manifest this wisdom in the manifest of wisdom!", CID::Interact);
 		makeTextButton(inspire, "Inspire", "Get inspired by random wisdom from the manifest of wisdom!", CID::Interact);
 		makeTextButton(reveal, "Reveal", "Reveal the sacret manifest of wisdom!", CID::Interact);
@@ -189,28 +189,21 @@ namespace gui
 		buttonLabelsGroup.add(reveal.label);
 		buttonLabelsGroup.add(clear.label);
 		buttonLabelsGroup.add(paste.label);
-
 		title.autoMaxHeight = false;
 		subTitle.autoMaxHeight = false;
-		manifest.label.autoMaxHeight = false;
-		inspire.label.autoMaxHeight = false;
-		reveal.label.autoMaxHeight = false;
-		clear.label.autoMaxHeight = false;
-		paste.label.autoMaxHeight = false;
 	}
 
 	void ManifestOfWisdom::paint(Graphics& g)
 	{
-		g.fillAll(Colour(0xff000000));
-		const auto thicc = utils.thicc;
-		const auto textBounds = layout(0, 1, 5, 2);
+		g.fillAll(getColour(CID::Bg));
+		const auto textBounds = layout(0, 0, 5, 3);
 		const auto col1 = Colours::c(CID::Darken);
-		const auto col2 = Colour(0xff000000);
+		const auto col2 = Colour(0x00000000);
 		const auto pt1 = textBounds.getTopLeft();
 		const auto pt2 = textBounds.getBottomLeft();
 		Gradient gradient(col1, pt1, col2, pt2, false);
 		g.setGradientFill(gradient);
-		g.fillRoundedRectangle(textBounds.reduced(thicc), thicc);
+		g.fillRect(textBounds);
 	}
 
 	void ManifestOfWisdom::resized()
@@ -242,7 +235,7 @@ namespace gui
 	// ButtonWisdom
 
 	ButtonWisdom::ButtonWisdom(ManifestOfWisdom& menu) :
-		Button(menu.utils, "buttonmanifest"),
+		Button(menu.utils),
 		book(ImageCache::getFromMemory(BinaryData::mow_png, BinaryData::mow_pngSize)),
 		bookHover(book),
 		bookX(0), bookY(0)

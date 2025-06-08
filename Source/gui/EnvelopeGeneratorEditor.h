@@ -52,9 +52,9 @@ namespace gui
 			bool updateCurve() noexcept;
 		};
 
-		// utils, uID, title, attack, decay, sustain, release, temposync, temposyncPIDs
+		// utils, title, attack, decay, sustain, release, temposync, temposyncPIDs
 		EnvelopeGeneratorMultiVoiceEditor(Utils&, const String&,
-			const String&, PID, PID, PID, PID, PID, PIDsTemposync* = nullptr);
+			PID, PID, PID, PID, PID, PIDsTemposync* = nullptr);
 
 		void paint(Graphics&) override;
 

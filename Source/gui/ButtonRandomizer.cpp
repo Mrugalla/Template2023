@@ -2,11 +2,11 @@
 
 namespace gui
 {
-    ButtonRandomizer::ButtonRandomizer(Utils& u, const String& uID, String&& id) :
-        Button(u, uID),
+    ButtonRandomizer::ButtonRandomizer(Utils& u, const String& id) :
+        Button(u),
         randomizables(),
         randFuncs(),
-        randomizer(*u.audioProcessor.state.props.getUserSettings(), std::move(id))
+        randomizer(*u.audioProcessor.state.props.getUserSettings(), id)
     {
         const auto op = makeButtonOnPaint(false, getColour(CID::Bg));
 
@@ -159,7 +159,7 @@ namespace gui
     String ButtonRandomizer::makeTooltip()
     {
         Random rand;
-        static constexpr auto count = 270;
+        static constexpr auto count = 272;
         const auto v = rand.nextInt(count + 1);
         switch (v)
         {
@@ -433,6 +433,8 @@ namespace gui
         case 268: return "Making plugins is easy, but it's kinda hard.";
         case 269: return "Let's do it! :)";
         case 270: return "hfggddfssdsff, oh sry my cat walked over my keyboard. (tbh i wrote that myself)";
+        case 271: return "You can use my plugin, Absorbiere, as a beatsynced oscilloscope.";
+        case 272: return "Delete all your social media accounts now!";
         default: "Are you sure?";
         }
         return "You are not supposed to read this message!";

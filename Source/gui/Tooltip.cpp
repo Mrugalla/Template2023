@@ -21,11 +21,12 @@ namespace gui
 			{ 1 }
 		);
 
-		makeTextLabel(labels[kTooltip], "", font::dosisMedium(), Just::bottomLeft, CID::Txt, "Read the tooltips while hovering GUI elements to find out more about them!");
-
+		const auto fnt = font::text();
+		makeTextLabel(labels[kTooltip], "", fnt, Just::bottomLeft, CID::Txt,
+			"Read the tooltips while hovering GUI elements to find out more about them!");
 		const auto buildDateString = getBuildDate();
 		const String buildDateTooltip = "This version's build date: " + buildDateString;
-		makeTextLabel(labels[kBuildDate], buildDateString, font::dosisMedium(), Just::bottomRight, CID::Hover, buildDateTooltip);
+		makeTextLabel(labels[kBuildDate], buildDateString, fnt, Just::bottomRight, CID::Hover, buildDateTooltip);
 
 		for (auto& label : labels)
 			addAndMakeVisible(label);

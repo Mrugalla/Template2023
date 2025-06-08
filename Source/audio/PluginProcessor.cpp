@@ -16,8 +16,8 @@ namespace dsp
 		sampleRate = _sampleRate;
 	}
 
-	void PluginProcessor::operator()(ProcessorBufferView& view,
-		MidiBuffer&, const Transport::Info& trans) noexcept
+	void PluginProcessor::operator()(ProcessorBufferView&,
+		MidiBuffer&, const Transport::Info&) noexcept
 	{
 	}
 

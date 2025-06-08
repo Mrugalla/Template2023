@@ -1,5 +1,5 @@
 #pragma once
-#include "../Using.h"
+#include "Using.h"
 
 namespace dsp
 {
@@ -49,9 +49,5 @@ namespace dsp
 }
 
 /*
-
 still have to implement this one: https://www.desmos.com/calculator/j3ynx47urc
-
-use fireledge for the clipping parameter!
-
 */

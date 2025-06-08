@@ -6,8 +6,8 @@ namespace gui
 	struct RadioButton :
 		public Comp
 	{
-		// u, uID
-		RadioButton(Utils&, const String&);
+		// u
+		RadioButton(Utils&);
 
 		void clear();
 

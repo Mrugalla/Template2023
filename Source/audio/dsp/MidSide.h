@@ -1,4 +1,5 @@
 #pragma once
+#include "Using.h"
 
 namespace dsp
 {
@@ -7,4 +8,8 @@ namespace dsp
 
 	template<typename Float>
 	void midSideDecode(Float* const*, int) noexcept;
+
+	void midSideEncode(ProcessorBufferView&) noexcept;
+
+	void midSideDecode(ProcessorBufferView&) noexcept;
 }

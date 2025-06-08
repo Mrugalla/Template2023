@@ -18,6 +18,7 @@ namespace gui
 		std::unique_ptr<ColourSelector> selector;
 		std::array<Button, NumColours> buttonsColour;
 		Button buttonRevert, buttonDefault;
+		LabelGroup labelGroup;
 		int cIdx;
 		Colour lastColour;
 
