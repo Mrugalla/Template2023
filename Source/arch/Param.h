@@ -204,8 +204,8 @@ namespace param
 
 		void modulate(float) noexcept;
 
-		// numChannels
-		void endModulation(int) noexcept;
+		// tweaked, numChannels
+		void endModulation(std::atomic<bool>&, int) noexcept;
 
 		float getDefaultValue() const override;
 
@@ -251,7 +251,6 @@ namespace param
 		Unit unit;
 		std::atomic<bool> locked, inGesture;
 		const bool modulatable;
-
 		bool modDepthAbsolute;
 	};
 
@@ -296,8 +295,12 @@ namespace param
 
 		Parameters& data() noexcept;
 		const Parameters& data() const noexcept;
+
+		void setTweaked(bool) noexcept;
+		bool isTweaked() const noexcept;
 	protected:
 		Parameters params;
 		std::atomic<float> modDepthAbsolute;
+		std::atomic<bool> tweaked;
 	};
 }

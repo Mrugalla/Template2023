@@ -346,7 +346,7 @@ namespace audio
 #else
             mixProcessor.split
             (
-                samples, numChannels, numSamples
+                bufferViewBlock
             );
 #endif
 #endif
@@ -400,7 +400,7 @@ namespace audio
 #else
             mixProcessor.join
             (
-                samples, mix, gainWetDb, gainOutDb, numChannels, numSamples, delta
+                bufferViewBlock, mix, gainWetDb, gainOutDb, delta
             );
 #endif
 #endif

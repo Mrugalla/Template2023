@@ -487,7 +487,7 @@ namespace gui
 		button.setName(param::toString(pID));
 		const auto valToNameFunc = makeValToNameFunc(button, pID, text);
 
-		makeTextButton(button, valToNameFunc(), param::toTooltip(pID), CID::Interact);
+		makeTextButton(button, valToNameFunc(), param::toTooltip(pID), CID::Interact, Colour(0x000000));
 
 		button.label.cID = CID::Interact;
 		button.add(Callback([&btn = button, pID, valToNameFunc]()

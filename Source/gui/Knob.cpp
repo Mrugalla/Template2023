@@ -457,14 +457,14 @@ namespace gui
         else
 			knob.add(Callback([&k = knob, &prm = *prms[0]]()
 			{
-                    k.setLocked(prm.isLocked());
-                    const auto vn = prm.getValue();
-                    auto& vals = k.values;
-                    if (vals[Knob::kVals::Value] != vn)
-                    {
-                        vals[Knob::kVals::Value] = vn;
-                        k.repaint();
-                    }
+                k.setLocked(prm.isLocked());
+                const auto vn = prm.getValue();
+                auto& vals = k.values;
+                if (vals[Knob::kVals::Value] != vn)
+                {
+                    vals[Knob::kVals::Value] = vn;
+                    k.repaint();
+                }
 			}, Knob::kCBs::kUpdateParameterCB, cbFPS::k60, true));
     }
 

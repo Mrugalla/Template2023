@@ -30,7 +30,6 @@ namespace gui
 			}
 		});
 
-		setOpaque(true);
 		selector->setMouseCursor(makeCursor());
 
 		layout.init
@@ -40,6 +39,7 @@ namespace gui
 		);
 
 		addAndMakeVisible(*selector);
+		const Colour btnBgCol(0x00000000);
 		for (auto i = 0; i < NumColours; ++i)
 		{
 			auto& button = buttonsColour[i];
@@ -48,7 +48,7 @@ namespace gui
 			const auto cID = static_cast<CID>(i);
 			const auto name = toString(cID);
 
-			makeTextButton(button, name, "Click here to change the colour of " + name + ".", CID::Interact);
+			makeTextButton(button, name, "Click here to change the colour of " + name + ".", CID::Interact, btnBgCol);
 			button.type = Button::Type::kChoice;
 			button.value = 0.f;
 			button.onClick = [&, i](const Mouse&)
@@ -84,8 +84,8 @@ namespace gui
 		addAndMakeVisible(buttonRevert);
 		addAndMakeVisible(buttonDefault);
 
-		makeTextButton(buttonRevert, "Revert", "Revert to the last saved colour settings.", CID::Interact);
-		makeTextButton(buttonDefault, "Default", "Revert to the default colour settings.", CID::Interact);
+		makeTextButton(buttonRevert, "Revert", "Revert to the last saved colour settings.", CID::Interact, btnBgCol);
+		makeTextButton(buttonDefault, "Default", "Revert to the default colour settings.", CID::Interact, btnBgCol);
 
 		buttonRevert.onClick = [&](const Mouse&)
 		{
@@ -167,7 +167,8 @@ namespace gui
 
 	void ColoursEditor::paint(Graphics& g)
 	{
-		g.fillAll(Colour(0xff000000));
+		setCol(g, CID::Darken);
+		g.fillAll();
 	}
 
 	ButtonColours::ButtonColours(ColoursEditor& menu) :

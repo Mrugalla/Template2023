@@ -493,7 +493,7 @@ namespace param
 		valInternal += calcValModOf(modSrc);
 	}
 
-	void Param::endModulation(int numChannels) noexcept
+	void Param::endModulation(std::atomic<bool>& tweaked, int numChannels) noexcept
 	{
 		auto y = valInternal;
 		if (modulatable)
@@ -503,6 +503,7 @@ namespace param
 		curValMod = y;
 		valMod.store(curValMod);
 		callback({ *this, curValMod, numChannels });
+		tweaked.store(true);
 	}
 
 	float Param::getDefaultValue() const
@@ -1484,7 +1485,8 @@ namespace param
 #endif
 	) :
 		params(),
-		modDepthAbsolute(false)
+		modDepthAbsolute(false),
+		tweaked(false)
 	{
 		{ // HIGH LEVEL PARAMS:
 			params.push_back(makeParam(PID::Macro, 1.f, makeRange::lin(0, 1), Unit::Percent, false));
@@ -1592,7 +1594,7 @@ namespace param
 			auto& p = *params[i];
 			p.startModulation();
 			p.modulate(modSrc);
-			p.endModulation(numChannels);
+			p.endModulation(tweaked, numChannels);
 		}
 	}
 
@@ -1631,5 +1633,15 @@ namespace param
 	void Params::switchModDepthAbsolute() noexcept
 	{
 		setModDepthAbsolute(!isModDepthAbsolute());
+	}
+
+	void Params::setTweaked(bool e) noexcept
+	{
+		tweaked.store(e);
+	}
+
+	bool Params::isTweaked() const noexcept
+	{
+		return tweaked.load();
 	}
 }

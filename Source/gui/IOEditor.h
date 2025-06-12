@@ -7,31 +7,13 @@ namespace gui
 	struct IOEditor :
 		public Comp
 	{
-		IOEditor(Utils& u) :
-			Comp(u),
-			gainOut(u),
-			power(u)
-		{
-			layout.init
-			(
-				{ 4, 2 },
-				{ 1 }
-			);
+		IOEditor(Utils&);
 
-			addAndMakeVisible(gainOut);
-			addAndMakeVisible(power);
-
-			gainOut.init(PID::GainOut, "Volume", KnobStyle::TextKnob);
-		}
-
-		void resized() override
-		{
-			Comp::resized();
-			layout.place(gainOut, 0, 0, 1, 1);
-			layout.place(power, 1, 0, 1, 1);
-		}
-
+		void resized() override;
 	private:
+#if PPDIO == PPDIOWetMix || PPDIO == PPDDryWet
+		Knob2 dryOrWet, wetOrMix;
+#endif
 		Knob2 gainOut;
 		ButtonPower power;
 	};

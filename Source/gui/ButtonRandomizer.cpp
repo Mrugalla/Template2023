@@ -8,15 +8,11 @@ namespace gui
         randFuncs(),
         randomizer(*u.audioProcessor.state.props.getUserSettings(), id)
     {
-        const auto op = makeButtonOnPaint(false, getColour(CID::Bg));
-
         makePaintButton
         (
             *this,
-            [op](Graphics& g, const Button& b)
+            [](Graphics& g, const Button& b)
             {
-                op(g, b);
-
                 const auto& utils = b.utils;
                 const auto thicc = utils.thicc;
                 const auto thicc2 = thicc * 2.f;

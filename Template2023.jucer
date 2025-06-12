@@ -7,7 +7,7 @@
               pluginName="Template2023" pluginDesc="Plugin Template" pluginManufacturer="Mrugalla"
               pluginManufacturerCode="BBBB" pluginCode="BBBB" pluginVST3Category="Fx"
               pluginAAXCategory="0" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
-              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOOut&#10;&#10;PPDHasStereoConfig=0&#10;PPDHasSidechain=0&#10;PPDHasLookahead=0&#10;PPDHasTuningEditor=0"
+              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=1&#10;PPDHasSidechain=0&#10;PPDHasLookahead=0&#10;PPDHasTuningEditor=0"
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'" maxBinaryFileSize="20971520">
   <MAINGROUP id="WYhkvs" name="Template2023">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
@@ -207,10 +207,6 @@
         <FILE id="j9ghNX" name="PatchBrowser.h" compile="0" resource="0" file="Source/gui/PatchBrowser.h"/>
         <FILE id="I1ldma" name="RadioButton.cpp" compile="1" resource="0" file="Source/gui/RadioButton.cpp"/>
         <FILE id="amuxXN" name="RadioButton.h" compile="0" resource="0" file="Source/gui/RadioButton.h"/>
-        <FILE id="DyTxai" name="RandomizerEditor.cpp" compile="1" resource="0"
-              file="Source/gui/RandomizerEditor.cpp"/>
-        <FILE id="DtF9gU" name="RandomizerEditor.h" compile="0" resource="0"
-              file="Source/gui/RandomizerEditor.h"/>
         <FILE id="UVxJhG" name="Ruler.cpp" compile="1" resource="0" file="Source/gui/Ruler.cpp"/>
         <FILE id="RBCJKK" name="Ruler.h" compile="0" resource="0" file="Source/gui/Ruler.h"/>
         <FILE id="jwAtW1" name="TextEditor.cpp" compile="1" resource="0" file="Source/gui/TextEditor.cpp"/>

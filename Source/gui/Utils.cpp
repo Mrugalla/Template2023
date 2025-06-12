@@ -14,24 +14,6 @@ namespace gui
 		Colours::c.init(audioProcessor.state.props.getUserSettings());
 	}
 
-	void Utils::editLayout(bool e)
-	{
-		if (editingLayout == e)
-			return;
-		editingLayout = e;
-		eventSystem.notify(evt::Type::UpdateEditLayout);
-	}
-
-	void Utils::switchEditLayout()
-	{
-		editLayout(!editingLayout);
-	}
-
-	bool Utils::isEditingLayout() const noexcept
-	{
-		return editingLayout;
-	}
-
 	void Utils::add(Callback* ncb)
 	{
 		callbacks.add(ncb);

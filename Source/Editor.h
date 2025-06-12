@@ -25,6 +25,7 @@ namespace gui
         evt::Member evtMember;
         CompTexture texture;
 
+        patch::Browser patchBrowser;
         ColoursEditor coloursEditor;
         ManifestOfWisdom manifest;
 		HeaderEditor header;

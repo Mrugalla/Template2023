@@ -45,6 +45,12 @@ namespace gui
 				setActive(false);
 			}
 		});
+
+		addEvt([&](evt::Type t, const void*)
+		{
+			if (t == evt::Type::ClickedEmpty)
+				setActive(false);
+		});
 	}
 
 	void ParameterEditor::setActive(bool e)

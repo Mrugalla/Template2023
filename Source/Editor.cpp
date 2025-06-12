@@ -11,9 +11,7 @@ namespace gui
             case evt::Type::ThemeUpdated:
                 return e.repaint();
             case evt::Type::ClickedEmpty:
-                e.parameterEditor.setActive(false);
                 e.editor2.setVisible(true);
-                //e.patchBrowser.setVisible(false);
                 e.giveAwayKeyboardFocus();
                 return;
             }
@@ -65,9 +63,10 @@ namespace gui
         layout(),
         evtMember(utils.eventSystem, makeEvt(*this)),
         texture(utils, BinaryData::texture_png, BinaryData::texture_pngSize, .1f, 4),
+        patchBrowser(utils),
         coloursEditor(utils),
         manifest(utils),
-        header(coloursEditor, manifest),
+        header(coloursEditor, manifest, patchBrowser),
         tooltip(utils),
         toast(utils),
         parameterEditor(utils),
@@ -87,6 +86,7 @@ namespace gui
         addAndMakeVisible(header);
         addAndMakeVisible(tooltip);
 		addAndMakeVisible(editor2);
+		addChildComponent(patchBrowser);
 		addChildComponent(coloursEditor);
 		addChildComponent(manifest);
         addChildComponent(parameterEditor);
@@ -120,12 +120,13 @@ namespace gui
         tooltip.setBounds(layout.bottom().toNearestInt());
 		header.setBounds(layout.top().toNearestInt());
 		layout.place(editor2, 0, 1, 1, 1);
+		patchBrowser.setBounds(editor2.getBounds());
         texture.setBounds(editor2.getBounds());
         powerComp.setBounds(editor2.getBounds());
-		coloursEditor.setBounds(editor2.getBounds());
+		coloursEditor.setBounds(editor2.getBounds().toFloat().reduced(utils.thicc * 12.f).toNearestInt());
 		manifest.setBounds(editor2.getBounds());
 
-        const auto toastWidth = static_cast<int>(utils.thicc * 36.f);
+        const auto toastWidth = static_cast<int>(utils.thicc * 24.f);
         const auto toastHeight = toastWidth * 3 / 4;
         toast.setSize(toastWidth, toastHeight);
 		parameterEditor.setSize(toastWidth * 3, toastHeight);
