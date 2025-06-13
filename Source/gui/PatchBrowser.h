@@ -43,7 +43,9 @@ namespace gui
 		{
 			SelectionComp(Utils& u) :
 				Comp(u),
-				selected(nullptr)
+				selected(nullptr),
+				name(""),
+				author("")
 			{
 				setInterceptsMouseClicks(false, false);
 			}
@@ -57,15 +59,23 @@ namespace gui
 			void select(Patch* p) noexcept
 			{
 				selected = p;
-				setVisible(p != nullptr);
+				if (selected)
+				{
+					name = selected->name;
+					author = selected->author;
+				}
+				setVisible(selected != nullptr);
 			}
 
 			Patch* selected;
+			String name, author;
 		};
 
 		struct Patches :
 			public Comp
 		{
+			using UpdatedFunc = std::function<void(const Patches&)>;
+
 			Patches(Utils&);
 
 			void resized() override;
@@ -103,8 +113,10 @@ namespace gui
 
 			void resizePatches(float, float);
 		public:
-			std::function<void(const Patches&)> onUpdate;
+			UpdatedFunc onUpdate;
 		};
+
+		using PatchesUpdatedFunc = Patches::UpdatedFunc;
 
 		struct ButtonSavePatch :
 			public Button
@@ -124,6 +136,8 @@ namespace gui
 		{
 			Browser(Utils&);
 
+			~Browser();
+
 			void setVisible(bool) override;
 
 			void paint(Graphics&) override;
@@ -137,10 +151,9 @@ namespace gui
 
 			void resized() override;
 
-			std::function<void(const Patches&)>& getOnUpdate() noexcept
-			{
-				return patches.onUpdate;
-			}
+			void overwriteSelectedPatch();
+
+			PatchesUpdatedFunc& getOnUpdate() noexcept;
 		protected:
 			Label title;
 			TextEditor editorAuthor, editorName;
@@ -150,6 +163,8 @@ namespace gui
 			String nameText, authorText;
 		};
 
+		// Quick Access Buttons:
+
 		struct BrowserButton :
 			public Button
 		{
@@ -157,7 +172,14 @@ namespace gui
 
 			BrowserButton(Browser&);
 
-			bool patchTweaked;
+			bool patchTweaked, reportUpdate;
+		};
+
+		struct ButtonSaveQuick :
+			public Button
+		{
+			// browser
+			ButtonSaveQuick(Browser&);
 		};
 
 		struct NextPatchButton :
@@ -170,18 +192,10 @@ namespace gui
 }
 
 /*
-bug: when selecting another patch, patch browser button needs to update & repaint
-
-bug: select patch, then scroll out of its visbility and scroll back, wrong patch selected!
-
-feature: save button near patch browser button for quick resave of selected patch
-
 feature: when trying to save and file already exists, ask if overwrite ok
 
 feature: authors are saved in author list (all plugins)
 	a list of all authors can be shown for quick access
 	quick workflow for removing all presets from 1 author
 		or renaming all author names of presets of 1 author (for exmpl to consolidate presets)
-
-feature: when new preset made serialize preset name
 */

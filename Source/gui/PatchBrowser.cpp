@@ -184,13 +184,11 @@ namespace gui
 
 			scrollBar.onScroll = [&]()
 			{
-				const auto sName = selection.selected ? selection.selected->name : "";
-				const auto sAuthor = selection.selected ? selection.selected->author : "";
 				update();
-				selection.setVisible(false);
+				selection.select(nullptr);
 				for (auto& patch : patches)
 					if(patch.isVisible())
-						if (patch.name == sName && patch.author == sAuthor)
+						if (patch.name == selection.name && patch.author == selection.author)
 						{
 							selection.select(&patch);
 							break;
@@ -214,18 +212,18 @@ namespace gui
 			update();
 
 			Comp::add(Callback([&]()
-				{
-					if (!isShowing())
-						return;
-					const auto patchesDirectory = getPatchesDirectory(u);
-					const auto nSize = getDirectorySize(patchesDirectory);
-					if (directorySize == nSize)
-						return;
-					directorySize = nSize;
-					update();
-					resized();
-					repaint();
-				}, 0, cbFPS::k_1_875, true));
+			{
+				if (!isShowing())
+					return;
+				const auto patchesDirectory = getPatchesDirectory(u);
+				const auto nSize = getDirectorySize(patchesDirectory);
+				if (directorySize == nSize)
+					return;
+				directorySize = nSize;
+				update();
+				resized();
+				repaint();
+			}, 0, cbFPS::k_1_875, true));
 		}
 
 		void Patches::resized()
@@ -338,41 +336,42 @@ namespace gui
 			auto name = file.getFileName();
 			name = name.substring(0, name.lastIndexOf("."));
 			const auto author = state.getProperty("author", "");
-			if (isInAuthor(author, filterAuthor))
-			{
-				patches[i].activate(name, author, file);
-				patches[i].buttonLoad.onClick = [&, i](const Mouse&)
-				{
-					selection.select(&patches[i]);
-					const auto& file = patches[i].file;
-					const auto vt = ValueTree::fromXml(file.loadFileAsString());
-					if (!vt.isValid())
-						return;
-					auto& state = utils.audioProcessor.state;
-					state.state = vt;
-					utils.audioProcessor.params.loadPatch(state);
-					utils.audioProcessor.pluginProcessor.loadPatch(state);
-					resized();
-					repaint();
-				};
-				patches[i].buttonDelete.onClick = [&, i](const Mouse&)
-				{
-					if (patches[i].author == "factory")
-						return;
-					const auto file = patches[i].file;
-					file.deleteFile();
-					const auto directory = getPatchesDirectory(utils);
-					directorySize = getDirectorySize(directory);
-					patches[i].deactivate();
-					update();
-					resized();
-					repaint();
-				};
-			}
-			else
+			if (!isInAuthor(author, filterAuthor))
 			{
 				patches[i].deactivate();
+				return;
 			}
+			patches[i].activate(name, author, file);
+			patches[i].buttonLoad.onClick = [&, i](const Mouse&)
+			{
+				auto& p = patches[i];
+				selection.select(&p);
+				const auto& file = p.file;
+				const auto vt = ValueTree::fromXml(file.loadFileAsString());
+				if (!vt.isValid())
+					return;
+				auto& state = utils.audioProcessor.state;
+				state.state = vt;
+				utils.audioProcessor.params.loadPatch(state);
+				utils.audioProcessor.pluginProcessor.loadPatch(state);
+				resized();
+				repaint();
+				onUpdate(*this);
+			};
+			patches[i].buttonDelete.onClick = [&, i](const Mouse&)
+			{
+				if (patches[i].author == "factory")
+					return;
+				const auto file = patches[i].file;
+				file.deleteFile();
+				const auto directory = getPatchesDirectory(utils);
+				directorySize = getDirectorySize(directory);
+				patches[i].deactivate();
+				update();
+				resized();
+				repaint();
+				onUpdate(*this);
+			};
 		}
 
 		const Patch& Patches::operator[](int i) const noexcept
@@ -496,46 +495,7 @@ namespace gui
 				saveStuff(patches, editorName, editorAuthor);
 			};
 
-			makePaintButton(*this, [](Graphics& g, const Button& b)
-			{
-				const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
-				const auto clickPhase = b.callbacks[Button::kClickAniCB].phase;
-
-				const auto thicc = b.utils.thicc;
-				const auto lineThicc = thicc + hoverPhase + clickPhase * thicc;
-				const auto bounds = maxQuadIn(b.getLocalBounds()).reduced(lineThicc);
-
-				Path path;
-				const auto x = bounds.getX();
-				const auto y = bounds.getY();
-				const auto width = bounds.getWidth();
-				const auto height = bounds.getHeight();
-				const auto btm = bounds.getBottom();
-				const auto right = bounds.getRight();
-
-				const auto x2 = x + width * .2f;
-				const auto x8 = x + width * .8f;
-				const auto y2 = y + height * .2f;
-				const auto y4 = y + height * .4f;
-				const auto y5 = y + height * .5f;
-				const auto y4To5 = y4 + hoverPhase * (y5 - y4);
-
-				path.startNewSubPath(bounds.getTopLeft());
-				path.lineTo(x, btm);
-				path.lineTo(right, btm);
-				path.lineTo(right, y2);
-				path.lineTo(x8, y);
-				path.closeSubPath();
-
-				path.startNewSubPath(x2, btm);
-				path.lineTo(x2, y4To5);
-				path.lineTo(x8, y4To5);
-				path.lineTo(x8, btm);
-
-				Stroke stroke(lineThicc, Stroke::JointStyle::beveled, Stroke::EndCapStyle::butt);
-				setCol(g, CID::Interact);
-				g.strokePath(path, stroke);
-			}, "Click here to save this patch.");
+			makePaintButton(*this, makeButtonOnPaintSave(), "Click here to save this patch.");
 		}
 
 		// ButtonReveal
@@ -676,7 +636,30 @@ namespace gui
 					setVisible(false);
 			});
 
+			const auto& user = u.getProps();
+			const auto name = user.getValue("patchname", "");
+			const auto author = user.getValue("patchauthor", "");
+			if (name.isNotEmpty() && author.isNotEmpty())
+			{
+				patches.select(author, name);
+			}
+
 			setOpaque(true);
+		}
+
+		Browser::~Browser()
+		{
+			const auto selected = getSelectedPatch();
+			const auto tweaked = utils.params.isTweaked();
+			auto& user = utils.getProps();
+			if (selected == nullptr || tweaked)
+			{
+				user.setValue("patchname", "");
+				user.setValue("patchauthor", "");
+				return;
+			}
+			user.setValue("patchname", selected->name);
+			user.setValue("patchauthor", selected->author);
 		}
 
 		void Browser::setVisible(bool e)
@@ -723,13 +706,34 @@ namespace gui
 			layout.place(patches, 0, 2, 4, 1);
 		}
 
+		void Browser::overwriteSelectedPatch()
+		{
+			const auto selectedPtr = getSelectedPatch();
+			if (!selectedPtr)
+				return;
+			editorName.txt = selectedPtr->name;
+			editorAuthor.txt = selectedPtr->author;
+			saveStuff(patches, editorName, editorAuthor);
+		}
+
+		PatchesUpdatedFunc& Browser::getOnUpdate() noexcept
+		{
+			return patches.onUpdate;
+		}
+
 		// BrowserButton
 
 		BrowserButton::BrowserButton(Browser& browser) :
 			Button(browser.utils),
-			patchTweaked(false)
+			patchTweaked(false),
+			reportUpdate(true)
 		{
-			makeTextButton(*this, "-", "Click here to save, browse or manage patches.", CID::Interact, Colour(0x000000));
+			makeTextButton
+			(
+				*this, "-",
+				"Click here to save, browse or manage patches.",
+				CID::Interact, Colour(0x000000)
+			);
 			label.autoMaxHeight = true;
 			onClick = [&b = browser](const Mouse&)
 			{
@@ -739,18 +743,24 @@ namespace gui
 			};
 
 			auto& onUpdate = browser.getOnUpdate();
-			onUpdate = [&](const Patches& patches)
+			onUpdate = [&](const Patches&)
 			{
-				const auto selectedPtr = patches.getSelected();
-				const auto& sName = selectedPtr ? selectedPtr->name : "-";
-				label.setText(sName);
-				patchTweaked = false;
-				utils.params.setTweaked(false);
-				repaint();
+				reportUpdate = true;
 			};
 
 			add(Callback([&]()
 			{
+				if (reportUpdate)
+				{
+					const auto selectedPtr = browser.getSelectedPatch();
+					const auto& sName = selectedPtr ? selectedPtr->name : "-";
+					label.setText(sName);
+					patchTweaked = false;
+					utils.params.setTweaked(false);
+					reportUpdate = false;
+					repaint();
+					return;
+				}
 				if (!isShowing())
 					return;
 				const auto nT = utils.params.isTweaked();
@@ -759,7 +769,21 @@ namespace gui
 				patchTweaked = true;
 				label.setText(label.text + "*");
 				repaint();
-			}, Button::kNumCallbacks, cbFPS::k15, true));
+			}, Button::kNumCallbacks, cbFPS::k7_5, true));
+		}
+
+		// ButtonSaveQuick
+
+		ButtonSaveQuick::ButtonSaveQuick(Browser& browser) :
+			Button(browser.utils)
+		{
+			makePaintButton(*this, makeButtonOnPaintSave(), "Click here to overwrite the selected patch.");
+			label.autoMaxHeight = true;
+			onClick = [&](const Mouse&)
+			{
+				notify(evt::Type::ClickedEmpty);
+				browser.overwriteSelectedPatch();
+			};
 		}
 
 		// NextPatchButton

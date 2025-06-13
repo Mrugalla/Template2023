@@ -22,6 +22,8 @@ namespace gui
 
         add(Callback([&, speed]()
         {
+            if (!isShowing())
+                return;
             auto& phase = callbacks[kEnterExitCB].phase;
             const auto pol = isMouseOverOrDragging() ? 1.f : -1.f;
             phase += speed * pol;
@@ -34,6 +36,8 @@ namespace gui
 
         add(Callback([&, speed]()
         {
+            if (!isShowing())
+                return;
             auto& phase = callbacks[kDownUpCB].phase;
             const auto pol = isMouseButtonDown() ? 1.f : -1.f;
             phase += speed * pol;
@@ -435,6 +439,8 @@ namespace gui
         if(modulatable)
             knob.add(Callback([&k = knob, &prm = *prms[0]]()
             {
+                if (!k.isShowing())
+                    return;
                 k.setLocked(prm.isLocked());
 
                 const auto vn = prm.getValue();
@@ -457,6 +463,8 @@ namespace gui
         else
 			knob.add(Callback([&k = knob, &prm = *prms[0]]()
 			{
+                if (!k.isShowing())
+                    return;
                 k.setLocked(prm.isLocked());
                 const auto vn = prm.getValue();
                 auto& vals = k.values;

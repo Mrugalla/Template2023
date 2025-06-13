@@ -54,6 +54,8 @@ namespace gui
 
 	Button::OnPaint makeButtonOnPaintClip();
 
+	Button::OnPaint makeButtonOnPaintSave();
+
 	// numDiagnoalLines
 	Button::OnPaint makeButtonOnPaintVisor(int);
 

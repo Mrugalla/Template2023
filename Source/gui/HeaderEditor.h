@@ -17,8 +17,9 @@ namespace gui
 		void resized() override;
 	private:
 		LabelPluginRecorder title;
-		patch::NextPatchButton buttonPrev, buttonNext;
 		patch::BrowserButton buttonBrowser;
+		patch::NextPatchButton buttonPrev, buttonNext;
+		patch::ButtonSaveQuick buttonSave;
 		MacroEditor macro;
 		IOEditor ioEditor;
 		ButtonColours buttonColours;

@@ -18,6 +18,8 @@ namespace gui
 
 		add(Callback([&, speed]()
 		{
+			if (!isShowing())
+				return;
 			auto& phase = callbacks[kHoverAniCB].phase;
 			const auto hovering = isMouseOverOrDragging();
 			if (hovering)
@@ -37,6 +39,8 @@ namespace gui
 
 		add(Callback([&, speed]()
 		{
+			if (!isShowing())
+				return;
 			auto& phase = callbacks[kClickAniCB].phase;
 			phase -= speed;
 			if (phase <= 0.f)
@@ -49,6 +53,8 @@ namespace gui
 
 		add(Callback([&, speed]()
 		{
+			if (!isShowing())
+				return;
 			auto& toggleState = callbacks[kToggleStateCB].phase;
 			if (type != Type::kToggle)
 			{
@@ -384,6 +390,50 @@ namespace gui
 		};
 	}
 
+	Button::OnPaint makeButtonOnPaintSave()
+	{
+		return [](Graphics& g, const Button& b)
+		{
+			const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
+			const auto clickPhase = b.callbacks[Button::kClickAniCB].phase;
+
+			const auto thicc = b.utils.thicc;
+			const auto lineThicc = thicc + hoverPhase + clickPhase * thicc;
+			const auto bounds = maxQuadIn(b.getLocalBounds()).reduced(lineThicc);
+
+			Path path;
+			const auto x = bounds.getX();
+			const auto y = bounds.getY();
+			const auto width = bounds.getWidth();
+			const auto height = bounds.getHeight();
+			const auto btm = bounds.getBottom();
+			const auto right = bounds.getRight();
+
+			const auto x2 = x + width * .2f;
+			const auto x8 = x + width * .8f;
+			const auto y2 = y + height * .2f;
+			const auto y4 = y + height * .4f;
+			const auto y5 = y + height * .5f;
+			const auto y4To5 = y4 + hoverPhase * (y5 - y4);
+
+			path.startNewSubPath(bounds.getTopLeft());
+			path.lineTo(x, btm);
+			path.lineTo(right, btm);
+			path.lineTo(right, y2);
+			path.lineTo(x8, y);
+			path.closeSubPath();
+
+			path.startNewSubPath(x2, btm);
+			path.lineTo(x2, y4To5);
+			path.lineTo(x8, y4To5);
+			path.lineTo(x8, btm);
+
+			Stroke stroke(lineThicc, Stroke::JointStyle::beveled, Stroke::EndCapStyle::butt);
+			setCol(g, CID::Interact);
+			g.strokePath(path, stroke);
+		};
+	}
+
 	////// LOOK AND FEEL:
 
 	void makeTextButton(Button& btn, const String& txt, const String& tooltip, CID cID, Colour bgCol)
@@ -492,6 +542,8 @@ namespace gui
 		button.label.cID = CID::Interact;
 		button.add(Callback([&btn = button, pID, valToNameFunc]()
 		{
+			if (!btn.isShowing())
+				return;
 			const auto& utils = btn.utils;
 			const auto& param = utils.getParam(pID);
 			const auto val = param.getValue();
@@ -514,6 +566,8 @@ namespace gui
 
 		button.add(Callback([&btn = button, pID]()
 		{
+			if (!btn.isShowing())
+				return;
 			const auto& utils = btn.utils;
 			const auto& param = utils.getParam(pID);
 			const auto val = param.getValue();
@@ -574,7 +628,10 @@ namespace gui
 			button.label.cID = CID::Interact;
 			button.add(Callback([&, pID]()
 			{
-				const auto& utils = buttons[0]->utils;
+				auto& b = *buttons[0];
+				if (!b.isShowing())
+					return;
+				const auto& utils = b.utils;
 				const auto& param = utils.getParam(pID);
 				const auto val = static_cast<int>(std::round(param.getValueDenorm()));
 
