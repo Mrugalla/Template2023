@@ -41,31 +41,11 @@ namespace gui
 		struct SelectionComp :
 			public Comp
 		{
-			SelectionComp(Utils& u) :
-				Comp(u),
-				selected(nullptr),
-				name(""),
-				author("")
-			{
-				setInterceptsMouseClicks(false, false);
-			}
+			SelectionComp(Utils&);
 
-			void paint(Graphics& g) override
-			{
-				setCol(g, CID::Mod);
-				g.fillEllipse(getLocalBounds().toFloat().reduced(utils.thicc * 4.f));
-			}
+			void paint(Graphics&) override;
 
-			void select(Patch* p) noexcept
-			{
-				selected = p;
-				if (selected)
-				{
-					name = selected->name;
-					author = selected->author;
-				}
-				setVisible(selected != nullptr);
-			}
+			void select(Patch*) noexcept;
 
 			Patch* selected;
 			String name, author;
@@ -74,7 +54,7 @@ namespace gui
 		struct Patches :
 			public Comp
 		{
-			using UpdatedFunc = std::function<void(const Patches&)>;
+			using UpdatedFunc = std::function<void()>;
 
 			Patches(Utils&);
 
@@ -154,6 +134,9 @@ namespace gui
 			void overwriteSelectedPatch();
 
 			PatchesUpdatedFunc& getOnUpdate() noexcept;
+
+			// fromSelected
+			void save(bool);
 		protected:
 			Label title;
 			TextEditor editorAuthor, editorName;
@@ -192,7 +175,8 @@ namespace gui
 }
 
 /*
-feature: when trying to save and file already exists, ask if overwrite ok
+
+style: rewrite everything to use the word preset instead of patch
 
 feature: authors are saved in author list (all plugins)
 	a list of all authors can be shown for quick access

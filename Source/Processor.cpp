@@ -56,9 +56,10 @@ namespace audio
         if (!patchesDirectory.exists())
         {
             patchesDirectory.createDirectory();
-
-			using String = juce::String;
-            const auto makePatch = [&p = patchesDirectory](const String& name, const void* data, int size)
+            /*
+            using String = juce::String;
+            const auto makePatch = [&p = patchesDirectory]
+                (const String& name, const void* data, int size)
             {
                 const auto initFile = p.getChildFile(name + ".txt");
                 if (initFile.existsAsFile())
@@ -66,13 +67,14 @@ namespace audio
                 initFile.create();
                 initFile.replaceWithData(data, size);
             };
+            */
 		}
 
-        state.set("author", "factory");
+        state.set("author", "factowy");
         params.savePatch(state);
         pluginProcessor.savePatch(state);
         const auto init = state.state.createCopy();
-        const auto initFile = patchesDirectory.getChildFile(" init .txt");
+        const auto initFile = patchesDirectory.getChildFile(" init.txt");
         if (initFile.existsAsFile())
             initFile.deleteFile();
         initFile.create();
@@ -164,7 +166,7 @@ namespace audio
         pluginRecorder.prepare(sampleRateF);
         mixProcessor.prepare(sampleRateF);
         transport.prepare(1. / sampleRate);
-        pluginProcessor.prepare(sampleRateF);
+        pluginProcessor.prepare(sampleRate);
         setLatencySamples(latency);
         startTimerHz(4);
     }

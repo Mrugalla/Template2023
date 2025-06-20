@@ -6,48 +6,28 @@ namespace dsp
 {
 	struct FFT
 	{
-		static constexpr int Order = 9;
-		static constexpr int Size = 1 << Order;
-		static constexpr int Size2 = Size * 2;
-		static constexpr float Size2Inv = 1.f / Size2;
-		static constexpr float Size2InvTau = Size2Inv * Tau;
-	
-		FFT() :
-			fft(Order),
-			fifo(),
-			idx(0)
-		{}
+		static constexpr int MinOrder = 5;
+		static constexpr int MaxOrder = 14;
+		static constexpr int RangeOrder = MaxOrder - MinOrder + 1;
+		static constexpr int MaxSize = 1 << MaxOrder;
+		static constexpr int MaxSize2 = MaxSize * 2;
 
-		void operator()(float* smpls, int numSamples) noexcept
-		{
-			for (auto s = 0; s < numSamples; ++s)
-				processSample(smpls[s]);
-		}
+		FFT();
 
-		float processSample(float x) noexcept
-		{
-			fifo[idx] = x;
-			if (++idx == Size)
-			{
-				idx = 0;
-				applyFFT();
-			}
-			return x;
-		}
+		void setOrder(int) noexcept;
 
-	protected:
-		juce::dsp::FFT fft;
-		std::array<float, Size2> fifo;
-		int idx;
+		void operator()(float) noexcept;
 
-		void applyFFT() noexcept
-		{
-			fft.performRealOnlyForwardTransform(fifo.data(), true);
-		}
+		// bins, size
+		std::function<void(const float*, int)> callback;
+
+		float getFreqRangePerBin(float) const noexcept;
+	private:
+		std::array<juce::dsp::FFT, RangeOrder> ffts;
+		std::array<float, MaxSize2> fifo;
+		float sizeInv;
+		int order, size, idx;
+
+		void applyFFT() noexcept;
 	};
-
-	inline void fftTest()
-	{
-		FFT fft;
-	}
 }

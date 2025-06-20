@@ -78,6 +78,7 @@ namespace gui
     using DnDSrc = DragAndDropTarget::SourceDetails;
 	using URL = juce::URL;
 	using FineAssTransform = juce::AffineTransform;
+	using CharUTF8 = juce::CharPointer_UTF8;
 
     using Processor = audio::Processor;
 
@@ -111,5 +112,52 @@ namespace gui
         Font flx();
         Font text();
         Font headline();
+    }
+
+    namespace ascii
+    {
+        inline String mouth()
+        {
+            return String(CharUTF8("\xe2\x80\xbf"));
+        }
+
+        inline String brokenHeart()
+        {
+            return String(CharUTF8("\xf0\x9f\x92\x94"));
+        }
+
+        inline String bear()
+        {
+            const auto a = String(CharUTF8("\xca\x95"));
+            const auto b = String(CharUTF8("\xe2\x80\xa2"));
+            const auto c = String(CharUTF8("\xe1\xb4\xa5"));
+			return a + b + c + b + a;
+        }
+
+        inline String cuteFace()
+        {
+            const auto flower = String(CharUTF8("\xe2\x9c\xbf"));
+            const auto eye = String(CharUTF8("\xe2\x97\xa0"));
+			return "(" + flower + eye + mouth() + eye + ")";
+        }
+
+        inline String rolfFace()
+        {
+            const auto r = String(CharUTF8("\xe2\x89\xa7"));
+            return "(" + r + mouth() + r + ")";
+        }
+
+        inline String pwesets()
+        {
+            const auto dotLow = String(CharUTF8("\xef\xbd\xa1"));
+            const auto dotHigh = String(CharUTF8("\xef\xbe\x9f"));
+            const auto dotCentre = String(CharUTF8("\xef\xbd\xa5"));
+            const auto star = String(CharUTF8("\xe2\x98\x86"));
+            const auto arm = String(CharUTF8("\xe3\x82\x9e"));
+			const auto star2 = String(CharUTF8("\xe2\x9c\xa7"));
+            const auto music = String(CharUTF8("\xf0\x9f\x8e\xb6"));
+            return dotLow + dotHigh + dotCentre + star + "(*^w^*)" + star + dotCentre + dotHigh + ": " + music
+                + " pwesets " + music + " :" + dotCentre + dotHigh + star2 + ":" + dotCentre + dotHigh + star2 + "(*^" + mouth() + "^)" + arm + star + dotCentre + dotHigh + dotLow;
+        }
     }
 }

@@ -74,7 +74,8 @@ namespace gui
         {
         }, 0, cbFPS::k_1_875, false),
         powerComp(utils),
-        editor2(utils)
+        editor2(utils),
+        prompt(utils)
     {
         layout.init
         (
@@ -92,6 +93,7 @@ namespace gui
         addChildComponent(parameterEditor);
         addChildComponent(toast);
 		addChildComponent(powerComp);
+        addChildComponent(prompt);
 
         utils.add(&callback);
         loadSize(*this);
@@ -123,10 +125,14 @@ namespace gui
 		patchBrowser.setBounds(editor2.getBounds());
         texture.setBounds(editor2.getBounds());
         powerComp.setBounds(editor2.getBounds());
-		coloursEditor.setBounds(editor2.getBounds().toFloat().reduced(utils.thicc * 12.f).toNearestInt());
 		manifest.setBounds(editor2.getBounds());
+		const auto thicc = utils.thicc;
+		const auto thicc12 = thicc * 12.f;
+		const auto thicc24 = thicc12 * 2.f;
+        coloursEditor.setBounds(editor2.getBounds().toFloat().reduced(thicc12).toNearestInt());
+		prompt.setBounds(editor2.getBounds().toFloat().reduced(thicc24 + thicc12).toNearestInt());
 
-        const auto toastWidth = static_cast<int>(utils.thicc * 24.f);
+        const auto toastWidth = static_cast<int>(thicc24);
         const auto toastHeight = toastWidth * 3 / 4;
         toast.setSize(toastWidth, toastHeight);
 		parameterEditor.setSize(toastWidth * 3, toastHeight);

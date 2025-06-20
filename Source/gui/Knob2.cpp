@@ -48,4 +48,9 @@ namespace gui
 		layout.place(label, 0, 1, 1, 1);
 		followKnob(modDial, knob, style);
 	}
+
+	void Knob2::setMaxHeight(float margin) noexcept
+	{
+		label.setMaxHeight(margin);
+	}
 }

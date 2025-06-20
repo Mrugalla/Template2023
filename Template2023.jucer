@@ -93,6 +93,9 @@
           <FILE id="Z24dk1" name="Perlin.h" compile="0" resource="0" file="Source/audio/dsp/Perlin.h"/>
           <FILE id="bs6WPl" name="Phasor.cpp" compile="1" resource="0" file="Source/audio/dsp/Phasor.cpp"/>
           <FILE id="xq7t2w" name="Phasor.h" compile="0" resource="0" file="Source/audio/dsp/Phasor.h"/>
+          <FILE id="NEROIo" name="PitchDetector.cpp" compile="1" resource="0"
+                file="Source/audio/dsp/PitchDetector.cpp"/>
+          <FILE id="HyDdjW" name="PitchDetector.h" compile="0" resource="0" file="Source/audio/dsp/PitchDetector.h"/>
           <FILE id="zT357c" name="PluginRecorder.cpp" compile="1" resource="0"
                 file="Source/audio/dsp/PluginRecorder.cpp"/>
           <FILE id="Gu6CVv" name="PluginRecorder.h" compile="0" resource="0"
@@ -205,6 +208,8 @@
         <FILE id="wEOt2Q" name="PatchBrowser.cpp" compile="1" resource="0"
               file="Source/gui/PatchBrowser.cpp"/>
         <FILE id="j9ghNX" name="PatchBrowser.h" compile="0" resource="0" file="Source/gui/PatchBrowser.h"/>
+        <FILE id="ZMbHcO" name="Prompt.cpp" compile="1" resource="0" file="Source/gui/Prompt.cpp"/>
+        <FILE id="GBK56m" name="Prompt.h" compile="0" resource="0" file="Source/gui/Prompt.h"/>
         <FILE id="I1ldma" name="RadioButton.cpp" compile="1" resource="0" file="Source/gui/RadioButton.cpp"/>
         <FILE id="amuxXN" name="RadioButton.h" compile="0" resource="0" file="Source/gui/RadioButton.h"/>
         <FILE id="UVxJhG" name="Ruler.cpp" compile="1" resource="0" file="Source/gui/Ruler.cpp"/>

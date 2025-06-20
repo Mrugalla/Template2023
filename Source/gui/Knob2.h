@@ -14,6 +14,8 @@ namespace gui
 		
 		void resized() override;
 
+		// margin
+		void setMaxHeight(float = 0.f) noexcept;
 	private:
 		Knob knob;
 		Label label;

@@ -80,32 +80,32 @@ namespace gui
 			name = _name;
 			author = _author;
 			file = _file;
-			makeTextButton(buttonLoad, name + " by " + author, "Click here to load " + name + ".", CID::Interact);
+			makeTextButton(buttonLoad, name + " by " + author, "Cwick hewe to load " + name + "! :3", CID::Interact);
 			buttonLoad.label.font = font::text();
 			makePaintButton(buttonDelete, [](Graphics& g, const Button& b)
-				{
-					const auto thicc = b.utils.thicc;
-					const auto thicc3 = thicc * 3.f;
+			{
+				const auto thicc = b.utils.thicc;
+				const auto thicc3 = thicc * 3.f;
 
-					const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
+				const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
 
-					const auto margin = thicc + thicc3 - hoverPhase * thicc3;
-					const auto bounds = maxQuadIn(b.getLocalBounds().toFloat()).reduced(margin);
+				const auto margin = thicc + thicc3 - hoverPhase * thicc3;
+				const auto bounds = maxQuadIn(b.getLocalBounds().toFloat()).reduced(margin);
 
-					const auto shrink = .2f;
+				const auto shrink = .2f;
 
-					const auto w = bounds.getWidth();
-					const auto wShrinked = hoverPhase * w * shrink;
-					const auto h = bounds.getHeight();
-					const auto y = bounds.getY();
-					const auto x = bounds.getX() + wShrinked;
-					const auto r = bounds.getRight() - wShrinked;
+				const auto w = bounds.getWidth();
+				const auto wShrinked = hoverPhase * w * shrink;
+				const auto h = bounds.getHeight();
+				const auto y = bounds.getY();
+				const auto x = bounds.getX() + wShrinked;
+				const auto r = bounds.getRight() - wShrinked;
 
-					setCol(g, CID::Interact);
-					const auto lineThicc = thicc + hoverPhase * thicc;
-					g.drawLine(x, y, r, y + h, lineThicc);
-					g.drawLine(x, y + h, r, y, lineThicc);
-				}, "Click here to remove " + name + ".");
+				setCol(g, CID::Interact);
+				const auto lineThicc = thicc + hoverPhase * thicc;
+				g.drawLine(x, y, r, y + h, lineThicc);
+				g.drawLine(x, y + h, r, y, lineThicc);
+			}, name + " scweams: Nooo, don't dewete meee~ " + ascii::brokenHeart());
 			setVisible(true);
 		}
 
@@ -158,6 +158,34 @@ namespace gui
 				viewIdx = 0;
 			onScroll();
 			repaint();
+		}
+
+		// SelectionComp
+
+		SelectionComp::SelectionComp(Utils& u) :
+			Comp(u),
+			selected(nullptr),
+			name(""),
+			author("")
+		{
+			setInterceptsMouseClicks(false, false);
+		}
+
+		void SelectionComp::paint(Graphics& g)
+		{
+			setCol(g, CID::Mod);
+			g.fillEllipse(getLocalBounds().toFloat().reduced(utils.thicc * 4.f));
+		}
+
+		void SelectionComp::select(Patch* p) noexcept
+		{
+			selected = p;
+			if (selected)
+			{
+				name = selected->name;
+				author = selected->author;
+			}
+			setVisible(selected != nullptr);
 		}
 
 		// Patches
@@ -356,11 +384,15 @@ namespace gui
 				utils.audioProcessor.pluginProcessor.loadPatch(state);
 				resized();
 				repaint();
-				onUpdate(*this);
+				onUpdate();
 			};
 			patches[i].buttonDelete.onClick = [&, i](const Mouse&)
 			{
-				if (patches[i].author == "factory")
+				if (const auto selected = getSelected())
+					if (selected->name == patches[i].name
+						&& selected->author == patches[i].author)
+						selection.select(nullptr);
+				if (patches[i].author == "factowy")
 					return;
 				const auto file = patches[i].file;
 				file.deleteFile();
@@ -370,7 +402,7 @@ namespace gui
 				update();
 				resized();
 				repaint();
-				onUpdate(*this);
+				onUpdate();
 			};
 		}
 
@@ -401,7 +433,7 @@ namespace gui
 				{
 					selection.select(&patch);
 					if(onUpdate)
-						onUpdate(*this);
+						onUpdate();
 					return;
 				}
 			selection.select(nullptr);
@@ -441,7 +473,7 @@ namespace gui
 			utils.audioProcessor.pluginProcessor.loadPatch(state);
 		}
 
-		// ButtonSavePatch
+		// ClearEditors
 
 		void clearEditors(Patches& patches, TextEditor& eName, TextEditor& eAuthor)
 		{
@@ -450,23 +482,125 @@ namespace gui
 			patches.updateFilter(eName.txt, eAuthor.txt);
 		}
 
+		// Prompt Functions & Saving Patches
+
+		void promptAuthorFactory(TextEditor& eAuthor)
+		{
+			PromptData promptData;
+			promptData.message = "These awe wocked factowy pwesets~ no tweakies allowed >.<";
+			promptData.buttons.push_back({ "Okiee~", "Nyaa~ twy a diffewent authow name, oki?! :>", [&]()
+			{
+				eAuthor.clear();
+				eAuthor.notify(evt::Type::PromptDeactivate);
+			} });
+			eAuthor.notify(evt::Type::PromptActivate, &promptData);
+		}
+
+		void promptEmptyNameOrSelection(TextEditor& eName)
+		{
+			PromptData promptData;
+			promptData.message = "Pwomise you'ww choose a name ow patch befowe saving!!";
+			promptData.buttons.push_back({ "Of couwse, sweetie <3", "Nyaa~ name it ow pick a pweset, den twy 'gain! :3", [&]()
+			{
+				eName.notify(evt::Type::PromptDeactivate);
+			} });
+			eName.notify(evt::Type::PromptActivate, &promptData);
+		}
+		
+		File findPatch(const File& patchesDirectory, const String& name, const String& author)
+		{
+			const auto findFiles = File::TypesOfFileToFind::findFiles;
+			for (const auto file : patchesDirectory.findChildFiles(findFiles, true, name))
+			{
+				if (file.existsAsFile())
+				{
+					const auto vt = ValueTree::fromXml(file.loadFileAsString());
+					if (vt.isValid())
+						if(vt.getProperty("author", "").toString() == author)
+							return file;
+				}
+			}
+			return {};
+		}
+
+		void promptBadResult(const File& file, Patches& patches)
+		{
+			PromptData promptData;
+			promptData.message = "Oh noesies~ sometin' went oopsie, sowwyyy:\n" + file.getFullPathName();
+			promptData.buttons.push_back({ "Dat totawwy stinksies :o", "Hehe, it is what it is~ :3", [&]()
+			{
+				patches.notify(evt::Type::PromptDeactivate);
+			} });
+			patches.notify(evt::Type::PromptActivate, &promptData);
+		}
+
+		void promptFileExists(const File& file, Patches& patches)
+		{
+			PromptData promptData;
+			promptData.message = "Oopsie, patch name taken by diffewent authow :'(";
+			promptData.buttons.push_back({ "Show me~ " + String(juce::CharPointer_UTF8("\xf0\x9f\x91\x80")), "Take a wook at da fiwe, pwease~", [&, f = file]()
+			{
+				f.revealToUser();
+				patches.notify(evt::Type::PromptDeactivate);
+			} });
+			promptData.buttons.push_back({ "Mhm, okidokie " + ascii::cuteFace(), "Alles bleibt hier so, wie es ist!!", [&]()
+			{
+				patches.notify(evt::Type::PromptDeactivate);
+			} });
+			patches.notify(evt::Type::PromptActivate, &promptData);
+		}
+
+		void saveForReal(const File& file,
+			Patches& patches, TextEditor& eName, TextEditor& eAuthor)
+		{
+			if (file.existsAsFile())
+				return promptFileExists(file, patches);
+			const auto result = file.create();
+			if (result.failed())
+				return promptBadResult(file, patches);
+			const auto vt = patches.utils.getState();
+			file.replaceWithText(vt.toXmlString());
+			clearEditors(patches, eName, eAuthor);
+			patches.select(eAuthor.txt, eName.txt);
+		}
+
+		void promptOverwrite(const File& file,
+			Patches& patches, TextEditor& eName, TextEditor& eAuthor)
+		{
+			PromptData promptData;
+			promptData.message = "Oopsie~ patch awweady here! Overwide?? :*";
+			promptData.buttons.push_back({ "Yep :)", "Let the past be past!", [&, f = file]()
+			{
+				patches.notify(evt::Type::PromptDeactivate);
+				saveForReal(f, patches, eName, eAuthor);
+			} });
+			promptData.buttons.push_back({ "Nah", "Better not. I still need it! :O", [&]()
+			{
+				patches.notify(evt::Type::PromptDeactivate);
+			} });
+			patches.notify(evt::Type::PromptActivate, &promptData);
+		}
+
 		void saveStuff(Patches& patches, TextEditor& eName, TextEditor& eAuthor)
 		{
-			auto name = eName.txt;
 			auto author = eAuthor.txt;
-			if (author.isEmpty() || author == "factory")
+			if(author.toLowerCase() == "factowy")
+				return promptAuthorFactory(eAuthor);
+			if (author.isEmpty())
 				author = "Audio Traveller";
+			auto name = eName.txt;
 			if (name.isEmpty())
 			{
-				if (const auto p = patches.getSelected())
-				{
-					if (p->author == "factory")
-						return;
-					if (name.isEmpty())
-						name = p->name;
-					if (author.isEmpty())
-						author = p->author;
-				}
+				const auto selected = patches.getSelected();
+				if (selected == nullptr)
+					return promptEmptyNameOrSelection(eName);
+
+				author = selected->author;
+				if (author.toLowerCase() == "factowy")
+					return promptAuthorFactory(eAuthor);
+				if (author.isEmpty())
+					author = "Audio Traveller";
+				name = selected->name;
 			}
 			const auto& utils = patches.utils;
 			const auto patchesDirectory = getPatchesDirectory(utils);
@@ -475,16 +609,17 @@ namespace gui
 			utils.audioProcessor.pluginProcessor.savePatch(state);
 			auto& vt = state.state;
 			vt.setProperty("author", author, nullptr);
-			const auto file = patchesDirectory.getChildFile(name + ".txt");
+			const auto nameTxt = name + ".txt";
+			auto file = findPatch(patchesDirectory, nameTxt, author);
+			eAuthor.txt = author;
+			eName.txt = name;
 			if (file.existsAsFile())
-				file.deleteFile();
-			const auto result = file.create();
-			if (result.failed())
-				return;
-			file.replaceWithText(vt.toXmlString());
-			clearEditors(patches, eName, eAuthor);
-			patches.select(author, name);
+				return promptOverwrite(file, patches, eName, eAuthor);
+			file = patchesDirectory.getChildFile(nameTxt);
+			saveForReal(file, patches, eName, eAuthor);
 		}
+
+		// ButtonSavePatch
 
 		ButtonSavePatch::ButtonSavePatch(Patches& patches,
 			TextEditor& editorName, TextEditor& editorAuthor) :
@@ -495,7 +630,7 @@ namespace gui
 				saveStuff(patches, editorName, editorAuthor);
 			};
 
-			makePaintButton(*this, makeButtonOnPaintSave(), "Click here to save this patch.");
+			makePaintButton(*this, makeButtonOnPaintSave(), "Wanna keep dis soundie foweva?? go on, cwick it! ^.^");
 		}
 
 		// ButtonReveal
@@ -563,7 +698,7 @@ namespace gui
 				Stroke stroke(lineThicc, Stroke::JointStyle::beveled, Stroke::EndCapStyle::butt);
 				setCol(g, CID::Interact);
 				g.strokePath(path, stroke);
-			}, "Click here to reveal the patches directory or the selected patch.");
+			}, "Hewe's da magic button to show patchies~ cwick it >.<");
 		}
 
 		// Browser
@@ -571,8 +706,8 @@ namespace gui
 		Browser::Browser(Utils& u) :
 			Comp(u),
 			title(u),
-			editorAuthor(u, "enter author"),
-			editorName(u, "enter name"),
+			editorAuthor(u, "enter authow~ "),
+			editorName(u, "entew name~ "),
 			patches(u),
 			saveButton(patches, editorName, editorAuthor),
 			revealButton(patches),
@@ -592,18 +727,18 @@ namespace gui
 			addAndMakeVisible(revealButton);
 			addAndMakeVisible(patches);
 
-			editorAuthor.tooltip = "Click here to enter the name of the author of the current patch.";
-			editorName.tooltip = "Click here to enter the name of the current patch.";
+			editorAuthor.tooltip = "Wanna add yoaw name, cutie? Just cwicky hewe~ " + ascii::rolfFace();
+			editorName.tooltip = "Gimme a cute name fow da patch~ just cwick hewe! UwU";
 			editorAuthor.labelEmpty.setText("Author");
 			editorName.labelEmpty.setText("Name");
 
 			makeTextLabel
 			(
 				title,
-				"Patch Browser",
+				ascii::pwesets(),
 				font::text(),
 				Just::centred, CID::Txt,
-				"You have entered the patch browser. no shit."
+				"Nyaa~ I'm Patchi-chan! :3 Weddy to bwing u da cutest soundies~ <3"
 			);
 			title.autoMaxHeight = true;
 
@@ -616,11 +751,6 @@ namespace gui
 				patches.updateFilter(nameText, authorText);
 			};
 
-			editorName.onEnter = [&]()
-			{
-				saveStuff(patches, editorName, editorAuthor);
-			};
-
 			editorAuthor.onKeyPress = [&](const KeyPress&)
 			{
 				const auto text = editorAuthor.txt;
@@ -628,6 +758,11 @@ namespace gui
 					return;
 				authorText = text;
 				patches.updateFilter(nameText, authorText);
+			};
+
+			editorName.onEnter = editorAuthor.onEnter = [&]()
+			{
+				save(false);
 			};
 
 			addEvt([&](evt::Type t, const void*)
@@ -708,17 +843,26 @@ namespace gui
 
 		void Browser::overwriteSelectedPatch()
 		{
-			const auto selectedPtr = getSelectedPatch();
-			if (!selectedPtr)
-				return;
-			editorName.txt = selectedPtr->name;
-			editorAuthor.txt = selectedPtr->author;
-			saveStuff(patches, editorName, editorAuthor);
+			save(true);
 		}
 
 		PatchesUpdatedFunc& Browser::getOnUpdate() noexcept
 		{
 			return patches.onUpdate;
+		}
+
+		void Browser::save(bool fromSelected)
+		{
+			if (fromSelected)
+			{
+				const auto selectedPtr = getSelectedPatch();
+				if (!selectedPtr)
+					return;
+				editorName.txt = selectedPtr->name;
+				editorAuthor.txt = selectedPtr->author;
+			}
+			
+			saveStuff(patches, editorName, editorAuthor);
 		}
 
 		// BrowserButton
@@ -731,7 +875,7 @@ namespace gui
 			makeTextButton
 			(
 				*this, "-",
-				"Click here to save, browse or manage patches.",
+				"Cwick hewe to meet Patchi-chan, youw pweset bwowsie~",
 				CID::Interact, Colour(0x000000)
 			);
 			label.autoMaxHeight = true;
@@ -743,7 +887,7 @@ namespace gui
 			};
 
 			auto& onUpdate = browser.getOnUpdate();
-			onUpdate = [&](const Patches&)
+			onUpdate = [&]()
 			{
 				reportUpdate = true;
 			};
@@ -792,7 +936,8 @@ namespace gui
 			Button(browser.utils)
 		{
 			const String text(next ? ">" : "<");
-			makeTextButton(*this, text, "Click here to load the " + text + " patch.", CID::Interact, Colour(0x00000000));
+			makeTextButton(*this, text, "Click here to load the " + String(next ? "next" : "previews") + " patch.",
+				CID::Interact, Colour(0x00000000));
 			label.autoMaxHeight = true;
 			onClick = [&b = browser, next](const Mouse&)
 			{

@@ -56,6 +56,7 @@ namespace param
 		Power,
 
 		// low level parameters
+		FFTOrder,
 		//
 		
 		NumParams
@@ -108,6 +109,7 @@ namespace param
 		Custom,
 		FilterType,
 		Vowel,
+		FFTOrder,
 		NumUnits
 	};
 
@@ -135,10 +137,13 @@ namespace param
 
 			bool getBool() const noexcept;
 
+			int getInt() const noexcept;
+
 			const Param& param;
 			float norm;
 			int numChannels;
 		};
+
 		using ParameterChangedCallback = std::function<void(CB)>;
 
 		struct Mod

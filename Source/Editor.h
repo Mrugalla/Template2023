@@ -1,4 +1,5 @@
 #pragma once
+#include "gui/Prompt.h"
 #include "gui/CompTexture.h"
 #include "gui/HeaderEditor.h"
 #include "gui/Tooltip.h"
@@ -35,6 +36,7 @@ namespace gui
         Callback callback;
         CompPower powerComp;
 		Editor2 editor2;
+        Prompt prompt;
 
         //JUCE_HEAVYWEIGHT_LEAK_DETECTOR(Editor)
     };

@@ -19,6 +19,8 @@ namespace gui
             ParameterEditorShowUp,
             ParameterEditorAssignParam,
 			ParameterEditorVanish,
+            PromptActivate,
+			PromptDeactivate,
             NumTypes
         };
 

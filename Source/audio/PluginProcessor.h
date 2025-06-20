@@ -1,9 +1,13 @@
 #pragma once
 #include "dsp/Transport.h"
 #include "../arch/Param.h"
+
+#include "dsp/PitchDetector.h"
+
 namespace dsp
 {
 	using Params = param::Params;
+	using Param = param::Param;
 	using PID = param::PID;
 	using State = arch::State;
 	using CB = param::Param::CB;
@@ -32,5 +36,10 @@ namespace dsp
 		void loadPatch(const State&);
 
 		double sampleRate;
+		//
+		PitchDetector pitchDetector;
+
+		float freqHz;
+		float phase, inc, gain;
 	};
 }

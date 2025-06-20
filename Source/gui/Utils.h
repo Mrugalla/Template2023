@@ -5,6 +5,18 @@
 
 namespace gui
 {
+	struct PromptButtonData
+	{
+		String text, tooltip;
+		std::function<void()> onClick;
+	};
+
+	struct PromptData
+	{
+		String message;
+		std::vector<PromptButtonData> buttons;
+	};
+
 	class Utils
 	{
 		static constexpr float DragSpeed = .5f;

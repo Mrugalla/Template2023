@@ -114,6 +114,7 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
+		case PID::FFTOrder: return "FFT Order";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -269,6 +270,7 @@ namespace param
 		case Unit::Legato: return "";
 		case Unit::Custom: return "";
 		case Unit::FilterType: return "";
+		case Unit::FFTOrder: return "";
 		default: return "";
 		}
 	}
@@ -283,6 +285,11 @@ namespace param
 	bool Param::CB::getBool() const noexcept
 	{
 		return norm > .5f;
+	}
+
+	int Param::CB::getInt() const noexcept
+	{
+		return static_cast<int>(std::round(denorm()));
 	}
 
 	// PARAM:
@@ -1001,6 +1008,17 @@ namespace param::strToVal
 				return p(text, 0.f);
 		};
 	}
+
+	StrToValFunc fftOrder()
+	{
+		return[p = parse()](const String& txt)
+		{
+			const auto text = txt.toLowerCase();
+			const auto val = p(text, 0.f);
+			const auto order = std::round(std::log2(val));
+			return order;
+		};
+	}
 }
 
 namespace param::valToStr
@@ -1227,7 +1245,6 @@ namespace param::valToStr
 	}
 #endif
 	
-
 	ValToStrFunc q()
 	{
 		return [](float v)
@@ -1304,6 +1321,15 @@ namespace param::valToStr
 				default: return String("");
 				}
 			};
+	}
+
+	ValToStrFunc fftOrder()
+	{
+		return [](float v)
+		{
+			const auto o = static_cast<int>(std::round(v));
+			return String(1 << o);
+		};
 	}
 }
 
@@ -1401,6 +1427,10 @@ namespace param
 		case Unit::FilterType:
 			valToStrFunc = valToStr::filterType();
 			strToValFunc = strToVal::filterType();
+			break;
+		case Unit::FFTOrder:
+			valToStrFunc = valToStr::fftOrder();
+			strToValFunc = strToVal::fftOrder();
 			break;
 		default:
 			valToStrFunc = [](float v) { return String(v); };
@@ -1538,7 +1568,8 @@ namespace param
 			params.push_back(makeParam(PID::Power, 1.f, makeRange::toggle(), Unit::Power, false));
 		}
 
-		// LOW LEVEL PARAMS:		
+		// LOW LEVEL PARAMS:	
+		params.push_back(makeParam(PID::FFTOrder, 9.f, makeRange::stepped(5, 14), Unit::FFTOrder, false));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)
