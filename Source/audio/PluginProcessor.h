@@ -39,7 +39,6 @@ namespace dsp
 		//
 		PitchDetector pitchDetector;
 
-		float freqHz;
-		float phase, inc, gain;
+		float phase, inc;
 	};
 }

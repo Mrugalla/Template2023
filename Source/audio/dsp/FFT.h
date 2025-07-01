@@ -19,9 +19,13 @@ namespace dsp
 		void operator()(float) noexcept;
 
 		// bins, size
-		std::function<void(const float*, int)> callback;
+		std::function<void(float*, int)> callback;
 
 		float getFreqRangePerBin(float) const noexcept;
+
+		float fcToBin(float) const noexcept;
+
+		float freqHzToBin(float, float) const noexcept;
 	private:
 		std::array<juce::dsp::FFT, RangeOrder> ffts;
 		std::array<float, MaxSize2> fifo;

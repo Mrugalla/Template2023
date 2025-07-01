@@ -11,12 +11,6 @@ namespace dsp
 			// startVal
 			Block(float = 0.f);
 
-			/*
-			// not sure if this method makes sense lol
-			// bufferOut, bufferIn, numSamples
-			void operator()(float*, float*, int) noexcept;
-			*/
-
 			// buffer, val, numSamples
 			void operator()(float*, float, int) noexcept;
 

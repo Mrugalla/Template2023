@@ -115,6 +115,7 @@ namespace param
 
 		// LOW LEVEL PARAMS:
 		case PID::FFTOrder: return "FFT Order";
+		case PID::Smooth: return "Smooth";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -1435,9 +1436,9 @@ namespace param
 		default:
 			valToStrFunc = [](float v) { return String(v); };
 			strToValFunc = [p = strToVal::parse()](const String& s)
-			{
-				return p(s, 0.f);
-			};
+				{
+					return p(s, 0.f);
+				};
 			break;
 		}
 
@@ -1506,7 +1507,10 @@ namespace param
 	{
 		return new Param(id, range, valDenormDefault, valToStrFunc, strToValFunc, Unit::Custom, modulatable);
 	}
+}
 
+namespace param
+{
 	// PARAMS
 
 	Params::Params(AudioProcessor& audioProcessor
@@ -1542,7 +1546,7 @@ namespace param
 			params.push_back(makeParam(PID::Delta, 0.f, makeRange::toggle(), Unit::Power));
 #endif
 #endif
-			params.push_back(makeParam(PID::GainOut, 0.f, makeRange::lin(-60, 0), Unit::Decibel));
+			params.push_back(makeParam(PID::GainOut, 0.f, makeRange::lin(-60, 12), Unit::Decibel));
 #if PPDHasStereoConfig
 			params.push_back(makeParam(PID::StereoConfig, 0.f, makeRange::toggle(), Unit::StereoConfig));
 #endif
@@ -1570,6 +1574,7 @@ namespace param
 
 		// LOW LEVEL PARAMS:	
 		params.push_back(makeParam(PID::FFTOrder, 9.f, makeRange::stepped(5, 14), Unit::FFTOrder, false));
+		params.push_back(makeParam(PID::Smooth, 0.f, makeRange::quad(0, 200, 2), Unit::Ms, true));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

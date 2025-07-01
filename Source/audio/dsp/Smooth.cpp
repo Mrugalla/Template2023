@@ -55,6 +55,15 @@ namespace dsp
 		template<bool AutoGain>
 		void Lowpass<AutoGain>::makeFromDecayInSamples(double d) noexcept
 		{
+			// decay in samples can not be negative, if it is you made a mistake before!
+			// look it up, bitch!
+			oopsie(d < 0.);
+			if (d == 0.)
+			{
+				a0 = 1.;
+				b1 = 0.;
+				return;
+			}
 			setX(std::exp(-1. / d));
 		}
 
@@ -203,14 +212,6 @@ namespace dsp
 			auto numSamples = endIdx - startIdx;
 			return operator()(&bufferOut[startIdx], numSamples);
 		}
-
-		/*
-		void Smooth::operator()(float* bufferOut, float* bufferIn, int numSamples) noexcept
-		{
-			block(bufferOut, bufferIn, numSamples);
-			lowpass(bufferOut, numSamples);
-		}
-		*/
 
 		bool Smooth::operator()(float* bufferOut, int numSamples) noexcept
 		{

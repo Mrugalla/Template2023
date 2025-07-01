@@ -3,10 +3,10 @@
 <JUCERPROJECT id="sxi35P" name="Template2023" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" companyName="Mrugalla"
               companyWebsite="https://github.com/Mrugalla" companyEmail="beatsbasteln@web.de"
-              pluginFormats="buildStandalone,buildVST3" pluginCharacteristicsValue="pluginWantsMidiIn"
-              pluginName="Template2023" pluginDesc="Plugin Template" pluginManufacturer="Mrugalla"
-              pluginManufacturerCode="BBBB" pluginCode="BBBB" pluginVST3Category="Fx"
-              pluginAAXCategory="0" pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
+              pluginFormats="buildStandalone,buildVST3" pluginName="Template2023"
+              pluginDesc="Plugin Template" pluginManufacturer="Mrugalla" pluginManufacturerCode="BBBB"
+              pluginCode="BBBB" pluginVST3Category="Fx" pluginAAXCategory="0"
+              pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
               defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=1&#10;PPDHasSidechain=0&#10;PPDHasLookahead=0&#10;PPDHasTuningEditor=0"
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'" maxBinaryFileSize="20971520">
   <MAINGROUP id="WYhkvs" name="Template2023">

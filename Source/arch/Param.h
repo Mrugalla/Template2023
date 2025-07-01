@@ -57,6 +57,7 @@ namespace param
 
 		// low level parameters
 		FFTOrder,
+		Smooth,
 		//
 		
 		NumParams

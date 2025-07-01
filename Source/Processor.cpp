@@ -365,10 +365,11 @@ namespace audio
             pluginProcessor(bufferViewBlock, midiSubBuffer, transport.info);
             transport(numSamples);
 
+#if JucePlugin_ProducesMidiOutput
             midiMessages.clear();
             for (auto it : midiSubBuffer)
                 midiMessages.addEvent(it.getMessage(), it.samplePosition + s);
-
+#endif
 #if PPDIO == PPDIOOut
 #if PPDIsNonlinear
             mixProcessor.join

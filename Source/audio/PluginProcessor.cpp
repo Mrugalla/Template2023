@@ -9,14 +9,17 @@ namespace dsp
 	) :
 		sampleRate(1.),
 		pitchDetector(),
-		freqHz(0.f),
 		phase(0.f),
-		inc(0.f),
-		gain(0.f)
+		inc(0.f)
 	{
 		params(PID::FFTOrder).callback = [&](CB cb)
 		{
 			pitchDetector.setFFTOrder(cb.getInt());
+		};
+
+		params(PID::Smooth).callback = [&](CB cb)
+		{
+			pitchDetector.setLPDecayInMs(cb.denorm());
 		};
 	}
 
@@ -27,19 +30,18 @@ namespace dsp
 	}
 
 	void PluginProcessor::operator()(ProcessorBufferView& view,
-		MidiBuffer&, const Transport::Info&) noexcept
+		MidiBuffer&, const Transport::Info& transport) noexcept
 	{
 		auto main = view.getSamplesMain(0);
 		for (auto s = 0; s < view.numSamples; ++s)
 		{
-			freqHz = pitchDetector(main[s]);
-			if (freqHz != 0.f)
+			const auto info = pitchDetector(main[s]);
+			auto gain = 0.f;
+			if (transport.playing && info.tonal)
 			{
 				gain = 1.f;
-				inc = freqHz / static_cast<float>(sampleRate);
+				inc = info.freqHz / static_cast<float>(sampleRate);
 			}
-			else
-				gain = 0.f;
 			phase += inc;
 			if (phase >= 1.f)
 				--phase;

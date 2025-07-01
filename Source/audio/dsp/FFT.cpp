@@ -44,6 +44,16 @@ namespace dsp
 		return sampleRate * sizeInv;
 	}
 
+	float FFT::fcToBin(float fc) const noexcept
+	{
+		return fc * size;
+	}
+
+	float FFT::freqHzToBin(float freqHz, float sampleRate) const noexcept
+	{
+		return fcToBin(math::freqHzToFc(freqHz, sampleRate));
+	}
+
 	void FFT::applyFFT() noexcept
 	{
 		idx = 0;
