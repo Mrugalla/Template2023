@@ -6,7 +6,7 @@ namespace gui
         Button(u),
         randomizables(),
         randFuncs(),
-        randomizer(*u.audioProcessor.state.props.getUserSettings(), id)
+        randomizer(*u.audioProcessor.state.props.getUserSettings(), id, false)
     {
         makePaintButton
         (

@@ -20,14 +20,16 @@ namespace dsp
 			float curVal;
 		};
 
-		// Float-Type, AutoGain 
-		template<bool AutoGain>
 		struct Lowpass
 		{
 			// decay
 			static double getXFromFc(double) noexcept;
 			// decay, Fs
+			static double getXFromSamples(double) noexcept;
+			// decay, Fs
 			static double getXFromHz(double, double) noexcept;
+			// decay, Fs
+			static double getXFromSecs(double, double) noexcept;
 			// decay, Fs
 			static double getXFromMs(double, double) noexcept;
 
@@ -35,16 +37,20 @@ namespace dsp
 			void makeFromDecayInSamples(double) noexcept;
 			// decay, Fs
 			void makeFromDecayInSecs(double, double) noexcept;
+			// decay, Fs
+			void makeFromDecayInSecs(float, float) noexcept;
 			// fc
 			void makeFromDecayInFc(double) noexcept;
 			// decay, Fs
 			void makeFromDecayInHz(double, double) noexcept;
 			// decay, Fs
 			void makeFromDecayInMs(double, double) noexcept;
+			// decay, Fs
+			void makeFromDecayInMs(float, float) noexcept;
 
-			void copyCutoffFrom(const Lowpass<AutoGain>&) noexcept;
+			void copyCutoffFrom(const Lowpass&) noexcept;
 
-			// startVal, autogain
+			// startVal
 			Lowpass(double = 0.);
 
 			// resets to startVal
@@ -73,9 +79,6 @@ namespace dsp
 
 			double processSample(float) noexcept;
 		};
-
-		using LowpassG0 = Lowpass<false>;
-		using LowpassG1 = Lowpass<true>;
 
 		struct Smooth
 		{
@@ -117,7 +120,7 @@ namespace dsp
 
 		protected:
 			Block block;
-			LowpassG0 lowpass;
+			Lowpass lowpass;
 			float cur, dest;
 			bool smoothing;
 		};

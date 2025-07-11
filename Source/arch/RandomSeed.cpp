@@ -2,23 +2,34 @@
 
 namespace arch
 {
-	RandSeed::RandSeed(Props& _props, const String& _id) :
+	RandSeed::RandSeed(Props& _props, const String& _id, bool loadState) :
 		user(_props),
 		id(_id.removeCharacters(" ").toLowerCase()),
 		mt(rd()),
 		dist(0.f, 1.f),
-		seed(user.getIntValue(id, 0))
+		seed(0)
 	{
-		if (seed != 0)
-			return;
+		const auto oSeed = user.getIntValue(id, 0);
+		if(!loadState || oSeed == 0)
+			randomizeSeed();
+		else
+			setSeed(oSeed);
+	}
+
+	void RandSeed::randomizeSeed()
+	{
 		RandJUCE rand;
-		seed = rand.nextInt();
-		user.setValue(id, seed);
+		setSeed(rand.nextInt());
 	}
 
 	void RandSeed::updateSeed(bool seedUp)
 	{
-		seed += seedUp ? 1 : -1;
+		setSeed(seedUp ? seed + 1 : seed - 1);
+	}
+
+	void RandSeed::setSeed(int i)
+	{
+		seed = i;
 		mt.seed(seed);
 		user.setValue(id, seed);
 	}

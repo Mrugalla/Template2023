@@ -29,34 +29,41 @@ namespace dsp
 
 		// Lowpass static
 
-		template<bool AutoGain>
-		double Lowpass<AutoGain>::getXFromFc(double fc) noexcept
+		double Lowpass::getXFromFc(double fc) noexcept
 		{
 			return std::exp(-TauD * fc);
 		}
 
-		template<bool AutoGain>
-		double Lowpass<AutoGain>::getXFromHz(double hz, double Fs) noexcept
+		double Lowpass::getXFromHz(double hz, double Fs) noexcept
 		{
 			return getXFromFc(hz / Fs);
 		}
 
-		template<bool AutoGain>
-		double Lowpass<AutoGain>::getXFromMs(double ms, double Fs) noexcept
+		double Lowpass::getXFromSamples(double lengthSamples) noexcept
 		{
-			const auto sec = ms * .001;
-			const auto secSamples = sec * Fs;
-			const auto fc = 1. / secSamples;
-			return getXFromFc(fc);
+			const auto dInv = -1. / lengthSamples;
+			const auto dExp = std::exp(dInv);
+			return dExp;
+		}
+
+		double Lowpass::getXFromSecs(double secs, double Fs) noexcept
+		{
+			const auto lengthSamples = secs * Fs;
+			return getXFromSamples(lengthSamples);
+		}
+
+		double Lowpass::getXFromMs(double ms, double Fs) noexcept
+		{
+			const auto secs = ms * .001;
+			return getXFromSecs(secs, Fs);
 		}
 
 		// Lowpass
 
-		template<bool AutoGain>
-		void Lowpass<AutoGain>::makeFromDecayInSamples(double d) noexcept
+		void Lowpass::makeFromDecayInSamples(double d) noexcept
 		{
 			// decay in samples can not be negative, if it is you made a mistake before!
-			// look it up, bitch!
+			// look it up, biatch!
 			oopsie(d < 0.);
 			if (d == 0.)
 			{
@@ -64,69 +71,71 @@ namespace dsp
 				b1 = 0.;
 				return;
 			}
-			setX(std::exp(-1. / d));
+			const auto dInv = -1. / d;
+			const auto dExp = std::exp(dInv);
+			setX(dExp);
 		}
 
-		template<bool AutoGain>
-		void Lowpass<AutoGain>::makeFromDecayInSecs(double d, double Fs) noexcept
-		{
-			makeFromDecayInSamples(d * Fs);
-		}
-
-		template<bool AutoGain>
-		void Lowpass<AutoGain>::makeFromDecayInFc(double fc) noexcept
+		void Lowpass::makeFromDecayInFc(double fc) noexcept
 		{
 			setX(getXFromFc(fc));
 		}
 
-		template<bool AutoGain>
-		void Lowpass<AutoGain>::makeFromDecayInHz(double hz, double Fs) noexcept
+		void Lowpass::makeFromDecayInHz(double hz, double Fs) noexcept
 		{
 			setX(getXFromHz(hz, Fs));
 		}
 
-		template<bool AutoGain>
-		void Lowpass<AutoGain>::makeFromDecayInMs(double d, double Fs) noexcept
+		void Lowpass::makeFromDecayInSecs(double d, double Fs) noexcept
 		{
-			makeFromDecayInSamples(d * Fs * .001);
+			makeFromDecayInSamples(d * Fs);
 		}
 
-		template<bool AutoGain>
-		void Lowpass<AutoGain>::copyCutoffFrom(const Lowpass<AutoGain>& other) noexcept
+		void Lowpass::makeFromDecayInSecs(float d, float Fs) noexcept
+		{
+			makeFromDecayInSecs(static_cast<double>(d), static_cast<double>(Fs));
+		}
+
+		void Lowpass::makeFromDecayInMs(double d, double Fs) noexcept
+		{
+			makeFromDecayInSecs(d * .001, Fs);
+		}
+
+		void Lowpass::makeFromDecayInMs(float d, float Fs) noexcept
+		{
+			makeFromDecayInMs(static_cast<double>(d), static_cast<double>(Fs));
+		}
+
+		void Lowpass::copyCutoffFrom(const Lowpass& other) noexcept
 		{
 			a0 = other.a0;
 			b1 = other.b1;
 		}
 
-		template<bool AutoGain>
-		Lowpass<AutoGain>::Lowpass(double _startVal) :
+		Lowpass::Lowpass(double _startVal) :
 			a0(1.),
 			b1(0.),
 			y1(_startVal),
 			startVal(_startVal)
 		{}
 
-		template<bool AutoGain>
-		void Lowpass<AutoGain>::reset()
+		void Lowpass::reset()
 		{
 			reset(startVal);
 		}
 
-		template<bool AutoGain>
-		void Lowpass<AutoGain>::reset(double v)
+		void Lowpass::reset(double v)
 		{
 			y1 = v;
 		}
 
-		template<bool AutoGain>
-		void Lowpass<AutoGain>::operator()(double* buffer, double val, int numSamples) noexcept
+		void Lowpass::operator()(double* buffer, double val, int numSamples) noexcept
 		{
 			for (auto s = 0; s < numSamples; ++s)
 				buffer[s] = processSample(val);
 		}
 
-		template<bool AutoGain>
-		void Lowpass<AutoGain>::operator()(double* buffer, int numSamples) noexcept
+		void Lowpass::operator()(double* buffer, int numSamples) noexcept
 		{
 			for (auto s = 0; s < numSamples; ++s)
 			{
@@ -135,8 +144,7 @@ namespace dsp
 			}
 		}
 
-		template<bool AutoGain>
-		void Lowpass<AutoGain>::operator()(float* buffer, int numSamples) noexcept
+		void Lowpass::operator()(float* buffer, int numSamples) noexcept
 		{
 			for (auto s = 0; s < numSamples; ++s)
 			{
@@ -145,38 +153,27 @@ namespace dsp
 			}
 		}
 
-		template<bool AutoGain>
-		double Lowpass<AutoGain>::operator()(double sample) noexcept
+		double Lowpass::operator()(double sample) noexcept
 		{
 			return processSample(sample);
 		}
 
-		template<bool AutoGain>
-		double Lowpass<AutoGain>::processSample(double x0) noexcept
+		double Lowpass::processSample(double x0) noexcept
 		{
 			y1 = x0 * a0 + y1 * b1;
 			return y1;
 		}
 
-		template<bool AutoGain>
-		double Lowpass<AutoGain>::processSample(float x0) noexcept
+		double Lowpass::processSample(float x0) noexcept
 		{
 			return processSample(static_cast<double>(x0));
 		}
 
-		template<bool AutoGain>
-		void Lowpass<AutoGain>::setX(double x) noexcept
+		void Lowpass::setX(double x) noexcept
 		{
 			a0 = 1. - x;
-
-			if constexpr (AutoGain)
-				b1 = x * (1. - a0);
-			else
-				b1 = x;
+			b1 = x;
 		}
-
-		template struct Lowpass<true>;
-		template struct Lowpass<false>;
 
 		// Smooth
 

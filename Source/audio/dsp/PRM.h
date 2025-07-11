@@ -74,7 +74,7 @@ namespace dsp
 		operator float() const noexcept;
 
 		float startVal;
-		smooth::LowpassG0 lp;
+		smooth::Lowpass lp;
 		PRMInfo info;
 	};
 

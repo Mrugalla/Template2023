@@ -11,8 +11,12 @@ namespace arch
 		using Props = juce::PropertiesFile;
 		using RandJUCE = juce::Random;
 
-		// user props, id
-		RandSeed(Props&, const String&);
+		// user props, id, loadState
+		RandSeed(Props&, const String&, bool);
+
+		void randomizeSeed();
+
+		void setSeed(int);
 
 		// seedUp
 		void updateSeed(bool);

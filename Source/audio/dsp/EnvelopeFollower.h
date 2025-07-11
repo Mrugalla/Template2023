@@ -31,7 +31,7 @@ namespace dsp
 		std::array<float, BlockSize> buffer;
 		const double MinDb;
 		PRM gainPRM;
-		smooth::LowpassG0 envLP, smooth;
+		smooth::Lowpass envLP, smooth;
 		double sampleRate, smoothMs;
 		bool attackState;
 

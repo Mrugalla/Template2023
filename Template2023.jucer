@@ -71,6 +71,8 @@
           <FILE id="OeEMYB" name="Filter.h" compile="0" resource="0" file="Source/audio/dsp/Filter.h"/>
           <FILE id="mzUpHS" name="Gain.cpp" compile="1" resource="0" file="Source/audio/dsp/Gain.cpp"/>
           <FILE id="DPhUQD" name="Gain.h" compile="0" resource="0" file="Source/audio/dsp/Gain.h"/>
+          <FILE id="lvVfiD" name="Gate.cpp" compile="1" resource="0" file="Source/audio/dsp/Gate.cpp"/>
+          <FILE id="N79acs" name="Gate.h" compile="0" resource="0" file="Source/audio/dsp/Gate.h"/>
           <FILE id="jiceou" name="KeySelector.cpp" compile="1" resource="0" file="Source/audio/dsp/KeySelector.cpp"/>
           <FILE id="V9wed0" name="KeySelector.h" compile="0" resource="0" file="Source/audio/dsp/KeySelector.h"/>
           <FILE id="gGuXR3" name="MidSide.cpp" compile="1" resource="0" file="Source/audio/dsp/MidSide.cpp"/>

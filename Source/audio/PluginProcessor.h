@@ -2,8 +2,6 @@
 #include "dsp/Transport.h"
 #include "../arch/Param.h"
 
-#include "dsp/PitchDetector.h"
-
 namespace dsp
 {
 	using Params = param::Params;
@@ -25,8 +23,8 @@ namespace dsp
 		// sampleRate
 		void prepare(double);
 
-		// samples, midiBuffer, transport
-		void operator()(ProcessorBufferView& buffer, MidiBuffer&, const Transport::Info&) noexcept;
+		// butter view, midiBuffer, transport
+		void operator()(ProcessorBufferView&, MidiBuffer&, const Transport::Info&) noexcept;
 		
 		// samples, midiBuffer, numChannels, numSamples
 		void processBlockBypassed(float**, MidiBuffer&, int, int) noexcept;
@@ -37,8 +35,5 @@ namespace dsp
 
 		double sampleRate;
 		//
-		PitchDetector pitchDetector;
-
-		float phase, inc;
 	};
 }

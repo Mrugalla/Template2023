@@ -88,7 +88,7 @@ namespace dsp
 
 		double operator()(double) noexcept override;
 	protected:
-		smooth::LowpassG0 lp;
+		smooth::Lowpass lp;
 	};
 
 	template<class ResoClass>

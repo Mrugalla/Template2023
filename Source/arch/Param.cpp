@@ -114,8 +114,6 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
-		case PID::FFTOrder: return "FFT Order";
-		case PID::Smooth: return "Smooth";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -1572,9 +1570,7 @@ namespace param
 			params.push_back(makeParam(PID::Power, 1.f, makeRange::toggle(), Unit::Power, false));
 		}
 
-		// LOW LEVEL PARAMS:	
-		params.push_back(makeParam(PID::FFTOrder, 9.f, makeRange::stepped(5, 14), Unit::FFTOrder, false));
-		params.push_back(makeParam(PID::Smooth, 0.f, makeRange::quad(0, 200, 2), Unit::Ms, true));
+		// LOW LEVEL PARAMS:
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

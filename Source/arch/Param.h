@@ -56,8 +56,6 @@ namespace param
 		Power,
 
 		// low level parameters
-		FFTOrder,
-		Smooth,
 		//
 		
 		NumParams
