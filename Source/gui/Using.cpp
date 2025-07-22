@@ -19,7 +19,7 @@ namespace gui
 		Font getFont(const char* ttf, size_t size)
 		{
 			const auto typeface = juce::Typeface::createSystemTypefaceFor(ttf, size);
-			const FontOptions fontOptions(typeface);
+			const auto fontOptions = FontOptions(typeface);
 			return Font(fontOptions);
 		}
 

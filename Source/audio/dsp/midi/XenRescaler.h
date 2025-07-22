@@ -19,7 +19,7 @@ namespace dsp
 
 		XenRescaler();
 
-		/* midiIn, midiOutAdded, xen, basePitch, masterTune, pitchbendRange, type */
+		// midiIn, midiOutAdded, xen, basePitch, masterTune, pitchbendRange, type
 		void operator()(MidiBuffer&, MidiBuffer&,
 			double, double, double, double, Type);
 
@@ -27,11 +27,11 @@ namespace dsp
 		MidiMessage curNote;
 		NoteOnFuncs noteOnFuncs;
 
-		/* midiOut, velo, freq, pitchbendRange, channel, ts */
+		// midiOut, velo, freq, pitchbendRange, channel, ts
 		void processNoteOn(MidiBuffer&, float,
 			double, double, int, int);
 
-		/* midiOut, ts */
+		// midiOut, ts
 		void processNoteOff(MidiBuffer&, int);
 	};
 
@@ -41,7 +41,7 @@ namespace dsp
 
 		XenRescalerMPE(MPESplit&);
 
-		/* midi, xen, basePitch, masterTune, pitchbendRange, numSamples, type */
+		// midi, xen, basePitch, masterTune, pitchbendRange, numSamples, type
 		void operator()(MidiBuffer&,
 			double, double, double,
 			double, int, Type);

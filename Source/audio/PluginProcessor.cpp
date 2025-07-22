@@ -7,13 +7,15 @@ namespace dsp
 		, XenManager& xen
 #endif
 	) :
-		sampleRate(1.)
+		sampleRate(1.),
+		freqShifter()
 	{
 	}
 
 	void PluginProcessor::prepare(double _sampleRate)
 	{
 		sampleRate = _sampleRate;
+		freqShifter.configure(sampleRate, BlockSize, 2);
 	}
 
 	void PluginProcessor::operator()(ProcessorBufferView&,

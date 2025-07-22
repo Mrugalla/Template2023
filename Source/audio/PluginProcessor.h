@@ -2,6 +2,8 @@
 #include "dsp/Transport.h"
 #include "../arch/Param.h"
 
+#include "../libs/signalsmith/include/signalsmith-basics/freq-shifter.h"
+
 namespace dsp
 {
 	using Params = param::Params;
@@ -35,5 +37,6 @@ namespace dsp
 
 		double sampleRate;
 		//
+		signalsmith::basics::FreqShifterDouble freqShifter;
 	};
 }

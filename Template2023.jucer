@@ -15,6 +15,7 @@
         <FILE id="vIjA3L" name="FormulaParser.cpp" compile="1" resource="0"
               file="Source/arch/FormulaParser.cpp"/>
         <FILE id="jHyQmH" name="FormulaParser.h" compile="0" resource="0" file="Source/arch/FormulaParser.h"/>
+        <FILE id="wRJ4tO" name="Math.cpp" compile="1" resource="0" file="Source/arch/Math.cpp"/>
         <FILE id="z1ElGl" name="Math.h" compile="0" resource="0" file="Source/arch/Math.h"/>
         <FILE id="rXyZ9c" name="Param.cpp" compile="1" resource="0" file="Source/arch/Param.cpp"/>
         <FILE id="CFxWXi" name="Param.h" compile="0" resource="0" file="Source/arch/Param.h"/>
@@ -229,6 +230,39 @@
         <FILE id="P94380" name="Utils.h" compile="0" resource="0" file="Source/gui/Utils.h"/>
         <FILE id="P1fmxN" name="VoiceGrid.cpp" compile="1" resource="0" file="Source/gui/VoiceGrid.cpp"/>
         <FILE id="s5XjOb" name="VoiceGrid.h" compile="0" resource="0" file="Source/gui/VoiceGrid.h"/>
+      </GROUP>
+      <GROUP id="{40E95A58-6080-098A-78CC-EDCB00164472}" name="libs">
+        <GROUP id="{C0A18954-09A8-F0AE-58A3-3F56A37B97B4}" name="signalsmith">
+          <GROUP id="{709A45B8-5B50-C484-DBD7-B38FE73C8C15}" name="include">
+            <GROUP id="{56B53FE0-D29A-1D39-ADF7-FD406DBF6D7A}" name="signalsmith-basics">
+              <FILE id="lpFxMV" name="analyser.h" compile="0" resource="0" file="Source/libs/signalsmith/include/signalsmith-basics/analyser.h"/>
+              <FILE id="iBDunt" name="freq-shifter.h" compile="0" resource="0" file="Source/libs/signalsmith/include/signalsmith-basics/freq-shifter.h"/>
+            </GROUP>
+            <GROUP id="{48D970B8-7E8D-9385-CD8C-54CEC9E10727}" name="stfx">
+              <FILE id="M4OUkw" name="stfx-library.h" compile="0" resource="0" file="Source/libs/signalsmith/include/stfx/stfx-library.h"/>
+            </GROUP>
+          </GROUP>
+          <GROUP id="{882936C3-FE55-DD0D-836A-DC1C02B26E44}" name="modules">
+            <GROUP id="{244F3B29-4DFA-E3DF-539C-6B4269FC1D45}" name="dsp"/>
+            <GROUP id="{558FFF7B-7F5E-4DE0-518D-A996DDC3E104}" name="hilbert-iir">
+              <GROUP id="{AB570C94-47C2-D525-23BF-7111FD23A21D}" name="design">
+                <FILE id="agSKDI" name="main.cpp" compile="1" resource="0" file="Source/libs/signalsmith/modules/hilbert-iir/design/main.cpp"/>
+                <FILE id="Ijhmkg" name="Makefile" compile="0" resource="1" file="Source/libs/signalsmith/modules/hilbert-iir/design/Makefile"/>
+                <FILE id="bBwHCz" name="plot.h" compile="0" resource="0" file="Source/libs/signalsmith/modules/hilbert-iir/design/plot.h"/>
+                <FILE id="Mv0CFS" name="simple-fft.h" compile="0" resource="0" file="Source/libs/signalsmith/modules/hilbert-iir/design/simple-fft.h"/>
+              </GROUP>
+              <FILE id="TqlHMD" name="hilbert.h" compile="0" resource="0" file="Source/libs/signalsmith/modules/hilbert-iir/hilbert.h"/>
+              <FILE id="rG64ud" name="LICENSE.txt" compile="0" resource="1" file="Source/libs/signalsmith/modules/hilbert-iir/LICENSE.txt"/>
+              <FILE id="VzloQX" name="README.md" compile="0" resource="1" file="Source/libs/signalsmith/modules/hilbert-iir/README.md"/>
+              <FILE id="YN6tjC" name="SUPPORT.txt" compile="0" resource="1" file="Source/libs/signalsmith/modules/hilbert-iir/SUPPORT.txt"/>
+            </GROUP>
+            <GROUP id="{FB84A489-6782-29C8-A093-50AE6BDC016B}" name="linear"/>
+          </GROUP>
+          <FILE id="Ou1vvE" name="CMakeLists.txt" compile="0" resource="1" file="Source/libs/signalsmith/CMakeLists.txt"/>
+          <FILE id="mn26Bp" name="LICENSE.txt" compile="0" resource="1" file="Source/libs/signalsmith/LICENSE.txt"/>
+          <FILE id="Ffm9Sd" name="README.md" compile="0" resource="1" file="Source/libs/signalsmith/README.md"/>
+          <FILE id="oINV7h" name="SUPPORT.txt" compile="0" resource="1" file="Source/libs/signalsmith/SUPPORT.txt"/>
+        </GROUP>
       </GROUP>
       <GROUP id="{837EECC8-4BF8-2F21-8382-C9CD494249C4}" name="srcs">
         <GROUP id="{14A92D60-DB1D-C17C-00AE-F19CC06658AD}" name="WDXL">

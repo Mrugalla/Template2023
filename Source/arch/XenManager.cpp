@@ -100,29 +100,6 @@ namespace arch
 		return info;
 	}
 
-	/*
-	double XenManager::getXen() const noexcept
-	{
-		return info.xen;
-	}
-
-	double XenManager::getPitchbendRange() const noexcept
-	{
-		return info.pitchbendRange;
-	}
-
-	double XenManager::getAnchor() const noexcept
-	{
-		return info.anchor;
-	}
-
-	double XenManager::getMasterTune() const noexcept
-	{
-		return info.masterTune;
-	}
-	*/
-
-
 	template float XenManager::Info::noteToFreqHz<float>(float note) const noexcept;
 	template double XenManager::Info::noteToFreqHz<double>(double note) const noexcept;
 
