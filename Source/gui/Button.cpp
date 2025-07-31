@@ -132,7 +132,10 @@ namespace gui
 	{
 		utils.giveDAWKeyboardFocus();
 
-		if (mouse.mouseWasDraggedSinceMouseDown())
+		const auto drag = mouse.getOffsetFromDragStart().toFloat();
+		const auto length = LineF({ 0.f, 0.f }, drag).getLength();
+		const auto threshold = utils.thicc * DragThreshold;
+		if (length > threshold)
 			return;
 
 		callbacks[kClickAniCB].start(1.f);
