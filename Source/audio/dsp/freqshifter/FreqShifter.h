@@ -8,7 +8,8 @@ namespace dsp
 	class HilbertTransform
 	{
 		static constexpr int Order = 12;
-		static constexpr double Direct = 0.000262057212648;
+		static constexpr double Direct = 0.000262057212648 * 2.;
+		static constexpr double PassbandGain = 2.;
 		using ArrayD = std::array<double, Order>;
 		using ArrayC = std::array<ComplexD, Order>;
 
@@ -62,18 +63,17 @@ namespace dsp
 			coeffsI(),
 			polesR(),
 			polesI(),
-			states(),
-			direct(0.),
-			passbandGain(2.)
+			states()
 		{ }
 
-		void prepare(double sampleRateInv) noexcept
+		void prepare(double& direct, double sampleRateInv) noexcept
 		{
 			const auto freqFactor = std::min(0.46, 20000. * sampleRateInv);
-			direct = Direct * 2. * passbandGain * freqFactor;
+			const auto ffGain = PassbandGain * freqFactor;
+			direct = Direct * ffGain;
 			for (int i = 0; i < Order; ++i)
 			{
-				ComplexD coeff = Coeffs[i] * freqFactor * passbandGain;
+				ComplexD coeff = Coeffs[i] * ffGain;
 				coeffsR[i] = coeff.real();
 				coeffsI[i] = coeff.imag();
 				ComplexD pole = std::exp(Poles[i] * freqFactor);
@@ -88,7 +88,7 @@ namespace dsp
 				state.reset();
 		}
 
-		ComplexD operator()(double x, int ch) noexcept
+		ComplexD operator()(double x, double direct, int ch) noexcept
 		{
 			// Really we're just doing: state[i] = state[i]*poles[i] + x*coeffs[i]
 			// but std::complex is slow without -ffast-math, so we've unwrapped it
@@ -111,20 +111,21 @@ namespace dsp
 			return { resultR, resultI };
 		}
 
-		ComplexD operator()(float x, int ch) noexcept
+		ComplexD operator()(float x, double direct, int ch) noexcept
 		{
-			return operator()(static_cast<double>(x), ch);
+			return operator()(static_cast<double>(x), direct, ch);
 		}
 
-		ComplexD operator()(ComplexD x, int ch) noexcept
+		ComplexD operator()(ComplexD x, double direct, int ch) noexcept
 		{
-			State state = states[ch], newState;
+			State& state = states[ch];
+			State newState;
 			for (int i = 0; i < Order; ++i)
 			{
 				newState.real[i] = state.real[i] * polesR[i] - state.imag[i] * polesI[i] + x.real() * coeffsR[i] - x.imag() * coeffsI[i];
 				newState.imag[i] = state.real[i] * polesI[i] + state.imag[i] * polesR[i] + x.real() * coeffsI[i] + x.imag() * coeffsR[i];
 			}
-			states[ch] = newState;
+			state = newState;
 
 			auto resultR = x.real() * direct;
 			auto resultI = x.imag() * direct;
@@ -138,23 +139,10 @@ namespace dsp
 	private:
 		ArrayD coeffsR, coeffsI, polesR, polesI;
 		std::array<State, 2> states;
-		double direct, passbandGain;
 	};
 
 	class FreqShifter
 	{
-		/*
-		double unitToShiftHz(double x) noexcept
-		{
-			return 100. * x / (1.1 - x * x);
-		}
-
-		double shiftHzToUnit(double y) noexcept
-		{
-			return (std::sqrt(2500. + 1.1 * y * y) - 50.) / y;
-		}
-		*/
-		
 		struct PhasorC
 		{
 			PhasorC(double _angle = 1., double _phase = 0.) noexcept :
@@ -174,11 +162,11 @@ namespace dsp
 			ComplexD angle;
 			double phase;
 		};
-
 	public:
 		FreqShifter() :
 			hilbert(),
 			phasors(),
+			direct(0.),
 			sampleRateInv(1.),
 			shift(13.),
 			phaseStep(0.),
@@ -190,7 +178,7 @@ namespace dsp
 		{
 			sampleRateInv = 1. / sampleRate;
 			setShift(shift);
-			hilbert.prepare(sampleRateInv);
+			hilbert.prepare(direct, sampleRateInv);
 			reset();
 		}
 
@@ -224,7 +212,7 @@ namespace dsp
 				{
 					auto smpls = view.getSamplesMain(ch);
 					const auto x = static_cast<double>(smpls[i]);
-					const auto analyticSignal = phasors[1].angle * hilbert(x * phasors[0].angle, ch);
+					const auto analyticSignal = phasors[1].angle * hilbert(x * phasors[0].angle, direct, ch);
 					const auto y = static_cast<float>(analyticSignal.real());
 					smpls[i] = y;
 				}
@@ -232,11 +220,10 @@ namespace dsp
 				phasors[idx](phaseStep);
 			}
 		}
-
 	private:
 		HilbertTransform hilbert;
 		std::array<PhasorC, 2> phasors;
-		double sampleRateInv;
+		double direct, sampleRateInv;
 		//
 		double shift, phaseStep;
 		int reflect;
