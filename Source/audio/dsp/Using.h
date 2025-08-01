@@ -3,9 +3,12 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include "../../arch/Math.h"
 #include <array>
+#include <complex>
 
 namespace dsp
 {
+	using ComplexF = std::complex<float>;
+	using ComplexD = std::complex<double>;
 	using MidiBuffer = juce::MidiBuffer;
 	using MidiMessage = juce::MidiMessage;
 	using SIMD = juce::FloatVectorOperations;

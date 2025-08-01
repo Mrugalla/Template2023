@@ -9,40 +9,39 @@ namespace dsp
 	{
 		static constexpr int Order = 12;
 		static constexpr double Direct = 0.000262057212648;
-		using Complex = std::complex<double>;
 		using ArrayD = std::array<double, Order>;
 		using ArrayC = std::array<Complex, Order>;
 
 		static constexpr ArrayC Coeffs =
 		{
-			Complex{-0.000224352093802, 0.00543499018201},
-			Complex{0.0107500557815, -0.0173890685681},
-			Complex{-0.0456795873917, 0.0229166931429},
-			Complex{0.11282500582, 0.00278413661237},
-			Complex{-0.208067578452, -0.104628958675},
-			Complex{0.28717837501, 0.33619239719},
-			Complex{-0.254675294431, -0.683033899655},
-			Complex{0.0481081835026, 0.954061589374},
-			Complex{0.227861357867, -0.891273574569},
-			Complex{-0.365411839137, 0.525088317271},
-			Complex{0.280729061131, -0.155131206606},
-			Complex{-0.0935061787728, 0.00512245855404}
+			ComplexD{-0.000224352093802, 0.00543499018201},
+			ComplexD{0.0107500557815, -0.0173890685681},
+			ComplexD{-0.0456795873917, 0.0229166931429},
+			ComplexD{0.11282500582, 0.00278413661237},
+			ComplexD{-0.208067578452, -0.104628958675},
+			ComplexD{0.28717837501, 0.33619239719},
+			ComplexD{-0.254675294431, -0.683033899655},
+			ComplexD{0.0481081835026, 0.954061589374},
+			ComplexD{0.227861357867, -0.891273574569},
+			ComplexD{-0.365411839137, 0.525088317271},
+			ComplexD{0.280729061131, -0.155131206606},
+			ComplexD{-0.0935061787728, 0.00512245855404}
 		};
 
 		static constexpr ArrayC Poles =
 		{
-			Complex{-0.00495335976478, 0.0092579876872},
-			Complex{-0.017859491302, 0.0273493725543},
-			Complex{-0.0413714373155, 0.0744756910287},
-			Complex{-0.0882148408885, 0.178349677457},
-			Complex{-0.17922965812, 0.39601340223},
-			Complex{-0.338261800753, 0.829229533354},
-			Complex{-0.557688699732, 1.61298538328},
-			Complex{-0.735157736148, 2.79987398682},
-			Complex{-0.719057381172, 4.16396166128},
-			Complex{-0.517871025209, 5.29724826804},
-			Complex{-0.280197469471, 5.99598602388},
-			Complex{-0.0852751354531, 6.3048492377}
+			ComplexD{-0.00495335976478, 0.0092579876872},
+			ComplexD{-0.017859491302, 0.0273493725543},
+			ComplexD{-0.0413714373155, 0.0744756910287},
+			ComplexD{-0.0882148408885, 0.178349677457},
+			ComplexD{-0.17922965812, 0.39601340223},
+			ComplexD{-0.338261800753, 0.829229533354},
+			ComplexD{-0.557688699732, 1.61298538328},
+			ComplexD{-0.735157736148, 2.79987398682},
+			ComplexD{-0.719057381172, 4.16396166128},
+			ComplexD{-0.517871025209, 5.29724826804},
+			ComplexD{-0.280197469471, 5.99598602388},
+			ComplexD{-0.0852751354531, 6.3048492377}
 		};
 
 		struct State
@@ -90,7 +89,7 @@ namespace dsp
 				state.reset();
 		}
 
-		Complex operator()(double x, int ch) noexcept
+		ComplexD operator()(double x, int ch) noexcept
 		{
 			// Really we're just doing: state[i] = state[i]*poles[i] + x*coeffs[i]
 			// but std::complex is slow without -ffast-math, so we've unwrapped it
@@ -112,12 +111,12 @@ namespace dsp
 			return { resultR, resultI };
 		}
 
-		Complex operator()(float x, int ch) noexcept
+		ComplexD operator()(float x, int ch) noexcept
 		{
 			return operator()(static_cast<double>(x), ch);
 		}
 
-		Complex operator()(Complex x, int ch) noexcept
+		ComplexD operator()(ComplexD x, int ch) noexcept
 		{
 			State state = states[ch], newState;
 			for (int i = 0; i < Order; ++i)
@@ -129,7 +128,8 @@ namespace dsp
 
 			auto resultR = x.real() * direct;
 			auto resultI = x.imag() * direct;
-			for (int i = 0; i < Order; ++i) {
+			for (int i = 0; i < Order; ++i)
+			{
 				resultR += newState.real[i];
 				resultI += newState.imag[i];
 			}
@@ -143,12 +143,11 @@ namespace dsp
 
 	class FreqShifter
 	{
-		using Complex = std::complex<double>;
-
 		double unitToShiftHz(double x) noexcept
 		{
 			return 100. * x / (1.1 - x * x);
 		}
+
 		double shiftHzToUnit(double y) noexcept
 		{
 			return (std::sqrt(2500. + 1.1 * y * y) - 50.) / y;
@@ -193,18 +192,21 @@ namespace dsp
 					// In general, this may alias at the high end when shifting up
 					// but our Hilbert has a 20kHz lowpass, so that's enough
 					// room for our maximum +1000Hz shift
-					const Complex y = shiftAfter * hilbert(x * shiftBefore, ch);
-					smpls[i] = (float)y.real();
+					const auto analyticSignal = shiftAfter * hilbert(x * shiftBefore, ch);
+					const auto y = static_cast<double>(analyticSignal.real());
+					smpls[i] = y;
 				}
 				const bool shiftInput = (phaseStep < 0.) ? noReflectDown : duplicateUp;
 				if (shiftInput)
 				{
 					shiftPhaseBefore += phaseStep;
-					shiftBefore = std::polar(1., shiftPhaseBefore * TauD);
+					const auto angle = shiftPhaseBefore * TauD;
+					shiftBefore = std::polar(1., angle);
 				}
 				else
 				{
 					shiftPhaseAfter += phaseStep;
+					const auto angle = shiftPhaseBefore * TauD;
 					shiftAfter = std::polar(1., shiftPhaseAfter * TauD);
 				}
 			}
@@ -215,7 +217,7 @@ namespace dsp
 	private:
 		HilbertTransform hilbert;
 		double shiftPhaseBefore, shiftPhaseAfter, sampleRateInv;
-		Complex shiftBefore, shiftAfter;
+		ComplexD shiftBefore, shiftAfter;
 		//
 		double shift;
 		int reflect;
