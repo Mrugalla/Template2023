@@ -2,7 +2,7 @@
 #include "dsp/Transport.h"
 #include "../arch/Param.h"
 
-#include "../libs/signalsmith/include/signalsmith-basics/freq-shifter.h"
+#include "dsp/freqshifter/FreqShifter.h"
 
 namespace dsp
 {
@@ -37,6 +37,6 @@ namespace dsp
 
 		double sampleRate;
 		//
-		signalsmith::basics::FreqShifterDouble freqShifter;
+		FreqShifter freqShifter;
 	};
 }

@@ -15,12 +15,13 @@ namespace dsp
 	void PluginProcessor::prepare(double _sampleRate)
 	{
 		sampleRate = _sampleRate;
-		freqShifter.configure(sampleRate, BlockSize, 2);
+		freqShifter.prepare(sampleRate);
 	}
 
-	void PluginProcessor::operator()(ProcessorBufferView&,
+	void PluginProcessor::operator()(ProcessorBufferView& view,
 		MidiBuffer&, const Transport::Info&) noexcept
 	{
+		freqShifter(view);
 	}
 
 	void PluginProcessor::processBlockBypassed(float**, MidiBuffer&, int, int) noexcept
