@@ -24,7 +24,11 @@ namespace makeRange
 	// start, end, centre
 	Range withCentre(float, float, float) noexcept;
 
+	// start, end, centre
 	Range withCentre(int, int, int) noexcept;
+
+	// v0, v25, v50, v75, v100
+	Range withCentre(float, float, float, float, float) noexcept;
 
 	// start, end, bias[-1, 1]
 	// optimally round™
@@ -40,6 +44,7 @@ namespace makeRange
 	// min, max, numSteps ]1, N]
 	Range quad(float, float, int) noexcept;
 
+	// min, max, numSteps ]1, N]
 	Range quad(int, int, int) noexcept;
 
 	// minDenominator, maxDenominator, withZero, flipped

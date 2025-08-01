@@ -125,6 +125,31 @@ namespace makeRange
 		return withCentre(static_cast<float>(start), static_cast<float>(end), static_cast<float>(centre));
 	}
 
+	Range withCentre(float v0, float v25, float v50, float v75, float v100) noexcept
+	{
+		const auto r0 = withCentre(v0, v50, v25);
+		const auto r1 = withCentre(v50, v100, v75);
+
+		return Range(v0, v100,
+			[r0, r1](float, float, float norm)
+			{
+				const auto n2 = norm * 2.f;
+				if(norm < .5f)
+					return r0.convertFrom0to1(n2);
+				return r1.convertFrom0to1(n2 - 1.f);
+			},
+			[r0, r1](float, float, float denorm)
+			{
+				if(denorm < r0.end)
+					return r0.convertTo0to1(denorm) * .5f;
+				return r1.convertTo0to1(denorm) * .5f + .5f;
+			},
+			[](float min, float max, float x)
+			{
+				return x < min ? min : x > max ? max : x;
+			});
+	}
+
 	Range foleysLogRange(float min, float max) noexcept
 	{
 		return

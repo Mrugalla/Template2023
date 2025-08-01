@@ -56,6 +56,8 @@ namespace param
 		Power,
 
 		// low level parameters
+		Reflect,
+		Shift,
 		//
 		
 		NumParams

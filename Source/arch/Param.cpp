@@ -114,6 +114,8 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
+		case PID::Reflect: return "Reflect";
+		case PID::Shift: return "Shift";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -656,7 +658,7 @@ namespace param::strToVal
 	{
 		return[p = parse()](const String& txt)
 		{
-			auto text = txt.trimCharactersAtEnd(toString(Unit::Hz));
+			auto text = txt.trimCharactersAtEnd(toString(Unit::Hz)).removeCharacters(" ");
 			auto multiplier = 1.f;
 			if (text.getLastCharacter() == 'k')
 			{
@@ -1045,14 +1047,19 @@ namespace param::valToStr
 	ValToStrFunc hz()
 	{
 		return [](float v)
+		{
+			const auto vAbs = std::abs(v);
+			auto multi = 1.f;
+			String k(" ");
+			if (vAbs >= 1000.f)
 			{
-				if (v >= 10000.f)
-					return String(v * .001).substring(0, 4) + " k" + toString(Unit::Hz);
-				else if (v >= 1000.f)
-					return String(v * .001).substring(0, 3) + " k" + toString(Unit::Hz);
-				else
-					return String(v).substring(0, 5) + " " + toString(Unit::Hz);
-			};
+				multi = .001f;
+				k += "k";
+			}
+			const auto vMulti = v * multi;
+			const auto vBitcrushed = std::round(vMulti * 100.f) * .01f;
+			return String(vBitcrushed) + k + toString(Unit::Hz);
+		};
 	}
 
 	ValToStrFunc phase()
@@ -1571,6 +1578,8 @@ namespace param
 		}
 
 		// LOW LEVEL PARAMS:
+		params.push_back(makeParam(PID::Reflect, 0.f, makeRange::toggle(), Unit::Power, false));
+		params.push_back(makeParam(PID::Shift, 50.f, makeRange::withCentre(-20000.f, -420.f, 0.f, 420.f, 20000.f), Unit::Hz, true));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

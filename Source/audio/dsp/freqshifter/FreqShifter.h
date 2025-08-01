@@ -10,7 +10,7 @@ namespace dsp
 		static constexpr int Order = 12;
 		static constexpr double Direct = 0.000262057212648;
 		using ArrayD = std::array<double, Order>;
-		using ArrayC = std::array<Complex, Order>;
+		using ArrayC = std::array<ComplexD, Order>;
 
 		static constexpr ArrayC Coeffs =
 		{
@@ -73,10 +73,10 @@ namespace dsp
 			direct = Direct * 2. * passbandGain * freqFactor;
 			for (int i = 0; i < Order; ++i)
 			{
-				Complex coeff = Coeffs[i] * freqFactor * passbandGain;
+				ComplexD coeff = Coeffs[i] * freqFactor * passbandGain;
 				coeffsR[i] = coeff.real();
 				coeffsI[i] = coeff.imag();
-				Complex pole = std::exp(Poles[i] * freqFactor);
+				ComplexD pole = std::exp(Poles[i] * freqFactor);
 				polesR[i] = pole.real();
 				polesI[i] = pole.imag();
 			}
@@ -93,13 +93,14 @@ namespace dsp
 		{
 			// Really we're just doing: state[i] = state[i]*poles[i] + x*coeffs[i]
 			// but std::complex is slow without -ffast-math, so we've unwrapped it
-			State state = states[ch], newState;
+			State& state = states[ch];
+			State newState;
 			for (auto i = 0; i < Order; ++i)
 			{
 				newState.real[i] = state.real[i] * polesR[i] - state.imag[i] * polesI[i] + x * coeffsR[i];
 				newState.imag[i] = state.real[i] * polesI[i] + state.imag[i] * polesR[i] + x * coeffsI[i];
 			}
-			states[ch] = newState;
+			state = newState;
 
 			auto resultR = x * direct;
 			auto resultI = 0.;
@@ -157,61 +158,72 @@ namespace dsp
 			hilbert(),
 			shiftPhaseBefore(0.),
 			shiftPhaseAfter(0.),
+			sampleRateInv(1.),
 			shiftBefore(1.),
 			shiftAfter(1.),
-			shift(shiftHzToUnit(50.)),
-			reflect(0)
+			shift(50.),
+			phaseStep(0.),
+			reflect(false)
 		{
 		}
 
 		void prepare(double sampleRate) noexcept
 		{
 			sampleRateInv = 1. / sampleRate;
+			setShift(shift);
 			hilbert.prepare(sampleRate);
 		}
+
+		// parameters:
+
+		void setReflect(bool r) noexcept
+		{
+			reflect = r;
+		}
+
+		void setShift(double s) noexcept
+		{
+			shift = s;
+			phaseStep = shift * sampleRateInv;
+		}
+
+		// process:
 
 		void reset() noexcept
 		{
 			shiftPhaseBefore = shiftPhaseAfter = 0.;
-			shiftBefore = shiftAfter = Complex(1., 0.);
+			shiftBefore = shiftAfter = ComplexD(1., 0.);
 			hilbert.reset();
 		}
 
 		void operator()(ProcessorBufferView& view) noexcept
 		{
-			const auto hz = unitToShiftHz(shift);
-			const auto phaseStep = hz * sampleRateInv;
-			const bool noReflectDown = (reflect == 0 || reflect == 2);
-			const bool duplicateUp = (reflect == 2 || reflect == 3);
 			for (auto i = 0; i < view.numSamples; ++i)
 			{
 				for (auto ch = 0; ch < view.getNumChannelsMain(); ++ch)
 				{
 					auto smpls = view.getSamplesMain(ch);
 					const auto x = static_cast<double>(smpls[i]);
-					// In general, this may alias at the high end when shifting up
-					// but our Hilbert has a 20kHz lowpass, so that's enough
-					// room for our maximum +1000Hz shift
 					const auto analyticSignal = shiftAfter * hilbert(x * shiftBefore, ch);
-					const auto y = static_cast<double>(analyticSignal.real());
+					const auto y = static_cast<float>(analyticSignal.real());
 					smpls[i] = y;
 				}
-				const bool shiftInput = (phaseStep < 0.) ? noReflectDown : duplicateUp;
+				const bool shiftInput = (phaseStep < 0.) ? !reflect : reflect;
 				if (shiftInput)
 				{
 					shiftPhaseBefore += phaseStep;
 					const auto angle = shiftPhaseBefore * TauD;
 					shiftBefore = std::polar(1., angle);
+					shiftPhaseBefore -= std::floor(shiftPhaseBefore);
 				}
 				else
 				{
 					shiftPhaseAfter += phaseStep;
-					const auto angle = shiftPhaseBefore * TauD;
-					shiftAfter = std::polar(1., shiftPhaseAfter * TauD);
+					const auto angle = shiftPhaseAfter * TauD;
+					shiftAfter = std::polar(1., angle);
+					shiftPhaseAfter -= std::floor(shiftPhaseAfter);
 				}
 			}
-			shiftPhaseBefore -= std::floor(shiftPhaseBefore);
-			shiftPhaseAfter -= std::floor(shiftPhaseAfter);
 		}
 
 	private:
@@ -219,7 +231,7 @@ namespace dsp
 		double shiftPhaseBefore, shiftPhaseAfter, sampleRateInv;
 		ComplexD shiftBefore, shiftAfter;
 		//
-		double shift;
-		int reflect;
+		double shift, phaseStep;
+		bool reflect;
 	};
 }

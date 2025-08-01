@@ -2,7 +2,7 @@
 
 namespace dsp
 {
-	PluginProcessor::PluginProcessor(Params&
+	PluginProcessor::PluginProcessor(Params& params
 #if PPDHasTuningEditor
 		, XenManager& xen
 #endif
@@ -10,6 +10,15 @@ namespace dsp
 		sampleRate(1.),
 		freqShifter()
 	{
+		params(PID::Reflect).callback = [&](const param::Param::CB& cb) noexcept
+		{
+			freqShifter.setReflect(cb.getBool());
+		};
+
+		params(PID::Shift).callback = [&](const param::Param::CB& cb) noexcept
+		{
+			freqShifter.setShift(cb.denorm());
+		};
 	}
 
 	void PluginProcessor::prepare(double _sampleRate)
