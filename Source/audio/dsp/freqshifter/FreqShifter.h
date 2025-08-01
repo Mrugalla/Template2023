@@ -80,7 +80,6 @@ namespace dsp
 				polesR[i] = pole.real();
 				polesI[i] = pole.imag();
 			}
-			reset();
 		}
 
 		void reset() noexcept
@@ -144,6 +143,7 @@ namespace dsp
 
 	class FreqShifter
 	{
+		/*
 		double unitToShiftHz(double x) noexcept
 		{
 			return 100. * x / (1.1 - x * x);
@@ -153,15 +153,35 @@ namespace dsp
 		{
 			return (std::sqrt(2500. + 1.1 * y * y) - 50.) / y;
 		}
+		*/
+		
+		struct PhasorC
+		{
+			PhasorC(double _angle, double _phase) noexcept :
+				angle(_angle),
+				phase(_phase)
+			{
+			}
+
+			void operator()(double phaseStep) noexcept
+			{
+				phase += phaseStep;
+				const auto a = phase * TauD;
+				angle = std::polar(1., a);
+				phase -= std::floor(phase);
+			}
+
+			ComplexD angle;
+			double phase;
+		};
+
 	public:
 		FreqShifter() :
 			hilbert(),
-			shiftPhaseBefore(0.),
-			shiftPhaseAfter(0.),
+			phasorBefore(1., 0.),
+			phasorAfter(1., 0.),
 			sampleRateInv(1.),
-			shiftBefore(1.),
-			shiftAfter(1.),
-			shift(50.),
+			shift(13.),
 			phaseStep(0.),
 			reflect(false)
 		{
@@ -172,6 +192,7 @@ namespace dsp
 			sampleRateInv = 1. / sampleRate;
 			setShift(shift);
 			hilbert.prepare(sampleRate);
+			reset();
 		}
 
 		// parameters:
@@ -191,8 +212,8 @@ namespace dsp
 
 		void reset() noexcept
 		{
-			shiftPhaseBefore = shiftPhaseAfter = 0.;
-			shiftBefore = shiftAfter = ComplexD(1., 0.);
+			phasorBefore.angle = phasorAfter.angle = ComplexD(1., 0.);
+			phasorBefore.phase = phasorAfter.phase = 0.;
 			hilbert.reset();
 		}
 
@@ -204,32 +225,22 @@ namespace dsp
 				{
 					auto smpls = view.getSamplesMain(ch);
 					const auto x = static_cast<double>(smpls[i]);
-					const auto analyticSignal = shiftAfter * hilbert(x * shiftBefore, ch);
+					const auto analyticSignal = phasorAfter.angle * hilbert(x * phasorBefore.angle, ch);
 					const auto y = static_cast<float>(analyticSignal.real());
 					smpls[i] = y;
 				}
 				const bool shiftInput = (phaseStep < 0.) ? !reflect : reflect;
 				if (shiftInput)
-				{
-					shiftPhaseBefore += phaseStep;
-					const auto angle = shiftPhaseBefore * TauD;
-					shiftBefore = std::polar(1., angle);
-					shiftPhaseBefore -= std::floor(shiftPhaseBefore);
-				}
+					phasorBefore(phaseStep);
 				else
-				{
-					shiftPhaseAfter += phaseStep;
-					const auto angle = shiftPhaseAfter * TauD;
-					shiftAfter = std::polar(1., angle);
-					shiftPhaseAfter -= std::floor(shiftPhaseAfter);
-				}
+					phasorAfter(phaseStep);
 			}
 		}
 
 	private:
 		HilbertTransform hilbert;
-		double shiftPhaseBefore, shiftPhaseAfter, sampleRateInv;
-		ComplexD shiftBefore, shiftAfter;
+		PhasorC phasorBefore, phasorAfter;
+		double sampleRateInv;
 		//
 		double shift, phaseStep;
 		bool reflect;
