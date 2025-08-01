@@ -1579,7 +1579,7 @@ namespace param
 
 		// LOW LEVEL PARAMS:
 		params.push_back(makeParam(PID::Reflect, 0.f, makeRange::toggle(), Unit::Power, false));
-		params.push_back(makeParam(PID::Shift, 50.f, makeRange::withCentre(-20000.f, -420.f, 0.f, 420.f, 20000.f), Unit::Hz, true));
+		params.push_back(makeParam(PID::Shift, 50.f, makeRange::withCentre(-10000.f, -100.f, 0.f, 100.f, 10000.f), Unit::Hz, true));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

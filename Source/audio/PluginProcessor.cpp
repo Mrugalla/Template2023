@@ -12,7 +12,7 @@ namespace dsp
 	{
 		params(PID::Reflect).callback = [&](const param::Param::CB& cb) noexcept
 		{
-			freqShifter.setReflect(cb.getBool());
+			freqShifter.setReflect(cb.getInt());
 		};
 
 		params(PID::Shift).callback = [&](const param::Param::CB& cb) noexcept

@@ -67,9 +67,9 @@ namespace dsp
 			passbandGain(2.)
 		{ }
 
-		void prepare(double sampleRate) noexcept
+		void prepare(double sampleRateInv) noexcept
 		{
-			const auto freqFactor = std::min(0.46, 20000. / sampleRate);
+			const auto freqFactor = std::min(0.46, 20000. * sampleRateInv);
 			direct = Direct * 2. * passbandGain * freqFactor;
 			for (int i = 0; i < Order; ++i)
 			{
@@ -157,8 +157,8 @@ namespace dsp
 		
 		struct PhasorC
 		{
-			PhasorC(double _angle, double _phase) noexcept :
-				angle(_angle),
+			PhasorC(double _angle = 1., double _phase = 0.) noexcept :
+				angle(_angle, 0.),
 				phase(_phase)
 			{
 			}
@@ -178,8 +178,7 @@ namespace dsp
 	public:
 		FreqShifter() :
 			hilbert(),
-			phasorBefore(1., 0.),
-			phasorAfter(1., 0.),
+			phasors(),
 			sampleRateInv(1.),
 			shift(13.),
 			phaseStep(0.),
@@ -191,13 +190,13 @@ namespace dsp
 		{
 			sampleRateInv = 1. / sampleRate;
 			setShift(shift);
-			hilbert.prepare(sampleRate);
+			hilbert.prepare(sampleRateInv);
 			reset();
 		}
 
 		// parameters:
 
-		void setReflect(bool r) noexcept
+		void setReflect(int r) noexcept
 		{
 			reflect = r;
 		}
@@ -212,8 +211,8 @@ namespace dsp
 
 		void reset() noexcept
 		{
-			phasorBefore.angle = phasorAfter.angle = ComplexD(1., 0.);
-			phasorBefore.phase = phasorAfter.phase = 0.;
+			phasors[0].angle = phasors[1].angle = ComplexD(1., 0.);
+			phasors[0].phase = phasors[1].phase = 0.;
 			hilbert.reset();
 		}
 
@@ -225,24 +224,21 @@ namespace dsp
 				{
 					auto smpls = view.getSamplesMain(ch);
 					const auto x = static_cast<double>(smpls[i]);
-					const auto analyticSignal = phasorAfter.angle * hilbert(x * phasorBefore.angle, ch);
+					const auto analyticSignal = phasors[1].angle * hilbert(x * phasors[0].angle, ch);
 					const auto y = static_cast<float>(analyticSignal.real());
 					smpls[i] = y;
 				}
-				const bool shiftInput = (phaseStep < 0.) ? !reflect : reflect;
-				if (shiftInput)
-					phasorBefore(phaseStep);
-				else
-					phasorAfter(phaseStep);
+				const auto idx = (phaseStep < 0.) ? reflect : 1 - reflect;
+				phasors[idx](phaseStep);
 			}
 		}
 
 	private:
 		HilbertTransform hilbert;
-		PhasorC phasorBefore, phasorAfter;
+		std::array<PhasorC, 2> phasors;
 		double sampleRateInv;
 		//
 		double shift, phaseStep;
-		bool reflect;
+		int reflect;
 	};
 }
