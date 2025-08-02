@@ -57,80 +57,69 @@ namespace dsp
 			ArrayD r, i, pr, pi;
 		};
 
-		class HilbertTransform
+		struct HilbertTransform
 		{
-			struct State
-			{
-				ArrayD real, imag;
-
-				void reset() noexcept
-				{
-					for (auto& v : real)
-						v = 0.;
-					for (auto& v : imag)
-						v = 0.;
-				}
-			};
-		public:
 			HilbertTransform() :
-				states()
+				real(),
+				imag()
 			{
+				reset();
 			}
 
 			void reset() noexcept
 			{
-				for (auto& state : states)
-					state.reset();
+				for (auto& v : real)
+					v = 0.;
+				for (auto& v : imag)
+					v = 0.;
 			}
 
-			ComplexD operator()(const Coefficients& c, double x, double direct, int ch) noexcept
+			ComplexD operator()(const Coefficients& c, double x, double direct) noexcept
 			{
 				// Really we're just doing: state[i] = state[i]*poles[i] + x*coeffs[i]
 				// but std::complex is slow without -ffast-math, so we've unwrapped it
-				State& state = states[ch];
 				for (auto i = 0; i < Order; ++i)
 				{
-					const auto real = state.real[i] * c.pr[i] - state.imag[i] * c.pi[i] + x * c.r[i];
-					const auto imag = state.real[i] * c.pi[i] + state.imag[i] * c.pr[i] + x * c.i[i];
-					state.real[i] = real;
-					state.imag[i] = imag;
+					const auto nReal = real[i] * c.pr[i] - imag[i] * c.pi[i] + x * c.r[i];
+					const auto nImag = real[i] * c.pi[i] + imag[i] * c.pr[i] + x * c.i[i];
+					real[i] = nReal;
+					imag[i] = nImag;
 				}
 				auto resultR = x * direct;
 				auto resultI = 0.;
 				for (auto i = 0; i < Order; ++i)
 				{
-					resultR += state.real[i];
-					resultI += state.imag[i];
+					resultR += real[i];
+					resultI += imag[i];
 				}
 				return { resultR, resultI };
 			}
 
-			ComplexD operator()(const Coefficients& c, float x, double direct, int ch) noexcept
+			ComplexD operator()(const Coefficients& c, float x, double direct) noexcept
 			{
-				return operator()(c, static_cast<double>(x), direct, ch);
+				return operator()(c, static_cast<double>(x), direct);
 			}
 
-			ComplexD operator()(const Coefficients& c, ComplexD x, double direct, int ch) noexcept
+			ComplexD operator()(const Coefficients& c, ComplexD x, double direct) noexcept
 			{
-				State& state = states[ch];
 				for (int i = 0; i < Order; ++i)
 				{
-					const auto real = state.real[i] * c.pr[i] - state.imag[i] * c.pi[i] + x.real() * c.r[i] - x.imag() * c.i[i];
-					const auto imag = state.real[i] * c.pi[i] + state.imag[i] * c.pr[i] + x.real() * c.i[i] + x.imag() * c.r[i];
-					state.real[i] = real;
-					state.imag[i] = imag;
+					const auto nReal = real[i] * c.pr[i] - imag[i] * c.pi[i] + x.real() * c.r[i] - x.imag() * c.i[i];
+					const auto nImag = real[i] * c.pi[i] + imag[i] * c.pr[i] + x.real() * c.i[i] + x.imag() * c.r[i];
+					real[i] = nReal;
+					imag[i] = nImag;
 				}
 				auto resultR = x.real() * direct;
 				auto resultI = x.imag() * direct;
 				for (int i = 0; i < Order; ++i)
 				{
-					resultR += state.real[i];
-					resultI += state.imag[i];
+					resultR += real[i];
+					resultI += imag[i];
 				}
 				return { resultR, resultI };
 			}
 		private:
-			std::array<State, 2> states;
+			ArrayD real, imag;
 		};
 
 		struct PhasorC
@@ -155,7 +144,7 @@ namespace dsp
 	public:
 		FreqShifter() :
 			coeffs(),
-			hilbert(),
+			hilberts(),
 			phasors(),
 			direct(0.),
 			sampleRateInv(1.),
@@ -204,7 +193,8 @@ namespace dsp
 		{
 			phasors[0].angle = phasors[1].angle = ComplexD(1., 0.);
 			phasors[0].phase = phasors[1].phase = 0.;
-			hilbert.reset();
+			for(auto& hilbert: hilberts)
+				hilbert.reset();
 		}
 
 		void operator()(ProcessorBufferView& view) noexcept
@@ -215,7 +205,8 @@ namespace dsp
 				{
 					auto smpls = view.getSamplesMain(ch);
 					const auto x = static_cast<double>(smpls[i]);
-					const auto hlbrt = hilbert(coeffs, x * phasors[0].angle, direct, ch);
+					auto& hilbert = hilberts[ch];
+					const auto hlbrt = hilbert(coeffs, x * phasors[0].angle, direct);
 					const auto analyticSignal = phasors[1].angle * hlbrt;
 					const auto y = static_cast<float>(analyticSignal.real());
 					smpls[i] = y;
@@ -226,7 +217,7 @@ namespace dsp
 		}
 	private:
 		Coefficients coeffs;
-		HilbertTransform hilbert;
+		std::array<HilbertTransform, 2> hilberts;
 		std::array<PhasorC, 2> phasors;
 		double direct, sampleRateInv;
 		//
