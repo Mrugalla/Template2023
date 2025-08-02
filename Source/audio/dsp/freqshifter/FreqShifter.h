@@ -88,20 +88,19 @@ namespace dsp
 				// Really we're just doing: state[i] = state[i]*poles[i] + x*coeffs[i]
 				// but std::complex is slow without -ffast-math, so we've unwrapped it
 				State& state = states[ch];
-				State newState;
 				for (auto i = 0; i < Order; ++i)
 				{
-					newState.real[i] = state.real[i] * c.pr[i] - state.imag[i] * c.pi[i] + x * c.r[i];
-					newState.imag[i] = state.real[i] * c.pi[i] + state.imag[i] * c.pr[i] + x * c.i[i];
+					const auto real = state.real[i] * c.pr[i] - state.imag[i] * c.pi[i] + x * c.r[i];
+					const auto imag = state.real[i] * c.pi[i] + state.imag[i] * c.pr[i] + x * c.i[i];
+					state.real[i] = real;
+					state.imag[i] = imag;
 				}
-				state = newState;
-
 				auto resultR = x * direct;
 				auto resultI = 0.;
 				for (auto i = 0; i < Order; ++i)
 				{
-					resultR += newState.real[i];
-					resultI += newState.imag[i];
+					resultR += state.real[i];
+					resultI += state.imag[i];
 				}
 				return { resultR, resultI };
 			}
@@ -114,20 +113,19 @@ namespace dsp
 			ComplexD operator()(const Coefficients& c, ComplexD x, double direct, int ch) noexcept
 			{
 				State& state = states[ch];
-				State newState;
 				for (int i = 0; i < Order; ++i)
 				{
-					newState.real[i] = state.real[i] * c.pr[i] - state.imag[i] * c.pi[i] + x.real() * c.r[i] - x.imag() * c.i[i];
-					newState.imag[i] = state.real[i] * c.pi[i] + state.imag[i] * c.pr[i] + x.real() * c.i[i] + x.imag() * c.r[i];
+					const auto real = state.real[i] * c.pr[i] - state.imag[i] * c.pi[i] + x.real() * c.r[i] - x.imag() * c.i[i];
+					const auto imag = state.real[i] * c.pi[i] + state.imag[i] * c.pr[i] + x.real() * c.i[i] + x.imag() * c.r[i];
+					state.real[i] = real;
+					state.imag[i] = imag;
 				}
-				state = newState;
-
 				auto resultR = x.real() * direct;
 				auto resultI = x.imag() * direct;
 				for (int i = 0; i < Order; ++i)
 				{
-					resultR += newState.real[i];
-					resultI += newState.imag[i];
+					resultR += state.real[i];
+					resultI += state.imag[i];
 				}
 				return { resultR, resultI };
 			}
