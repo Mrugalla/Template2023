@@ -317,22 +317,33 @@ namespace audio
         xenManager({ xen, masterTune, anchor, pitchbendRange }, numChannels);
 #endif
         {
+            const auto dummy = juce::MidiMessage::createSysExMessage(nullptr, 0);
             auto s = 0;
             dsp::ProcessorBufferView bufferViewBlock;
             for (const auto it : midiMessages)
             {
                 const auto msg = it.getMessage();
                 const auto ts = it.samplePosition;
-                const auto numSamples = std::min(dsp::BlockSize, ts - s);
-
-                bufferViewBlock.fillBlock(bufferView, msg, s, numSamples);
-                processIGuess(bufferViewBlock, mix, gainWetDb, gainOutDb, delta);
-                s += numSamples;
+                do
+                {
+                    const auto numSamplesToEvt = ts - s;
+                    if (numSamplesToEvt < dsp::BlockSize)
+                    {
+                        bufferViewBlock.fillBlock(bufferView, msg, s, numSamplesToEvt);
+						s += numSamplesToEvt;
+                    }
+                    else
+                    {
+                        bufferViewBlock.fillBlock(bufferView, dummy, s, dsp::BlockSize);
+						s += dsp::BlockSize;
+                    }
+                    processIGuess(bufferViewBlock, mix, gainWetDb, gainOutDb, delta);
+                } while (s < ts);
             }
             while (s < bufferView.getNumSamples())
             {
-                const auto numSamples = std::min(dsp::BlockSize, bufferView.getNumSamples() - s);
-                const auto dummy = juce::MidiMessage::createSysExMessage(nullptr, 0);
+                const auto numSamplesToEnd = bufferView.getNumSamples() - s;
+                const auto numSamples = std::min(dsp::BlockSize, numSamplesToEnd);
                 bufferViewBlock.fillBlock(bufferView, dummy, s, numSamples);
                 processIGuess(bufferViewBlock, mix, gainWetDb, gainOutDb, delta);
                 s += numSamples;

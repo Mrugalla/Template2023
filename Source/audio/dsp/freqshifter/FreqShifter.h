@@ -137,21 +137,27 @@ namespace dsp
 
 		struct PhasorC
 		{
-			PhasorC(double _angle = 1., double _phase = 0.) noexcept :
-				angle(_angle, 0.),
+			PhasorC(double _pos = 1., double _phase = 0.) noexcept :
+				pos(_pos, 0.),
 				phase(_phase)
 			{
+			}
+
+			void reset(double _pos, double _phase) noexcept
+			{
+				pos = ComplexD(_pos, 0.);
+				phase = _phase;
 			}
 
 			void operator()(double inc) noexcept
 			{
 				phase += inc;
-				const auto a = phase * TauD;
-				angle = std::polar(1., a);
+				const auto phaseTau = phase * TauD;
+				pos = std::polar(1., phaseTau);
 				phase -= std::floor(phase);
 			}
 
-			ComplexD angle;
+			ComplexD pos;
 			double phase;
 		};
 	public:
@@ -195,8 +201,8 @@ namespace dsp
 
 		void reset(double phaseOffset) noexcept
 		{
-			phasors[0].angle = phasors[1].angle = ComplexD(1., 0.);
-			phasors[0].phase = phasors[1].phase = phaseOffset;
+			for(auto& phasor: phasors)
+				phasor.reset(1., phaseOffset);
 			for(auto& hilbert: hilberts)
 				hilbert.reset(0., 0.);
 		}
@@ -210,8 +216,8 @@ namespace dsp
 					auto smpls = view.getSamplesMain(ch);
 					const auto x = static_cast<double>(smpls[i]);
 					auto& hilbert = hilberts[ch];
-					const auto hlbrt = hilbert(coeffs, x * phasors[0].angle, direct);
-					const auto analyticSignal = phasors[1].angle * hlbrt;
+					const auto hlbrt = hilbert(coeffs, x * phasors[0].pos, direct);
+					const auto analyticSignal = phasors[1].pos * hlbrt;
 					const auto y = static_cast<float>(analyticSignal.real());
 					smpls[i] = y;
 				}
