@@ -8,7 +8,8 @@
               pluginCode="BBBB" pluginVST3Category="Fx" pluginAAXCategory="0"
               pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
               defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=1&#10;PPDHasSidechain=0&#10;PPDHasLookahead=0&#10;PPDHasTuningEditor=0"
-              includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'" maxBinaryFileSize="20971520">
+              includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'" maxBinaryFileSize="20971520"
+              pluginCharacteristicsValue="pluginWantsMidiIn">
   <MAINGROUP id="WYhkvs" name="Template2023">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
       <GROUP id="{B2DD672C-3747-AD06-804C-97143B931D2A}" name="arch">

@@ -64,8 +64,9 @@ namespace audio
         dsp::PluginRecorder pluginRecorder;
         dsp::Transport transport;
         dsp::PluginProcessor pluginProcessor;
-        MidiBuffer midiSubBuffer;
         dsp::MixProcessor mixProcessor;
+
+        void processIGuess(dsp::ProcessorBufferView&, float, float, float, bool) noexcept;
 
         //JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Processor)
     };

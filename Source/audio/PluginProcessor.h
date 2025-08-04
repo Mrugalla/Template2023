@@ -25,8 +25,8 @@ namespace dsp
 		// sampleRate
 		void prepare(double);
 
-		// butter view, midiBuffer, transport
-		void operator()(ProcessorBufferView&, MidiBuffer&, const Transport::Info&) noexcept;
+		// bufferView, transport
+		void operator()(ProcessorBufferView&, const Transport::Info&) noexcept;
 		
 		// samples, midiBuffer, numChannels, numSamples
 		void processBlockBypassed(float**, MidiBuffer&, int, int) noexcept;

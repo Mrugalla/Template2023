@@ -54,6 +54,19 @@ namespace dsp
 				pi()
 			{ }
 
+			void prepare(double ffGain, double freqFactor) noexcept
+			{
+				for (int j = 0; j < Order; ++j)
+				{
+					ComplexD coeff = Coeffs[j] * ffGain;
+					r[j] = coeff.real();
+					i[j] = coeff.imag();
+					ComplexD pole = std::exp(Poles[j] * freqFactor);
+					pr[j] = pole.real();
+					pi[j] = pole.imag();
+				}
+			}
+
 			ArrayD r, i, pr, pi;
 		};
 
@@ -63,20 +76,20 @@ namespace dsp
 				real(),
 				imag()
 			{
-				reset();
+				reset(0., 0.);
 			}
 
-			void reset() noexcept
+			void reset(double _real, double _imag) noexcept
 			{
 				for (auto& v : real)
-					v = 0.;
+					v = _real;
 				for (auto& v : imag)
-					v = 0.;
+					v = _imag;
 			}
 
 			ComplexD operator()(const Coefficients& c, double x, double direct) noexcept
 			{
-				// Really we're just doing: state[i] = state[i]*poles[i] + x*coeffs[i]
+				// Really we're just doing: state[i] = state[i] * poles[i] + x * coeffs[i]
 				// but std::complex is slow without -ffast-math, so we've unwrapped it
 				for (auto i = 0; i < Order; ++i)
 				{
@@ -130,9 +143,9 @@ namespace dsp
 			{
 			}
 
-			void operator()(double phaseStep) noexcept
+			void operator()(double inc) noexcept
 			{
-				phase += phaseStep;
+				phase += inc;
 				const auto a = phase * TauD;
 				angle = std::polar(1., a);
 				phase -= std::floor(phase);
@@ -149,7 +162,7 @@ namespace dsp
 			direct(0.),
 			sampleRateInv(1.),
 			shift(13.),
-			phaseStep(0.),
+			inc(0.),
 			reflect(false)
 		{
 		}
@@ -157,21 +170,12 @@ namespace dsp
 		void prepare(double sampleRate) noexcept
 		{
 			sampleRateInv = 1. / sampleRate;
-
 			const auto freqFactor = std::min(0.46, 20000. * sampleRateInv);
 			const auto ffGain = PassbandGain * freqFactor;
 			direct = Direct * ffGain;
-			for (int i = 0; i < Order; ++i)
-			{
-				ComplexD coeff = Coeffs[i] * ffGain;
-				coeffs.r[i] = coeff.real();
-				coeffs.i[i] = coeff.imag();
-				ComplexD pole = std::exp(Poles[i] * freqFactor);
-				coeffs.pr[i] = pole.real();
-				coeffs.pi[i] = pole.imag();
-			}
+			coeffs.prepare(ffGain, freqFactor);
 			setShift(shift);
-			reset();
+			reset(0.);
 		}
 
 		// parameters:
@@ -184,17 +188,17 @@ namespace dsp
 		void setShift(double s) noexcept
 		{
 			shift = s;
-			phaseStep = shift * sampleRateInv;
+			inc = shift * sampleRateInv;
 		}
 
 		// process:
 
-		void reset() noexcept
+		void reset(double phaseOffset) noexcept
 		{
 			phasors[0].angle = phasors[1].angle = ComplexD(1., 0.);
-			phasors[0].phase = phasors[1].phase = 0.;
+			phasors[0].phase = phasors[1].phase = phaseOffset;
 			for(auto& hilbert: hilberts)
-				hilbert.reset();
+				hilbert.reset(0., 0.);
 		}
 
 		void operator()(ProcessorBufferView& view) noexcept
@@ -211,8 +215,8 @@ namespace dsp
 					const auto y = static_cast<float>(analyticSignal.real());
 					smpls[i] = y;
 				}
-				const auto idx = (phaseStep < 0.) ? reflect : 1 - reflect;
-				phasors[idx](phaseStep);
+				const auto idx = (inc < 0.) ? reflect : 1 - reflect;
+				phasors[idx](inc);
 			}
 		}
 	private:
@@ -221,7 +225,7 @@ namespace dsp
 		std::array<PhasorC, 2> phasors;
 		double direct, sampleRateInv;
 		//
-		double shift, phaseStep;
+		double shift, inc;
 		int reflect;
 	};
 }

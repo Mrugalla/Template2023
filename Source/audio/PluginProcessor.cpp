@@ -28,9 +28,11 @@ namespace dsp
 	}
 
 	void PluginProcessor::operator()(ProcessorBufferView& view,
-		MidiBuffer&, const Transport::Info&) noexcept
+		const Transport::Info&) noexcept
 	{
 		freqShifter(view);
+		if (view.msg.isNoteOn())
+			freqShifter.reset(0.);
 	}
 
 	void PluginProcessor::processBlockBypassed(float**, MidiBuffer&, int, int) noexcept

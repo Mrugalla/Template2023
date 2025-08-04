@@ -46,7 +46,6 @@ namespace audio
             , xenManager
 #endif
         ),
-        midiSubBuffer(),
         mixProcessor()
     {
         const auto& user = *state.props.getUserSettings();
@@ -317,99 +316,28 @@ namespace audio
         const auto pitchbendRange = std::round(params(PID::PitchbendRange).getValModDenorm());
         xenManager({ xen, masterTune, anchor, pitchbendRange }, numChannels);
 #endif
-
-        for (auto s = 0; s < bufferView.getNumSamples(); s += dsp::BlockSize)
         {
+            auto s = 0;
             dsp::ProcessorBufferView bufferViewBlock;
-			bufferViewBlock.fillBlock(bufferView, s);
-			const auto numSamples = bufferViewBlock.getNumSamples();
-#if PPDIO == PPDIOOut
-#if PPDIsNonlinear
-            mixProcessor.split
-            (
-                samples, gainInDb, numChannels, numSamples
-            );
-#endif
-#elif PPDIO == PPDIODryWet
-#if PPDIsNonlinear
-            mixProcessor.split
-            (
-                samples, gainDryDb, gainInDb, numChannels, numSamples
-            );
-#else
-            mixProcessor.split
-            (
-                samples, gainDryDb, numChannels, numSamples
-            );
-#endif
-#else
-#if PPDIsNonlinear
-            mixProcessor.split(bufferViewBlock, gainInDb);
-#else
-            mixProcessor.split
-            (
-                bufferViewBlock
-            );
-#endif
-#endif
-            midiSubBuffer.clear();
-            for (auto it : midiMessages)
+            for (const auto it : midiMessages)
             {
+                const auto msg = it.getMessage();
                 const auto ts = it.samplePosition;
-                if (ts >= s && ts < s + numSamples)
-                    midiSubBuffer.addEvent(it.getMessage(), ts - s);
+                const auto numSamples = std::min(dsp::BlockSize, ts - s);
+
+                bufferViewBlock.fillBlock(bufferView, msg, s, numSamples);
+                processIGuess(bufferViewBlock, mix, gainWetDb, gainOutDb, delta);
+                s += numSamples;
             }
-            const auto sysexDummy = juce::MidiMessage::programChange(1, 0);
-            midiSubBuffer.addEvent(sysexDummy, numSamples);
-
-            pluginProcessor(bufferViewBlock, midiSubBuffer, transport.info);
-            transport(numSamples);
-
-#if JucePlugin_ProducesMidiOutput
-            midiMessages.clear();
-            for (auto it : midiSubBuffer)
-                midiMessages.addEvent(it.getMessage(), it.samplePosition + s);
-#endif
-#if PPDIO == PPDIOOut
-#if PPDIsNonlinear
-            mixProcessor.join
-            (
-                bufferViewBlock, gainOutDb, unityGain
-            );
-#else
-            mixProcessor.join
-            (
-                bufferViewBlock, gainOutDb
-            );
-#endif
-#elif PPDIO == PPDIODryWet
-#if PPDIsNonlinear
-            mixProcessor.join
-            (
-                samples, gainWetDb, gainOutDb, numChannels, numSamples, unityGain
-            );
-#else
-            mixProcessor.join
-            (
-                samples, gainWetDb, gainOutDb, numChannels, numSamples
-            );
-#endif
-#else
-#if PPDIsNonlinear
-            mixProcessor.join
-            (
-                bufferViewBlock, mix, gainWetDb, gainOutDb, unityGain, delta
-            );
-#else
-            mixProcessor.join
-            (
-                bufferViewBlock, mix, gainWetDb, gainOutDb, delta
-            );
-#endif
-#endif
-
+            while (s < bufferView.getNumSamples())
+            {
+                const auto numSamples = std::min(dsp::BlockSize, bufferView.getNumSamples() - s);
+                const auto dummy = juce::MidiMessage::createSysExMessage(nullptr, 0);
+                bufferViewBlock.fillBlock(bufferView, dummy, s, numSamples);
+                processIGuess(bufferViewBlock, mix, gainWetDb, gainOutDb, delta);
+                s += numSamples;
+            }
         }
-
 #if PPDHasStereoConfig
         if (midSide)
             dsp::midSideDecode(bufferView);
@@ -422,6 +350,84 @@ namespace audio
             for (auto s = 0; s < numSamplesMain; ++s)
                 smpls[s] = dsp::hardclip(smpls[s], 2.f);
         }
+#endif
+    }
+
+    void Processor::processIGuess(dsp::ProcessorBufferView& bufferViewBlock,
+        float mix, float gainWetDb, float gainOutDb, bool delta) noexcept
+    {
+#if PPDIO == PPDIOOut
+#if PPDIsNonlinear
+        mixProcessor.split
+        (
+            samples, gainInDb, numChannels, numSamples
+        );
+#endif
+#elif PPDIO == PPDIODryWet
+#if PPDIsNonlinear
+        mixProcessor.split
+        (
+            samples, gainDryDb, gainInDb, numChannels, numSamples
+        );
+#else
+        mixProcessor.split
+        (
+            samples, gainDryDb, numChannels, numSamples
+        );
+#endif
+#else
+#if PPDIsNonlinear
+        mixProcessor.split(bufferViewBlock, gainInDb);
+#else
+        mixProcessor.split
+        (
+            bufferViewBlock
+        );
+#endif
+#endif
+        pluginProcessor(bufferViewBlock, transport.info);
+        transport(bufferViewBlock.numSamples);
+#if JucePlugin_ProducesMidiOutput
+        midiMessages.clear();
+        for (auto it : midiSubBuffer)
+            midiMessages.addEvent(it.getMessage(), it.samplePosition + s);
+#endif
+#if PPDIO == PPDIOOut
+#if PPDIsNonlinear
+        mixProcessor.join
+        (
+            bufferViewBlock, gainOutDb, unityGain
+        );
+#else
+        mixProcessor.join
+        (
+            bufferViewBlock, gainOutDb
+        );
+#endif
+#elif PPDIO == PPDIODryWet
+#if PPDIsNonlinear
+        mixProcessor.join
+        (
+            samples, gainWetDb, gainOutDb, numChannels, numSamples, unityGain
+        );
+#else
+        mixProcessor.join
+        (
+            samples, gainWetDb, gainOutDb, numChannels, numSamples
+        );
+#endif
+#else
+#if PPDIsNonlinear
+        mixProcessor.join
+        (
+            bufferViewBlock, mix, gainWetDb, gainOutDb, unityGain, delta
+        );
+#else
+        mixProcessor.join
+        (
+            bufferViewBlock, mix, gainWetDb, gainOutDb, delta
+        );
+#endif
 #endif
     }
 

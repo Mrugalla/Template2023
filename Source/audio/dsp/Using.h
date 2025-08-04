@@ -94,14 +94,15 @@ namespace dsp
 	struct ProcessorBufferView
 	{
 		ProcessorBufferView() :
-			main(),
-			sc(),
+			main(), sc(),
+			msg(),
 			numSamples(0),
 			scEnabled(false)
 		{
 		}
 
-		void assignMain(float* const* samples, int numChannels, int _numSamples) noexcept
+		void assignMain(float* const* samples,
+			int numChannels, int _numSamples) noexcept
 		{
 			main.assign(samples, numChannels);
 			numSamples = _numSamples;
@@ -156,6 +157,20 @@ namespace dsp
 			scEnabled = buffer.scEnabled;
 		}
 
+		void fillBlock(ProcessorBufferView& buffer, const MidiMessage& _msg,
+			int s, int _numSamples) noexcept
+		{
+			msg = _msg;
+			numSamples = _numSamples;
+			main.numChannels = buffer.main.numChannels;
+			sc.numChannels = buffer.sc.numChannels;
+			for (auto ch = 0; ch < main.numChannels; ++ch)
+				main.view[ch] = &buffer.main.view[ch][s];
+			for (auto ch = 0; ch < sc.numChannels; ++ch)
+				sc.view[ch] = &buffer.sc.view[ch][s];
+			scEnabled = buffer.scEnabled;
+		}
+
 		BufferView2X getViewMain() noexcept
 		{
 			return main;
@@ -202,6 +217,7 @@ namespace dsp
 		}
 
 		BufferView2X main, sc;
+		MidiMessage msg;
 		int numSamples;
 		bool scEnabled;
 	};
