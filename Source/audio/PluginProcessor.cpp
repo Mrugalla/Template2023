@@ -27,12 +27,32 @@ namespace dsp
 		freqShifter.prepare(sampleRate);
 	}
 
+	static float phasor = 0.f;
+	static float incFast = 420.f / 44100.f;
+	static float incSlow = 50.f / 44100.f;
+	static float env = 0.f;
+	static float decay = 24.f / 44100.f;
+
 	void PluginProcessor::operator()(ProcessorBufferView& view,
 		const Transport::Info&) noexcept
 	{
-		freqShifter(view);
+		auto smpls = view.getSamplesMain(0);
+		for (auto s = 0; s < view.numSamples; ++s)
+		{
+			smpls[s] = std::cos(phasor * Tau) * env;
+			const auto inc = incSlow + env * env * (incFast - incSlow);
+			phasor += inc;
+			if (phasor >= 1.f)
+				--phasor;
+			env += decay * -env;
+		}
 		if (view.msg.isNoteOn())
-			freqShifter.reset(0.);
+		{
+			env = 1.f;
+			phasor = 0.f;
+		}
+		if(view.getNumChannelsMain() == 2)
+			SIMD::copy(view.getSamplesMain(1), smpls, view.numSamples);
 	}
 
 	void PluginProcessor::processBlockBypassed(float**, MidiBuffer&, int, int) noexcept
