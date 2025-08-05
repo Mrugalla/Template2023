@@ -58,6 +58,7 @@ namespace param
 		// low level parameters
 		Reflect,
 		Shift,
+		PhaseOffset,
 		//
 		
 		NumParams
@@ -104,6 +105,8 @@ namespace param
 		Xen,
 		Note,
 		Pitch,
+		Phase180,
+		Phase360,
 		Q,
 		Slope,
 		Legato,

@@ -169,6 +169,7 @@ namespace dsp
 			sampleRateInv(1.),
 			shift(13.),
 			inc(0.),
+			phaseOffset(0.),
 			reflect(false)
 		{
 		}
@@ -181,7 +182,7 @@ namespace dsp
 			direct = Direct * ffGain;
 			coeffs.prepare(ffGain, freqFactor);
 			setShift(shift);
-			reset(0.);
+			reset();
 		}
 
 		// parameters:
@@ -197,9 +198,14 @@ namespace dsp
 			inc = shift * sampleRateInv;
 		}
 
+		void setPhaseOffset(double phase) noexcept
+		{
+			phaseOffset = phase;
+		}
+
 		// process:
 
-		void reset(double phaseOffset) noexcept
+		void reset() noexcept
 		{
 			for(auto& phasor: phasors)
 				phasor.reset(1., phaseOffset);
@@ -231,7 +237,7 @@ namespace dsp
 		std::array<PhasorC, 2> phasors;
 		double direct, sampleRateInv;
 		//
-		double shift, inc;
+		double shift, inc, phaseOffset;
 		int reflect;
 	};
 }

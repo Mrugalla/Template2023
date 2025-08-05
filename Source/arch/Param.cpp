@@ -116,6 +116,7 @@ namespace param
 		// LOW LEVEL PARAMS:
 		case PID::Reflect: return "Reflect";
 		case PID::Shift: return "Shift";
+		case PID::PhaseOffset: return "Phase Offset";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -266,6 +267,7 @@ namespace param
 		case Unit::Xen: return "notes/oct";
 		case Unit::Note: return "";
 		case Unit::Pitch: return "";
+		case Unit::Phase180: return "°";
 		case Unit::Q: return "q";
 		case Unit::Slope: return "db/oct";
 		case Unit::Legato: return "";
@@ -672,13 +674,23 @@ namespace param::strToVal
 		};
 	}
 
-	StrToValFunc phase()
+	StrToValFunc phase180()
 	{
 		return[p = parse()](const String& txt)
 		{
 			const auto text = txt.trimCharactersAtEnd(toString(Unit::Degree));
 			const auto val = p(text, 0.f);
-			return val;
+			return val / 180.f;
+		};
+	}
+
+	StrToValFunc phase360()
+	{
+		return[p = parse()](const String& txt)
+		{
+			const auto text = txt.trimCharactersAtEnd(toString(Unit::Degree));
+			const auto val = p(text, 0.f);
+			return val / 360.f;
 		};
 	}
 
@@ -1062,7 +1074,7 @@ namespace param::valToStr
 		};
 	}
 
-	ValToStrFunc phase()
+	ValToStrFunc phase180()
 	{
 		return [](float v) { return String(std::round(v * 180.f)) + " " + toString(Unit::Degree); };
 	}
@@ -1434,6 +1446,14 @@ namespace param
 			valToStrFunc = valToStr::filterType();
 			strToValFunc = strToVal::filterType();
 			break;
+		case Unit::Phase180:
+			valToStrFunc = valToStr::phase180();
+			strToValFunc = strToVal::phase180();
+			break;
+		case Unit::Phase360:
+			valToStrFunc = valToStr::phase360();
+			strToValFunc = strToVal::phase360();
+			break;
 		case Unit::FFTOrder:
 			valToStrFunc = valToStr::fftOrder();
 			strToValFunc = strToVal::fftOrder();
@@ -1580,6 +1600,7 @@ namespace param
 		// LOW LEVEL PARAMS:
 		params.push_back(makeParam(PID::Reflect, 0.f, makeRange::toggle(), Unit::Power, false));
 		params.push_back(makeParam(PID::Shift, 50.f, makeRange::withCentre(-10000.f, -100.f, 0.f, 100.f, 10000.f), Unit::Hz, true));
+		params.push_back(makeParam(PID::PhaseOffset, 0.f, makeRange::lin(0.f, 1.f), Unit::Phase360, true));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)
