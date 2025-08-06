@@ -59,6 +59,7 @@ namespace param
 		Reflect,
 		Shift,
 		PhaseOffset,
+		Feedback,
 		//
 		
 		NumParams

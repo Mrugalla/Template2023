@@ -24,6 +24,11 @@ namespace dsp
 		{
 			freqShifter.setPhaseOffset(cb.norm);
 		};
+
+		params(PID::Feedback).callback = [&](const param::Param::CB& cb) noexcept
+		{
+			freqShifter.setFeedback(cb.denorm());
+		};
 	}
 
 	void PluginProcessor::prepare(double _sampleRate)

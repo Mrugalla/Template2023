@@ -25,12 +25,12 @@ namespace math
     template<typename Float>
     bool bufferSilent(Float*, int) noexcept;
 
-    template<typename Float>
     // samples, numChannels, numSamples
+    template<typename Float>
     bool bufferSilent(Float**, int, int) noexcept;
 
-    template<typename Float>
     // min, max, x
+    template<typename Float>
     Float limit(Float, Float, Float) noexcept;
 
     template<typename Float>

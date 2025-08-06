@@ -167,9 +167,11 @@ namespace dsp
 			phasors(),
 			direct(0.),
 			sampleRateInv(1.),
+			y0(0.),
 			shift(13.),
 			inc(0.),
 			phaseOffset(0.),
+			feedback(0.),
 			reflect(false)
 		{
 		}
@@ -203,6 +205,12 @@ namespace dsp
 			phaseOffset = phase;
 		}
 
+		// fb]-1, 1[
+		void setFeedback(double fb) noexcept
+		{
+			feedback = fb * fb;
+		}
+
 		// process:
 
 		void reset() noexcept
@@ -211,6 +219,7 @@ namespace dsp
 				phasor.reset(1., phaseOffset);
 			for(auto& hilbert: hilberts)
 				hilbert.reset(0., 0.);
+			y0 = 0.;
 		}
 
 		void operator()(ProcessorBufferView& view) noexcept
@@ -222,10 +231,11 @@ namespace dsp
 					auto smpls = view.getSamplesMain(ch);
 					const auto x = static_cast<double>(smpls[i]);
 					auto& hilbert = hilberts[ch];
-					const auto hlbrt = hilbert(coeffs, x * phasors[0].pos, direct);
+					const auto y1 = feedback * y0;
+					const auto hlbrt = hilbert(coeffs, y1 + x * phasors[0].pos, direct);
 					const auto analyticSignal = phasors[1].pos * hlbrt;
-					const auto y = static_cast<float>(analyticSignal.real());
-					smpls[i] = y;
+					y0 = analyticSignal.real();
+					smpls[i] = static_cast<float>(y0);
 				}
 				const auto idx = (inc < 0.) ? reflect : 1 - reflect;
 				phasors[idx](inc);
@@ -235,9 +245,9 @@ namespace dsp
 		Coefficients coeffs;
 		std::array<HilbertTransform, 2> hilberts;
 		std::array<PhasorC, 2> phasors;
-		double direct, sampleRateInv;
+		double direct, sampleRateInv, y0;
 		//
-		double shift, inc, phaseOffset;
+		double shift, inc, phaseOffset, feedback;
 		int reflect;
 	};
 }
