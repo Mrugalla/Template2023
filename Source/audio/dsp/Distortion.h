@@ -11,6 +11,10 @@ namespace dsp
 	template<typename Float>
 	Float ratioclip(Float, Float, Float) noexcept;
 
+	// samples, ceiling
+	template<typename Float>
+	Float parabolaclip(Float, Float) noexcept;
+
 	// sample, ceiling
 	template<typename Float>
 	Float softclipCubic(Float, Float) noexcept;

@@ -1,7 +1,7 @@
 // read the license file of this header's folder, if you want to use this code!
 #pragma once
-#include <complex>
-#include "../Using.h"
+#include "../Distortion.h"
+//#include "../Using.h"
 
 namespace dsp
 {
@@ -74,9 +74,15 @@ namespace dsp
 		{
 			HilbertTransform() :
 				real(),
-				imag()
+				imag(),
+				direct(0.)
 			{
 				reset(0., 0.);
+			}
+
+			void prepare(double _direct) noexcept
+			{
+				direct = _direct;
 			}
 
 			void reset(double _real, double _imag) noexcept
@@ -87,7 +93,7 @@ namespace dsp
 					v = _imag;
 			}
 
-			ComplexD operator()(const Coefficients& c, double x, double direct) noexcept
+			ComplexD operator()(const Coefficients& c, double x) noexcept
 			{
 				// Really we're just doing: state[i] = state[i] * poles[i] + x * coeffs[i]
 				// but std::complex is slow without -ffast-math, so we've unwrapped it
@@ -108,12 +114,12 @@ namespace dsp
 				return { resultR, resultI };
 			}
 
-			ComplexD operator()(const Coefficients& c, float x, double direct) noexcept
+			ComplexD operator()(const Coefficients& c, float x) noexcept
 			{
-				return operator()(c, static_cast<double>(x), direct);
+				return operator()(c, static_cast<double>(x));
 			}
 
-			ComplexD operator()(const Coefficients& c, ComplexD x, double direct) noexcept
+			ComplexD operator()(const Coefficients& c, ComplexD x) noexcept
 			{
 				for (int i = 0; i < Order; ++i)
 				{
@@ -133,6 +139,7 @@ namespace dsp
 			}
 		private:
 			ArrayD real, imag;
+			double direct;
 		};
 
 		struct PhasorC
@@ -160,19 +167,78 @@ namespace dsp
 			ComplexD pos;
 			double phase;
 		};
+
+		struct PhasorBuffer
+		{
+			PhasorBuffer() :
+				buffers(),
+				phasors{ PhasorC(1., 0.), PhasorC(1., 0.) },
+				inc(0.),
+				phaseOffset(0.),
+				reflect(0)
+			{
+				const auto& pos = phasors[0].pos;
+				for (auto& pairs : buffers)
+					for (auto& pair : pairs)
+						pair = pos;
+			}
+
+			// parameters:
+
+			void setInc(double _inc) noexcept
+			{
+				inc = _inc;
+			}
+
+			void setReflect(int r) noexcept
+			{
+				reflect = r;
+			}
+
+			void setPhaseOffset(double phase) noexcept
+			{
+				phaseOffset = phase;
+			}
+
+			// process:
+
+			void reset() noexcept
+			{
+				for (auto& phasor : phasors)
+					phasor.reset(1., phaseOffset);
+			}
+
+			void operator()(int numSamples) noexcept
+			{
+				for(auto s = 0; s < numSamples; ++s)
+				{
+					buffers[s][0] = phasors[0].pos;
+					buffers[s][1] = phasors[1].pos;
+
+					const auto idx = (inc < 0.) ? reflect : 1 - reflect;
+					phasors[idx](inc);
+				}
+			}
+
+			const std::array<ComplexD, 2>& operator[](int s) const noexcept
+			{
+				return buffers[s];
+			}
+		private:
+			std::array<std::array<ComplexD, 2>, BlockSize> buffers;
+			std::array<PhasorC, 2> phasors;
+			double inc, phaseOffset;
+			int reflect;
+		};
 	public:
 		FreqShifter() :
 			coeffs(),
 			hilberts(),
-			phasors(),
-			direct(0.),
+			phasorBuffer(),
 			sampleRateInv(1.),
-			y0(0.),
+			y0s{ 0., 0. },
 			shift(13.),
-			inc(0.),
-			phaseOffset(0.),
-			feedback(0.),
-			reflect(false)
+			feedback(0.)
 		{
 		}
 
@@ -181,7 +247,8 @@ namespace dsp
 			sampleRateInv = 1. / sampleRate;
 			const auto freqFactor = std::min(0.46, 20000. * sampleRateInv);
 			const auto ffGain = PassbandGain * freqFactor;
-			direct = Direct * ffGain;
+			for(auto& hilbert : hilberts)
+				hilbert.prepare(Direct * ffGain);
 			coeffs.prepare(ffGain, freqFactor);
 			setShift(shift);
 			reset();
@@ -191,63 +258,66 @@ namespace dsp
 
 		void setReflect(int r) noexcept
 		{
-			reflect = r;
+			phasorBuffer.setReflect(r);
 		}
 
 		void setShift(double s) noexcept
 		{
 			shift = s;
-			inc = shift * sampleRateInv;
+			phasorBuffer.setInc(shift * sampleRateInv);
 		}
 
-		void setPhaseOffset(double phase) noexcept
+		void setPhaseOffset(double p) noexcept
 		{
-			phaseOffset = phase;
+			phasorBuffer.setPhaseOffset(p);
 		}
 
 		// fb]-1, 1[
 		void setFeedback(double fb) noexcept
 		{
-			feedback = fb * fb;
+			feedback = fb;
 		}
 
 		// process:
 
 		void reset() noexcept
 		{
-			for(auto& phasor: phasors)
-				phasor.reset(1., phaseOffset);
+			phasorBuffer.reset();
 			for(auto& hilbert: hilberts)
 				hilbert.reset(0., 0.);
-			y0 = 0.;
+			for(auto& y0 : y0s)
+				y0 = 0.;
 		}
 
 		void operator()(ProcessorBufferView& view) noexcept
 		{
-			for (auto i = 0; i < view.numSamples; ++i)
+			phasorBuffer(view.numSamples);
+
+			for (auto ch = 0; ch < view.getNumChannelsMain(); ++ch)
 			{
-				for (auto ch = 0; ch < view.getNumChannelsMain(); ++ch)
+				auto smpls = view.getSamplesMain(ch);
+				auto& y0 = y0s[ch];
+				auto& hilbert = hilberts[ch];
+
+				for (auto s = 0; s < view.numSamples; ++s)
 				{
-					auto smpls = view.getSamplesMain(ch);
-					const auto x = static_cast<double>(smpls[i]);
-					auto& hilbert = hilberts[ch];
-					const auto y1 = feedback * y0;
-					const auto hlbrt = hilbert(coeffs, y1 + x * phasors[0].pos, direct);
-					const auto analyticSignal = phasors[1].pos * hlbrt;
+					const auto& pair = phasorBuffer[s];
+					const auto x = static_cast<double>(smpls[s]);
+					const auto y1 = std::tanh(feedback * y0);
+					const auto hlbrt = hilbert(coeffs, y1 + x * pair[0]);
+					const auto analyticSignal = pair[1] * hlbrt;
 					y0 = analyticSignal.real();
-					smpls[i] = static_cast<float>(y0);
+					smpls[s] = static_cast<float>(y0);
 				}
-				const auto idx = (inc < 0.) ? reflect : 1 - reflect;
-				phasors[idx](inc);
 			}
 		}
 	private:
 		Coefficients coeffs;
 		std::array<HilbertTransform, 2> hilberts;
-		std::array<PhasorC, 2> phasors;
-		double direct, sampleRateInv, y0;
+		PhasorBuffer phasorBuffer;
+		std::array<double, 2> y0s;
+		double sampleRateInv;
 		//
-		double shift, inc, phaseOffset, feedback;
-		int reflect;
+		double shift, feedback;
 	};
 }

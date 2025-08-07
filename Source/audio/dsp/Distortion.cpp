@@ -15,13 +15,28 @@ namespace dsp
 	}
 
 	template<typename Float>
+	Float parabolaclip(Float smpl, Float ceiling) noexcept
+	{
+		static constexpr auto zero = static_cast<Float>(0);
+		static constexpr auto one = static_cast<Float>(1);
+		if (smpl < zero)
+		{
+			const auto xx = smpl + one;
+			return ceiling * xx * xx - ceiling;
+		}
+		const auto xx = smpl - one;
+		return ceiling - ceiling * xx * xx;
+	}
+
+	template<typename Float>
 	Float softclipCubic(Float smpl, Float ceiling) noexcept
 	{
 		static constexpr auto three = static_cast<Float>(3);
-		static constexpr auto two = static_cast<Float>(2);
+		static constexpr auto threeInv = static_cast<Float>(1) / three;
+		static constexpr auto twoInv = static_cast<Float>(.5);
 		
 		return smpl < -ceiling ? -ceiling : smpl > ceiling ? ceiling :
-			(smpl - smpl * smpl * smpl / three) * three / two * ceiling;
+			(smpl - smpl * smpl * smpl * threeInv) * three * twoInv * ceiling;
 	}
 
 	template<typename Float>
@@ -97,6 +112,9 @@ namespace dsp
 
 	template float ratioclip(float, float, float) noexcept;
 	template double ratioclip(double, double, double) noexcept;
+
+	template float parabolaclip(float, float) noexcept;
+	template double parabolaclip(double, double) noexcept;
 
 	template float softclipCubic(float, float) noexcept;
 	template double softclipCubic(double, double) noexcept;
