@@ -12,6 +12,7 @@ namespace dsp
 		static constexpr double PassbandGain = 2.;
 		using ArrayD = std::array<double, Order>;
 		using ArrayC = std::array<ComplexD, Order>;
+		using ComplexPair = std::array<ComplexD, 2>;
 
 		static constexpr ArrayC Coeffs =
 		{
@@ -214,31 +215,77 @@ namespace dsp
 				{
 					buffers[s][0] = phasors[0].pos;
 					buffers[s][1] = phasors[1].pos;
-
 					const auto idx = (inc < 0.) ? reflect : 1 - reflect;
 					phasors[idx](inc);
 				}
 			}
 
-			const std::array<ComplexD, 2>& operator[](int s) const noexcept
+			const ComplexPair& operator[](int s) const noexcept
 			{
 				return buffers[s];
 			}
 		private:
-			std::array<std::array<ComplexD, 2>, BlockSize> buffers;
+			std::array<ComplexPair, BlockSize> buffers;
 			std::array<PhasorC, 2> phasors;
 			double inc, phaseOffset;
 			int reflect;
 		};
+
+		struct FreqShifterMono
+		{
+			FreqShifterMono() :
+				hilbert(),
+				y0(0.),
+				feedback(0.)
+			{
+			}
+
+			void prepare(double direct) noexcept
+			{
+				hilbert.prepare(direct);
+			}
+
+			// parameters:
+
+			void setFeedback(double fb) noexcept
+			{
+				feedback = fb;
+			}
+
+			// process:
+
+			void reset() noexcept
+			{
+				hilbert.reset(0., 0.);
+				y0 = 0.;
+			}
+
+			void operator()(float* smpls, const Coefficients& coeffs,
+				PhasorBuffer& phasorBuffer, int numSamples) noexcept
+			{
+				for (auto s = 0; s < numSamples; ++s)
+				{
+					const auto& pair = phasorBuffer[s];
+					const auto x = static_cast<double>(smpls[s]);
+					const auto y1 = std::tanh(feedback * y0);
+					const auto hlbrt = hilbert(coeffs, y1 + x * pair[0]);
+					const auto analyticSignal = pair[1] * hlbrt;
+					y0 = analyticSignal.real();
+					smpls[s] = static_cast<float>(y0);
+				}
+			}
+
+		private:
+			HilbertTransform hilbert;
+			double y0, feedback;
+		};
 	public:
 		FreqShifter() :
 			coeffs(),
-			hilberts(),
 			phasorBuffer(),
+			shifters(),
 			sampleRateInv(1.),
-			y0s{ 0., 0. },
-			shift(13.),
-			feedback(0.)
+			shift(13.)
 		{
 		}
 
@@ -247,9 +294,10 @@ namespace dsp
 			sampleRateInv = 1. / sampleRate;
 			const auto freqFactor = std::min(0.46, 20000. * sampleRateInv);
 			const auto ffGain = PassbandGain * freqFactor;
-			for(auto& hilbert : hilberts)
-				hilbert.prepare(Direct * ffGain);
 			coeffs.prepare(ffGain, freqFactor);
+			const auto direct = Direct * ffGain;
+			for(auto& shifter : shifters)
+				shifter.prepare(direct);
 			setShift(shift);
 			reset();
 		}
@@ -261,6 +309,7 @@ namespace dsp
 			phasorBuffer.setReflect(r);
 		}
 
+		// hz
 		void setShift(double s) noexcept
 		{
 			shift = s;
@@ -272,10 +321,10 @@ namespace dsp
 			phasorBuffer.setPhaseOffset(p);
 		}
 
-		// fb]-1, 1[
 		void setFeedback(double fb) noexcept
 		{
-			feedback = fb;
+			for (auto& shifter : shifters)
+				shifter.setFeedback(fb);
 		}
 
 		// process:
@@ -283,41 +332,24 @@ namespace dsp
 		void reset() noexcept
 		{
 			phasorBuffer.reset();
-			for(auto& hilbert: hilberts)
-				hilbert.reset(0., 0.);
-			for(auto& y0 : y0s)
-				y0 = 0.;
+			for(auto& shifter: shifters)
+				shifter.reset();
 		}
 
 		void operator()(ProcessorBufferView& view) noexcept
 		{
 			phasorBuffer(view.numSamples);
-
 			for (auto ch = 0; ch < view.getNumChannelsMain(); ++ch)
 			{
 				auto smpls = view.getSamplesMain(ch);
-				auto& y0 = y0s[ch];
-				auto& hilbert = hilberts[ch];
-
-				for (auto s = 0; s < view.numSamples; ++s)
-				{
-					const auto& pair = phasorBuffer[s];
-					const auto x = static_cast<double>(smpls[s]);
-					const auto y1 = std::tanh(feedback * y0);
-					const auto hlbrt = hilbert(coeffs, y1 + x * pair[0]);
-					const auto analyticSignal = pair[1] * hlbrt;
-					y0 = analyticSignal.real();
-					smpls[s] = static_cast<float>(y0);
-				}
+				auto& shifter = shifters[ch];
+				shifter(smpls, coeffs, phasorBuffer, view.numSamples);
 			}
 		}
 	private:
 		Coefficients coeffs;
-		std::array<HilbertTransform, 2> hilberts;
 		PhasorBuffer phasorBuffer;
-		std::array<double, 2> y0s;
-		double sampleRateInv;
-		//
-		double shift, feedback;
+		std::array<FreqShifterMono, 2> shifters;
+		double sampleRateInv, shift;
 	};
 }
