@@ -40,8 +40,18 @@ namespace math
     Float cosApprox(Float) noexcept;
 
     // for x != -9652.5
+    // this one is asymetric
     template<typename Float>
     Float tanhApprox(Float) noexcept;
+
+    template<typename Float>
+    Float tanhPoly5(Float) noexcept;
+
+    template<typename Float>
+    Float tanhPoly7(Float) noexcept;
+
+    template<typename Float>
+    Float tanhPoly7Horner(Float) noexcept;
 
     float invSqrt(float) noexcept;
 

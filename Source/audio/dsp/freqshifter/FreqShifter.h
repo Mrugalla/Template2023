@@ -205,6 +205,8 @@ namespace dsp
 
 			void reset() noexcept
 			{
+				if (phaseOffset == 0.)
+					return; // phase continuous mode!
 				for (auto& phasor : phasors)
 					phasor.reset(1., phaseOffset);
 			}
@@ -274,7 +276,6 @@ namespace dsp
 					smpls[s] = static_cast<float>(y0);
 				}
 			}
-
 		private:
 			HilbertTransform hilbert;
 			double y0, feedback;

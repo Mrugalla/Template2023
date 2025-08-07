@@ -94,6 +94,46 @@ namespace math
         return numerator / denominator;
     }
 
+    template<typename Float>
+    Float tanhPoly5(Float x) noexcept
+    {
+		constexpr auto one = static_cast<Float>(1);
+		constexpr auto threeInv = static_cast<Float>(1. / 3.);
+		constexpr auto two = static_cast<Float>(2);
+		constexpr auto fifteenInv = static_cast<Float>(1. / 15.);
+
+        const auto x2 = x * x;
+        return x * (one - x2 * threeInv + two * x2 * x2 * fifteenInv);
+    }
+
+    template<typename Float>
+    Float tanhPoly7(Float x) noexcept
+    {
+        constexpr auto threeInv = static_cast<Float>(1. / 3.);
+        constexpr auto two = static_cast<Float>(2);
+        constexpr auto fifteenInv = static_cast<Float>(1. / 15.);
+		constexpr auto seventeen = static_cast<Float>(17);
+		constexpr auto threehundredfifteenInv = static_cast<Float>(1. / 315.);
+        
+        const auto x2 = x * x;
+		const auto x3 = x2 * x;
+		const auto x5 = x3 * x2;
+		const auto x7 = x5 * x2;
+
+        return x - x3 * threeInv + two * x5 * fifteenInv - seventeen * x7 * threehundredfifteenInv;
+    }
+
+    template<typename Float>
+    Float tanhPoly7Horner(Float x) noexcept
+    {
+		static constexpr auto one = static_cast<Float>(1);
+		static constexpr auto onethird = static_cast<Float>(1. / 3.);
+		static constexpr auto twoFifteenth = static_cast<Float>(2. / 15.);
+        static constexpr auto seventeenThreeHundredFifteenth = static_cast<Float>(17. / 315.);
+		const auto x2 = x * x;
+        return x * (one + x2 * (-onethird + x2 * (-twoFifteenth + x2 * (-seventeenThreeHundredFifteenth))));
+    }
+
     float invSqrt(float x) noexcept
     {
         union { float f; int i; } y;
@@ -491,6 +531,15 @@ namespace math
 
     template float tanhApprox<float>(float) noexcept;
     template double tanhApprox<double>(double) noexcept;
+
+	template float tanhPoly5<float>(float) noexcept;
+	template double tanhPoly5<double>(double) noexcept;
+
+	template float tanhPoly7<float>(float) noexcept;
+	template double tanhPoly7<double>(double) noexcept;
+
+	template float tanhPoly7Horner<float>(float) noexcept;
+	template double tanhPoly7Horner<double>(double) noexcept;
 
     template float slightlySmaller<float>(float) noexcept;
     template double slightlySmaller<double>(double) noexcept;
