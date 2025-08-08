@@ -1,7 +1,6 @@
 // read the license file of this header's folder, if you want to use this code!
 #pragma once
 #include "../Distortion.h"
-//#include "../Using.h"
 
 namespace dsp
 {
@@ -269,7 +268,7 @@ namespace dsp
 				{
 					const auto& pair = phasorBuffer[s];
 					const auto x = static_cast<double>(smpls[s]);
-					const auto y1 = std::tanh(feedback * y0);
+					const auto y1 = rationalclip(feedback * y0);
 					const auto hlbrt = hilbert(coeffs, y1 + x * pair[0]);
 					const auto analyticSignal = pair[1] * hlbrt;
 					y0 = analyticSignal.real();
@@ -310,10 +309,9 @@ namespace dsp
 			phasorBuffer.setReflect(r);
 		}
 
-		// hz
-		void setShift(double s) noexcept
+		void setShift(double hz) noexcept
 		{
-			shift = s;
+			shift = hz;
 			phasorBuffer.setInc(shift * sampleRateInv);
 		}
 

@@ -29,6 +29,13 @@ namespace dsp
 	}
 
 	template<typename Float>
+	Float rationalclip(Float smpl) noexcept
+	{
+		static constexpr auto one = static_cast<Float>(1);
+		return smpl / (one + smpl * smpl);
+	}
+
+	template<typename Float>
 	Float softclipCubic(Float smpl, Float ceiling) noexcept
 	{
 		static constexpr auto three = static_cast<Float>(3);
@@ -115,6 +122,9 @@ namespace dsp
 
 	template float parabolaclip(float, float) noexcept;
 	template double parabolaclip(double, double) noexcept;
+
+	template float rationalclip(float) noexcept;
+	template double rationalclip(double) noexcept;
 
 	template float softclipCubic(float, float) noexcept;
 	template double softclipCubic(double, double) noexcept;
