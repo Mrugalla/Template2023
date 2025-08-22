@@ -133,16 +133,14 @@ namespace gui
 			file.deleteFile();
 		file.create();
 		WavAudioFormat format;
-		std::unique_ptr<AudioFormatWriter> writer;
 		const auto numChannels = utils.audioProcessor.getBus(true, 0)->getNumberOfChannels();
 		const auto Fs = utils.audioProcessor.getSampleRate();
-		writer.reset(format.createWriterFor(new FileOutputStream(file),
-			Fs,
-			numChannels,
-			24,
-			{},
-			0
-		));
+		juce::AudioFormatWriterOptions options;
+		options = options.withBitsPerSample(24)
+			.withSampleRate(Fs)
+			.withNumChannels(numChannels);
+		std::unique_ptr<juce::OutputStream> outStream(new FileOutputStream(file));
+		const auto writer = format.createWriterFor(outStream, options);
 		const auto numSamples = buffer.getNumSamples();
 		if (!writer)
 			return false;

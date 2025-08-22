@@ -262,7 +262,7 @@ namespace dsp
 			}
 
 			void operator()(float* smpls, const Coefficients& coeffs,
-				PhasorBuffer& phasorBuffer, int numSamples) noexcept
+				const PhasorBuffer& phasorBuffer, int numSamples) noexcept
 			{
 				for (auto s = 0; s < numSamples; ++s)
 				{
