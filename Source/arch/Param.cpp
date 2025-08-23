@@ -118,6 +118,7 @@ namespace param
 		case PID::Shift: return "Shift";
 		case PID::PhaseOffset: return "Phase Offset";
 		case PID::Feedback: return "Feedback";
+		case PID::ShiftWidth: return "Shift Width";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -1603,6 +1604,7 @@ namespace param
 		params.push_back(makeParam(PID::Shift, 50.f, makeRange::withCentre(-10000.f, -100.f, 0.f, 100.f, 10000.f), Unit::Hz, true));
 		params.push_back(makeParam(PID::PhaseOffset, 0.f, makeRange::lin(0.f, 1.f), Unit::Phase360, true));
 		params.push_back(makeParam(PID::Feedback, 0.f, makeRange::lin(-1.2f, 1.2f)));
+		params.push_back(makeParam(PID::ShiftWidth, 0.f, makeRange::withCentre(0.f, 5000.f, 50.f), Unit::Hz, true));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

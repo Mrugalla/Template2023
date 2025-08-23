@@ -17,7 +17,7 @@ namespace dsp
 
 		params(PID::Shift).callback = [&](const param::Param::CB& cb) noexcept
 		{
-			freqShifter.setShift(cb.denorm());
+			freqShifter.setShift(cb.denorm(), cb.numChannels);
 		};
 
 		params(PID::PhaseOffset).callback = [&](const param::Param::CB& cb) noexcept
@@ -28,6 +28,11 @@ namespace dsp
 		params(PID::Feedback).callback = [&](const param::Param::CB& cb) noexcept
 		{
 			freqShifter.setFeedback(cb.denorm());
+		};
+
+		params(PID::ShiftWidth).callback = [&](const param::Param::CB& cb) noexcept
+		{
+			freqShifter.setShiftWidth(cb.denorm(), cb.numChannels);
 		};
 	}
 

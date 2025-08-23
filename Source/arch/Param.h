@@ -60,6 +60,7 @@ namespace param
 		Shift,
 		PhaseOffset,
 		Feedback,
+		ShiftWidth,
 		//
 		
 		NumParams

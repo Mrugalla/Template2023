@@ -235,18 +235,36 @@ namespace dsp
 		struct FreqShifterMono
 		{
 			FreqShifterMono() :
+				phasorBuffer(),
 				hilbert(),
 				y0(0.),
-				feedback(0.)
+				feedback(0.),
+				sampleRateInv(1.)
 			{
 			}
 
-			void prepare(double direct) noexcept
+			void prepare(double _sampleRateInv, double direct) noexcept
 			{
+				sampleRateInv = _sampleRateInv;
 				hilbert.prepare(direct);
 			}
 
 			// parameters:
+
+			void setReflect(int r) noexcept
+			{
+				phasorBuffer.setReflect(r);
+			}
+
+			void setShift(double shift) noexcept
+			{
+				phasorBuffer.setInc(shift * sampleRateInv);
+			}
+
+			void setPhaseOffset(double phase) noexcept
+			{
+				phasorBuffer.setPhaseOffset(phase);
+			}
 
 			void setFeedback(double fb) noexcept
 			{
@@ -257,13 +275,15 @@ namespace dsp
 
 			void reset() noexcept
 			{
+				phasorBuffer.reset();
 				hilbert.reset(0., 0.);
 				y0 = 0.;
 			}
 
 			void operator()(float* smpls, const Coefficients& coeffs,
-				const PhasorBuffer& phasorBuffer, int numSamples) noexcept
+				int numSamples) noexcept
 			{
+				phasorBuffer(numSamples);
 				for (auto s = 0; s < numSamples; ++s)
 				{
 					const auto& pair = phasorBuffer[s];
@@ -276,16 +296,17 @@ namespace dsp
 				}
 			}
 		private:
+			PhasorBuffer phasorBuffer;
 			HilbertTransform hilbert;
-			double y0, feedback;
+			double y0, feedback, sampleRateInv;
 		};
 	public:
 		FreqShifter() :
 			coeffs(),
-			phasorBuffer(),
 			shifters(),
 			sampleRateInv(1.),
-			shift(13.)
+			shift(13.),
+			shiftWidth(0.)
 		{
 		}
 
@@ -297,8 +318,8 @@ namespace dsp
 			coeffs.prepare(ffGain, freqFactor);
 			const auto direct = Direct * ffGain;
 			for(auto& shifter : shifters)
-				shifter.prepare(direct);
-			setShift(shift);
+				shifter.prepare(sampleRateInv, direct);
+			setShift(shift, 2);
 			reset();
 		}
 
@@ -306,18 +327,20 @@ namespace dsp
 
 		void setReflect(int r) noexcept
 		{
-			phasorBuffer.setReflect(r);
+			for(auto& shifter: shifters)
+				shifter.setReflect(r);
 		}
 
-		void setShift(double hz) noexcept
+		void setShift(double hz, int numChannels) noexcept
 		{
 			shift = hz;
-			phasorBuffer.setInc(shift * sampleRateInv);
+			updateShift(numChannels);
 		}
 
 		void setPhaseOffset(double p) noexcept
 		{
-			phasorBuffer.setPhaseOffset(p);
+			for (auto& shifter : shifters)
+				shifter.setPhaseOffset(p);
 		}
 
 		void setFeedback(double fb) noexcept
@@ -326,29 +349,39 @@ namespace dsp
 				shifter.setFeedback(fb);
 		}
 
+		void setShiftWidth(double hz, int numChannels) noexcept
+		{
+			shiftWidth = hz;
+			updateShift(numChannels);
+		}
+
 		// process:
 
 		void reset() noexcept
 		{
-			phasorBuffer.reset();
 			for(auto& shifter: shifters)
 				shifter.reset();
 		}
 
 		void operator()(ProcessorBufferView& view) noexcept
 		{
-			phasorBuffer(view.numSamples);
 			for (auto ch = 0; ch < view.getNumChannelsMain(); ++ch)
 			{
 				auto smpls = view.getSamplesMain(ch);
 				auto& shifter = shifters[ch];
-				shifter(smpls, coeffs, phasorBuffer, view.numSamples);
+				shifter(smpls, coeffs, view.numSamples);
 			}
 		}
 	private:
 		Coefficients coeffs;
-		PhasorBuffer phasorBuffer;
 		std::array<FreqShifterMono, 2> shifters;
-		double sampleRateInv, shift;
+		double sampleRateInv, shift, shiftWidth;
+
+		void updateShift(int numChannels) noexcept
+		{
+			shifters[0].setShift(shift - shiftWidth);
+			if(numChannels == 2)
+				shifters[1].setShift(shift + shiftWidth);
+		}
 	};
 }
