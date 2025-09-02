@@ -1,7 +1,8 @@
 #pragma once
+#include "dsp/ProcessorBufferView.h"
 #include "dsp/Transport.h"
 #include "../arch/Param.h"
-
+//
 #include "dsp/freqshifter/FreqShifter.h"
 
 namespace dsp
@@ -16,10 +17,11 @@ namespace dsp
 #endif
 	struct PluginProcessor
 	{
-		PluginProcessor(Params&
+		PluginProcessor(Params&,
 #if PPDHasTuningEditor
-			, XenManager&
+			XenManager&,
 #endif
+			Transport&
 		);
 
 		// sampleRate

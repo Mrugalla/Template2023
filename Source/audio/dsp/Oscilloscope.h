@@ -2,6 +2,7 @@
 #include "Transport.h"
 #include "Whead.h"
 #include "Phasor.h"
+#include "ProcessorBufferView.h"
 
 namespace dsp
 {

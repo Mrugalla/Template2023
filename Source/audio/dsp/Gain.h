@@ -1,5 +1,6 @@
 #pragma once
 #include "PRM.h"
+#include "ProcessorBufferView.h"
 
 namespace dsp
 {

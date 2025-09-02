@@ -57,10 +57,15 @@ namespace param
 
 		// low level parameters
 		Reflect,
-		Shift,
+		Temposync,
+		ShiftHz,
+		ShiftBeats,
 		PhaseOffset,
 		Feedback,
-		ShiftWidth,
+		ShiftHzWidth,
+		ShiftBeatsWidth,
+		PhaseOffsetWidth,
+		FeedbackWidth,
 		//
 		
 		NumParams

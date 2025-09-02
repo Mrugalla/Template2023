@@ -115,10 +115,15 @@ namespace param
 
 		// LOW LEVEL PARAMS:
 		case PID::Reflect: return "Reflect";
-		case PID::Shift: return "Shift";
+		case PID::Temposync: return "Temposync";
+		case PID::ShiftHz: return "Shift Hz";
+		case PID::ShiftBeats: return "Shift Beats";
 		case PID::PhaseOffset: return "Phase Offset";
 		case PID::Feedback: return "Feedback";
-		case PID::ShiftWidth: return "Shift Width";
+		case PID::ShiftHzWidth: return "Shift Hz Width";
+		case PID::ShiftBeatsWidth: return "Shift Beats Width";
+		case PID::PhaseOffsetWidth: return "Phase Offset Width";
+		case PID::FeedbackWidth: return "Feedback Width";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -1601,10 +1606,15 @@ namespace param
 
 		// LOW LEVEL PARAMS:
 		params.push_back(makeParam(PID::Reflect, 0.f, makeRange::toggle(), Unit::Power, false));
-		params.push_back(makeParam(PID::Shift, 50.f, makeRange::withCentre(-10000.f, -100.f, 0.f, 100.f, 10000.f), Unit::Hz, true));
+		params.push_back(makeParam(PID::Temposync, 0, makeRange::toggle(), Unit::Power, false));
+		params.push_back(makeParam(PID::ShiftHz, 50.f, makeRange::withCentre(-10000, -100, 0, 100, 10000), Unit::Hz, true));
+		params.push_back(makeParam(PID::ShiftBeats, 1.f / 4.f, makeRange::beats(64, 1, false), Unit::Beats));
 		params.push_back(makeParam(PID::PhaseOffset, 0.f, makeRange::lin(0.f, 1.f), Unit::Phase360, true));
 		params.push_back(makeParam(PID::Feedback, 0.f, makeRange::lin(-1.2f, 1.2f)));
-		params.push_back(makeParam(PID::ShiftWidth, 0.f, makeRange::withCentre(0.f, 5000.f, 50.f), Unit::Hz, true));
+		params.push_back(makeParam(PID::ShiftHzWidth, 0.f, makeRange::withCentre(-5000, -50, 0, 50, 5000), Unit::Hz, true));
+		params.push_back(makeParam(PID::ShiftBeatsWidth, 0.f, makeRange::beats(64, 1, true), Unit::Beats, true));
+		params.push_back(makeParam(PID::PhaseOffsetWidth, 0.f, makeRange::lin(-1, 1), Unit::Phase360, true));
+		params.push_back(makeParam(PID::FeedbackWidth, 0.f, makeRange::lin(-1, 1)));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

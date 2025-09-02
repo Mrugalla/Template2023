@@ -59,6 +59,9 @@
           <FILE id="JX1v55" name="Allpass.h" compile="0" resource="0" file="Source/audio/dsp/Allpass.h"/>
           <FILE id="rYmB6g" name="AutoGain.cpp" compile="1" resource="0" file="Source/audio/dsp/AutoGain.cpp"/>
           <FILE id="FnrzIq" name="AutoGain.h" compile="0" resource="0" file="Source/audio/dsp/AutoGain.h"/>
+          <FILE id="HBYxes" name="BlitzCrusher.cpp" compile="1" resource="0"
+                file="Source/audio/dsp/BlitzCrusher.cpp"/>
+          <FILE id="V18omx" name="BlitzCrusher.h" compile="0" resource="0" file="Source/audio/dsp/BlitzCrusher.h"/>
           <FILE id="HydD4M" name="Convolver.cpp" compile="1" resource="0" file="Source/audio/dsp/Convolver.cpp"/>
           <FILE id="kcpxV5" name="Convolver.h" compile="0" resource="0" file="Source/audio/dsp/Convolver.h"/>
           <FILE id="pTft4b" name="Distortion.cpp" compile="1" resource="0" file="Source/audio/dsp/Distortion.cpp"/>
@@ -110,6 +113,10 @@
                 file="Source/audio/dsp/PluginRecorder.h"/>
           <FILE id="kLdw6e" name="PRM.cpp" compile="1" resource="0" file="Source/audio/dsp/PRM.cpp"/>
           <FILE id="qaffPJ" name="PRM.h" compile="0" resource="0" file="Source/audio/dsp/PRM.h"/>
+          <FILE id="MIUKYK" name="ProcessorBufferView.cpp" compile="1" resource="0"
+                file="Source/audio/dsp/ProcessorBufferView.cpp"/>
+          <FILE id="YocvVj" name="ProcessorBufferView.h" compile="0" resource="0"
+                file="Source/audio/dsp/ProcessorBufferView.h"/>
           <FILE id="Hd9KQN" name="Randomizer.cpp" compile="1" resource="0" file="Source/audio/dsp/Randomizer.cpp"/>
           <FILE id="xhr9wj" name="Randomizer.h" compile="0" resource="0" file="Source/audio/dsp/Randomizer.h"/>
           <FILE id="DiAel6" name="Resonator.cpp" compile="1" resource="0" file="Source/audio/dsp/Resonator.cpp"/>

@@ -2,10 +2,11 @@
 
 namespace dsp
 {
-	PluginProcessor::PluginProcessor(Params& params
+	PluginProcessor::PluginProcessor(Params& params,
 #if PPDHasTuningEditor
-		, XenManager& xen
+		XenManager& xen,
 #endif
+		Transport& transport
 	) :
 		sampleRate(1.),
 		freqShifter()
@@ -15,24 +16,54 @@ namespace dsp
 			freqShifter.setReflect(cb.getInt());
 		};
 
-		params(PID::Shift).callback = [&](const param::Param::CB& cb) noexcept
+		params(PID::Temposync).callback = [&](const param::Param::CB& cb) noexcept
 		{
-			freqShifter.setShift(cb.denorm(), cb.numChannels);
+			freqShifter.setTemposync(cb.getBool(), cb.numChannels);
+		};
+
+		params(PID::ShiftHz).callback = [&](const param::Param::CB& cb) noexcept
+		{
+			freqShifter.setShiftHz(cb.denorm(), cb.numChannels);
+		};
+
+		params(PID::ShiftBeats).callback = [&](const param::Param::CB& cb) noexcept
+		{
+			freqShifter.setShiftBeats(cb.denorm(), cb.numChannels);
 		};
 
 		params(PID::PhaseOffset).callback = [&](const param::Param::CB& cb) noexcept
 		{
-			freqShifter.setPhaseOffset(cb.norm);
+			freqShifter.setPhaseOffset(cb.norm, cb.numChannels);
 		};
 
 		params(PID::Feedback).callback = [&](const param::Param::CB& cb) noexcept
 		{
-			freqShifter.setFeedback(cb.denorm());
+			freqShifter.setFeedback(cb.denorm(), cb.numChannels);
 		};
 
-		params(PID::ShiftWidth).callback = [&](const param::Param::CB& cb) noexcept
+		params(PID::ShiftHzWidth).callback = [&](const param::Param::CB& cb) noexcept
 		{
-			freqShifter.setShiftWidth(cb.denorm(), cb.numChannels);
+			freqShifter.setShiftHzWidth(cb.denorm(), cb.numChannels);
+		};
+
+		params(PID::ShiftBeatsWidth).callback = [&](const param::Param::CB& cb) noexcept
+		{
+			freqShifter.setShiftBeatsWidth(cb.denorm(), cb.numChannels);
+		};
+
+		params(PID::PhaseOffsetWidth).callback = [&](const param::Param::CB& cb) noexcept
+		{
+			freqShifter.setPhaseOffsetWidth(cb.denorm(), cb.numChannels);
+		};
+
+		params(PID::FeedbackWidth).callback = [&](const param::Param::CB& cb) noexcept
+		{
+			freqShifter.setFeedbackWidth(cb.denorm(), cb.numChannels);
+		};
+
+		transport.callback = [&](const Transport::Info& info) noexcept
+		{
+			freqShifter.setBpm(info.bpm, info.numChannels);
 		};
 	}
 

@@ -19,6 +19,7 @@ namespace dsp
 				numerator(3.),
 				denominator(4.),
 				timeSamples(0),
+				numChannels(0),
 				playing(true)
 			{
 			}
@@ -49,11 +50,13 @@ namespace dsp
 
 			double ppq, bpm, timeSecs, numerator, denominator;
 			Int64 timeSamples;
+			int numChannels;
 			bool playing;
 		};
 
 		Transport() :
 			info(),
+			callback([](const Info&) {}),
 			sampleRateInv(0.)
 		{
 		}
@@ -63,7 +66,7 @@ namespace dsp
 			sampleRateInv = _sampleRateInv;
 		}
 
-		void operator()(const PlayHead* playHead) noexcept
+		void operator()(const PlayHead* playHead, int numChannels) noexcept
 		{
 			if (juce::JUCEApplicationBase::isStandaloneApp() || playHead == nullptr)
 				return;
@@ -71,7 +74,7 @@ namespace dsp
 			if (!phx.hasValue())
 				return;
 			const auto& posInfo = *phx;
-			update(posInfo);
+			update(posInfo, numChannels);
 		}
 
 		void operator()(int numSamples) noexcept
@@ -80,28 +83,58 @@ namespace dsp
 		}
 
 		Info info;
+		std::function<void(const Info&)> callback;
 	private:
 		double sampleRateInv;
 
-		void update(const PlayHead::PositionInfo& phx) noexcept
+		void update(const PlayHead::PositionInfo& phx, int numChannels) noexcept
 		{
+			info.numChannels = numChannels;
+
+			bool wannaUpdate = false;
+
 			const auto ppq = phx.getPpqPosition();
 			const auto bpm = phx.getBpm();
 			const auto timeSecs = phx.getTimeInSeconds();
 			const auto timeSig = phx.getTimeSignature();
 			const auto timeSamples = phx.getTimeInSamples();
 			
-			info.ppq = ppq.hasValue() ? *ppq : 0.;
-			info.bpm = bpm.hasValue() ? *bpm : 90.;
-			info.timeSecs = timeSecs.hasValue() ? *timeSecs : 0.;
+			const auto ppqVal = ppq.hasValue() ? *ppq : 0.;
+			const auto bpmVal = bpm.hasValue() ? *bpm : 90.;
+			const auto timeSecsVal = timeSecs.hasValue() ? *timeSecs : 0.;
+			const auto timeSamplesVal = timeSamples.hasValue() ? *timeSamples : 0;
+			const auto playingVal = phx.getIsPlaying();
+
+			info.ppq = ppqVal;
+			info.timeSecs = timeSecsVal;
+			info.timeSamples = timeSamplesVal;
+
+			if (info.bpm != bpmVal)
+			{
+				info.bpm = bpmVal;
+				wannaUpdate = true;
+			}
+			
 			if (timeSig.hasValue())
 			{
 				const auto& ts = *timeSig;
-				info.denominator = ts.denominator;
-				info.numerator = ts.numerator;
+				if (info.denominator != ts.denominator ||
+					info.numerator != ts.numerator)
+				{
+					info.denominator = ts.denominator;
+					info.numerator = ts.numerator;
+					wannaUpdate = true;
+				}
 			}
-			info.timeSamples = timeSamples.hasValue() ? *timeSamples : 0;
-			info.playing = phx.getIsPlaying();
+			
+			if (info.playing != playingVal)
+			{
+				info.playing = playingVal;
+				wannaUpdate = true;
+			}
+			
+			if (wannaUpdate)
+				callback(info);
 		}
 
 		void proceed(int numSamples) noexcept
@@ -112,3 +145,9 @@ namespace dsp
 		}
 	};
 }
+
+/*
+todo:
+wannaUpdate on ppq and irregular timeSamples
+seperate callbacks for different event types
+*/

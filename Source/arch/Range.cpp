@@ -150,6 +150,16 @@ namespace makeRange
 			});
 	}
 
+	Range withCentre(int v0, int v25, int v50, int v75, int v100) noexcept
+	{
+		return withCentre
+		(
+			static_cast<float>(v0), static_cast<float>(v25),
+			static_cast<float>(v50), static_cast<float>(v75),
+			static_cast<float>(v100)
+		);
+	}
+
 	Range foleysLogRange(float min, float max) noexcept
 	{
 		return

@@ -1,6 +1,7 @@
 // read the license file of this header's folder, if you want to use this code!
 #pragma once
 #include "../Distortion.h"
+#include "../ProcessorBufferView.h"
 
 namespace dsp
 {
@@ -204,8 +205,6 @@ namespace dsp
 
 			void reset() noexcept
 			{
-				if (phaseOffset == 0.)
-					return; // phase continuous mode!
 				for (auto& phasor : phasors)
 					phasor.reset(1., phaseOffset);
 			}
@@ -237,6 +236,7 @@ namespace dsp
 			FreqShifterMono() :
 				phasorBuffer(),
 				hilbert(),
+				phaseOffset(0.),
 				y0(0.),
 				feedback(0.),
 				sampleRateInv(1.)
@@ -261,9 +261,10 @@ namespace dsp
 				phasorBuffer.setInc(shift * sampleRateInv);
 			}
 
-			void setPhaseOffset(double phase) noexcept
+			void setPhaseOffset(double p) noexcept
 			{
-				phasorBuffer.setPhaseOffset(phase);
+				phaseOffset = p;
+				phasorBuffer.setPhaseOffset(phaseOffset);
 			}
 
 			void setFeedback(double fb) noexcept
@@ -275,6 +276,8 @@ namespace dsp
 
 			void reset() noexcept
 			{
+				if (phaseOffset == 0.)
+					return; // phase continuous mode!
 				phasorBuffer.reset();
 				hilbert.reset(0., 0.);
 				y0 = 0.;
@@ -298,15 +301,23 @@ namespace dsp
 		private:
 			PhasorBuffer phasorBuffer;
 			HilbertTransform hilbert;
-			double y0, feedback, sampleRateInv;
+			double phaseOffset, y0, feedback, sampleRateInv;
 		};
 	public:
 		FreqShifter() :
 			coeffs(),
 			shifters(),
 			sampleRateInv(1.),
-			shift(13.),
-			shiftWidth(0.)
+			bpm(90.),
+			shiftHz(13.),
+			shiftBeats(1.),
+			shiftHzWidth(0.),
+			shiftBeatsWidth(0.),
+			phaseOffset(0.),
+			phaseOffsetWidth(0.),
+			feedback(0.),
+			feedbackWidth(0.),
+			temposync(false)
 		{
 		}
 
@@ -319,11 +330,18 @@ namespace dsp
 			const auto direct = Direct * ffGain;
 			for(auto& shifter : shifters)
 				shifter.prepare(sampleRateInv, direct);
-			setShift(shift, 2);
+			updateShift(2);
 			reset();
 		}
 
 		// parameters:
+
+		void setBpm(double b, int numChannels) noexcept
+		{
+			bpm = b;
+			if(temposync)
+				updateShift(numChannels);
+		}
 
 		void setReflect(int r) noexcept
 		{
@@ -331,28 +349,58 @@ namespace dsp
 				shifter.setReflect(r);
 		}
 
-		void setShift(double hz, int numChannels) noexcept
+		void setTemposync(bool t, int numChannels) noexcept
 		{
-			shift = hz;
+			temposync = t;
 			updateShift(numChannels);
 		}
 
-		void setPhaseOffset(double p) noexcept
+		void setShiftHz(double hz, int numChannels) noexcept
 		{
-			for (auto& shifter : shifters)
-				shifter.setPhaseOffset(p);
-		}
-
-		void setFeedback(double fb) noexcept
-		{
-			for (auto& shifter : shifters)
-				shifter.setFeedback(fb);
-		}
-
-		void setShiftWidth(double hz, int numChannels) noexcept
-		{
-			shiftWidth = hz;
+			shiftHz = hz;
 			updateShift(numChannels);
+		}
+
+		void setShiftBeats(double b, int numChannels) noexcept
+		{
+			shiftBeats = b;
+			updateShift(numChannels);
+		}
+
+		void setPhaseOffset(double p, int numChannels) noexcept
+		{
+			phaseOffset = p;
+			updatePhaseOffset(numChannels);
+		}
+
+		void setFeedback(double fb, int numChannels) noexcept
+		{
+			feedback = fb;
+			updateFeedback(numChannels);
+		}
+
+		void setShiftHzWidth(double hz, int numChannels) noexcept
+		{
+			shiftHzWidth = hz;
+			updateShift(numChannels);
+		}
+
+		void setShiftBeatsWidth(double b, int numChannels) noexcept
+		{
+			shiftBeatsWidth = b;
+			updateShift(numChannels);
+		}
+
+		void setPhaseOffsetWidth(double p, int numChannels) noexcept
+		{
+			phaseOffsetWidth = p;
+			updatePhaseOffset(numChannels);
+		}
+
+		void setFeedbackWidth(double fb, int numChannels) noexcept
+		{
+			feedbackWidth = fb;
+			updateFeedback(numChannels);
 		}
 
 		// process:
@@ -375,13 +423,47 @@ namespace dsp
 	private:
 		Coefficients coeffs;
 		std::array<FreqShifterMono, 2> shifters;
-		double sampleRateInv, shift, shiftWidth;
+		double sampleRateInv, bpm, shiftHz, shiftBeats, shiftHzWidth, shiftBeatsWidth, phaseOffset, phaseOffsetWidth, feedback, feedbackWidth;
+		bool temposync;
 
 		void updateShift(int numChannels) noexcept
 		{
-			shifters[0].setShift(shift - shiftWidth);
-			if(numChannels == 2)
-				shifters[1].setShift(shift + shiftWidth);
+			if (temposync)
+			{
+				const auto bps = bpm * SixtyInv;
+				const auto shiftL = bps / shiftBeats;
+				shifters[0].setShift(shiftL);
+				if (numChannels == 2)
+				{
+					const auto shiftR = bps / (shiftBeats + shiftBeatsWidth);
+					shifters[1].setShift(shiftR);
+				}
+				return;
+			}
+			const auto shift = shiftHz;
+			shifters[0].setShift(shift - shiftHzWidth);
+			if (numChannels == 2)
+				shifters[1].setShift(shift + shiftHzWidth);
+		}
+
+		void updatePhaseOffset(int numChannels) noexcept
+		{
+			shifters[0].setPhaseOffset(phaseOffset - phaseOffsetWidth);
+			if (numChannels == 2)
+				shifters[1].setPhaseOffset(phaseOffset + phaseOffsetWidth);
+		}
+
+		void updateFeedback(int numChannels) noexcept
+		{
+			shifters[0].setFeedback(feedback - feedbackWidth);
+			if (numChannels == 2)
+				shifters[1].setFeedback(feedback + feedbackWidth);
 		}
 	};
 }
+
+/*
+todo:
+temposync: sync phasor with ppq?
+find out if useful parameter to only reset phasor and not filter on reset
+*/

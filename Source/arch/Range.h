@@ -30,6 +30,9 @@ namespace makeRange
 	// v0, v25, v50, v75, v100
 	Range withCentre(float, float, float, float, float) noexcept;
 
+	// v0, v25, v50, v75, v100
+	Range withCentre(int, int, int, int, int) noexcept;
+
 	// start, end, bias[-1, 1]
 	// optimally round™
 	Range biasedSatisfy(float, float, float) noexcept;

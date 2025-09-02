@@ -41,10 +41,11 @@ namespace audio
         transport(),
         pluginProcessor
         (
-            params
+            params,
 #if PPDHasTuningEditor
-            , xenManager
+            xenManager,
 #endif
+			transport
         ),
         mixProcessor()
     {
@@ -203,7 +204,7 @@ namespace audio
 
     bool Processor::hasEditor() const
     {
-        return true;
+        return false;
     }
 
     juce::AudioProcessorEditor* Processor::createEditor()
@@ -278,7 +279,7 @@ namespace audio
         }
         if (bufferView.getNumSamples() == 0)
             return;
-        transport(playHead);
+        transport(playHead, bufferView.getNumChannelsMain());
 #if PPDHasStereoConfig
         bool midSide = false;
         if (bufferView.getNumChannelsMain() == 2)
