@@ -6,79 +6,47 @@ namespace dsp
 #if PPDHasTuningEditor
 		XenManager& xen,
 #endif
-		Transport& transport
+		Transport&
 	) :
 		sampleRate(1.),
-		freqShifter()
+		onsetDetector()
 	{
-		params(PID::Reflect).callback = [&](const param::Param::CB& cb) noexcept
+		params(PID::Smooth).callback = [&](CB cb)
 		{
-			freqShifter.setReflect(cb.getInt());
+			onsetDetector.setSmooth(cb.denormD());
 		};
 
-		params(PID::Temposync).callback = [&](const param::Param::CB& cb) noexcept
+		params(PID::Atk0).callback = [&](CB cb)
 		{
-			freqShifter.setTemposync(cb.getBool(), cb.numChannels);
+			onsetDetector.setAttack(cb.denormD(), 0);
 		};
 
-		params(PID::ShiftHz).callback = [&](const param::Param::CB& cb) noexcept
+		params(PID::Dcy0).callback = [&](CB cb)
 		{
-			freqShifter.setShiftHz(cb.denorm(), cb.numChannels);
+			onsetDetector.setDecay(cb.denormD(), 0);
 		};
 
-		params(PID::ShiftBeats).callback = [&](const param::Param::CB& cb) noexcept
+		params(PID::Atk1).callback = [&](CB cb)
 		{
-			freqShifter.setShiftBeats(cb.denorm(), cb.numChannels);
+			onsetDetector.setAttack(cb.denormD(), 1);
 		};
 
-		params(PID::PhaseOffset).callback = [&](const param::Param::CB& cb) noexcept
+		params(PID::Dcy1).callback = [&](CB cb)
 		{
-			freqShifter.setPhaseOffset(cb.norm, cb.numChannels);
-		};
-
-		params(PID::Feedback).callback = [&](const param::Param::CB& cb) noexcept
-		{
-			freqShifter.setFeedback(cb.denorm(), cb.numChannels);
-		};
-
-		params(PID::ShiftHzWidth).callback = [&](const param::Param::CB& cb) noexcept
-		{
-			freqShifter.setShiftHzWidth(cb.denorm(), cb.numChannels);
-		};
-
-		params(PID::ShiftBeatsWidth).callback = [&](const param::Param::CB& cb) noexcept
-		{
-			freqShifter.setShiftBeatsWidth(cb.denorm(), cb.numChannels);
-		};
-
-		params(PID::PhaseOffsetWidth).callback = [&](const param::Param::CB& cb) noexcept
-		{
-			freqShifter.setPhaseOffsetWidth(cb.denorm(), cb.numChannels);
-		};
-
-		params(PID::FeedbackWidth).callback = [&](const param::Param::CB& cb) noexcept
-		{
-			freqShifter.setFeedbackWidth(cb.denorm(), cb.numChannels);
-		};
-
-		transport.callback = [&](const Transport::Info& info) noexcept
-		{
-			freqShifter.setBpm(info.bpm, info.numChannels);
+			onsetDetector.setDecay(cb.denormD(), 1);
 		};
 	}
 
 	void PluginProcessor::prepare(double _sampleRate)
 	{
 		sampleRate = _sampleRate;
-		freqShifter.prepare(sampleRate);
+		onsetDetector.prepare(sampleRate);
 	}
 
 	void PluginProcessor::operator()(ProcessorBufferView& view,
 		const Transport::Info&) noexcept
 	{
-		freqShifter(view);
-		if (view.msg.isNoteOn())
-			freqShifter.reset();
+		onsetDetector(view);
 	}
 
 	void PluginProcessor::processBlockBypassed(float**, MidiBuffer&, int, int) noexcept

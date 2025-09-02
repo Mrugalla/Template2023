@@ -56,16 +56,11 @@ namespace param
 		Power,
 
 		// low level parameters
-		Reflect,
-		Temposync,
-		ShiftHz,
-		ShiftBeats,
-		PhaseOffset,
-		Feedback,
-		ShiftHzWidth,
-		ShiftBeatsWidth,
-		PhaseOffsetWidth,
-		FeedbackWidth,
+		Smooth,
+		Atk0,
+		Atk1,
+		Dcy0,
+		Dcy1,
 		//
 		
 		NumParams
@@ -144,6 +139,8 @@ namespace param
 	public:
 		struct CB
 		{
+			double denormD() const noexcept;
+
 			float denorm() const noexcept;
 
 			bool getBool() const noexcept;

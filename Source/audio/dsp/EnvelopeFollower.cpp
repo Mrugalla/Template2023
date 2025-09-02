@@ -2,43 +2,105 @@
 
 namespace dsp
 {
+	// Params
+
+	EnvelopeFollower::Params::Params(float _gainDb, float _atkMs,
+		float _dcyMs, float _smoothMs) :
+		gainDb(_gainDb),
+		sampleRate(1.),
+		atkMs(_atkMs),
+		dcyMs(_dcyMs),
+		smoothMs(_smoothMs),
+		gainPRM(0.f),
+		atk(0.),
+		dcy(0.),
+		smooth(0.),
+		gain(math::dbToAmp(_gainDb))
+	{
+	}
+
+	void EnvelopeFollower::Params::prepare(double _sampleRate) noexcept
+	{
+		sampleRate = _sampleRate;
+		setAtk(atkMs);
+		setDcy(dcyMs);
+		setSmooth(smoothMs);
+		gainPRM.prepare(static_cast<float>(sampleRate), 4.f);
+	}
+
+	void EnvelopeFollower::Params::setGain(float db) noexcept
+	{
+		gainDb = db;
+		gain = math::dbToAmp(gainDb);
+	}
+
+	void EnvelopeFollower::Params::setAtk(double ms) noexcept
+	{
+		atkMs = ms;
+		atk = smooth::Lowpass::getXFromMs(atkMs, sampleRate);
+	}
+
+	void EnvelopeFollower::Params::setDcy(double ms) noexcept
+	{
+		dcyMs = ms;
+		dcy = smooth::Lowpass::getXFromMs(dcyMs, sampleRate);
+	}
+
+	void EnvelopeFollower::Params::setSmooth(double ms) noexcept
+	{
+		smoothMs = ms;
+		smooth = smooth::Lowpass::getXFromMs(smoothMs, sampleRate);
+	}
+
+	PRMInfo EnvelopeFollower::Params::getGain(int numSamples) noexcept
+	{
+		return gainPRM(gain, numSamples);
+	}
+
+	// EnvelopeFollower
+
 	EnvelopeFollower::EnvelopeFollower() :
+		params(),
 		meter(0.f),
 		buffer(),
 		MinDb(math::dbToAmp(-60.)),
-		gainPRM(1.f),
 		envLP(0.),
 		smooth(0.f),
-		sampleRate(1.), smoothMs(-1.),
 		attackState(false)
 	{
 	}
 
-	void EnvelopeFollower::prepare(float Fs) noexcept
+	void EnvelopeFollower::prepare(double sampleRate) noexcept
 	{
-		meter.store(0.f);
-		sampleRate = static_cast<double>(Fs);
-		gainPRM.prepare(Fs, 4.);
-		smooth.reset();
-		smoothMs = -1.;
-		envLP.reset();
+		params.prepare(sampleRate);
+		reset(-120.);
 	}
 
-	void EnvelopeFollower::operator()(float* smpls,
-		const Params& params, int numSamples) noexcept
+	void EnvelopeFollower::setGain(float db) noexcept
 	{
-		rectify(smpls, numSamples);
-		applyGain(params.gainDb, numSamples);
-		synthesizeEnvelope(params, numSamples);
-		smoothen(params.smoothMs, numSamples);
-		processMeter();
+		params.setGain(db);
 	}
 
-	void EnvelopeFollower::operator()(float** samples, const Params& params,
-		int numChannels, int numSamples) noexcept
+	void EnvelopeFollower::setAttack(double ms) noexcept
 	{
-		copyMid(samples, numChannels, numSamples);
-		operator()(buffer.data(), params, numSamples);
+		params.setAtk(ms);
+	}
+
+	void EnvelopeFollower::setDecay(double ms) noexcept
+	{
+		params.setDcy(ms);
+	}
+
+	void EnvelopeFollower::setSmooth(double ms) noexcept
+	{
+		params.setSmooth(ms);
+		smooth.setX(params.smooth);
+	}
+
+	void EnvelopeFollower::operator()(ProcessorBufferView& view) noexcept
+	{
+		copyMid(view);
+		operator()(buffer.data(), view.numSamples);
 	}
 
 	bool EnvelopeFollower::isSleepy() const noexcept
@@ -56,13 +118,34 @@ namespace dsp
 		return meter.load();
 	}
 
-	void EnvelopeFollower::copyMid(float** samples, int numChannels, int numSamples) noexcept
+	void EnvelopeFollower::reset(double v)
 	{
-		SIMD::copy(buffer.data(), samples[0], numSamples);
+		const auto vF = static_cast<float>(v);
+		meter.store(vF);
+		smooth.reset(v);
+		envLP.reset(v);
+		attackState = false;
+	}
+
+	void EnvelopeFollower::operator()(float* smpls, int numSamples) noexcept
+	{
+		rectify(smpls, numSamples);
+		applyGain(numSamples);
+		synthesizeEnvelope(numSamples);
+		smooth(buffer.data(), numSamples);
+		processMeter(numSamples);
+	}
+
+	void EnvelopeFollower::copyMid(ProcessorBufferView& view) noexcept
+	{
+		auto envFolBuffer = buffer.data();
+		const auto numChannels = view.getNumChannelsMain();
+		const auto numSamples = view.numSamples;
+		SIMD::copy(envFolBuffer, view.getSamplesMain(0), numSamples);
 		if (numChannels == 1)
 			return;
-		SIMD::add(buffer.data(), samples[1], numSamples);
-		SIMD::multiply(buffer.data(), .5f, numSamples);
+		SIMD::add(envFolBuffer, view.getSamplesMain(1), numSamples);
+		SIMD::multiply(envFolBuffer, .5f, numSamples);
 	}
 
 	void EnvelopeFollower::rectify(float* smpls, int numSamples) noexcept
@@ -71,60 +154,50 @@ namespace dsp
 			buffer[s] = std::abs(smpls[s]);
 	}
 
-	void EnvelopeFollower::applyGain(float gainDb, int numSamples) noexcept
+	void EnvelopeFollower::applyGain(int numSamples) noexcept
 	{
-		const auto gain = math::dbToAmp(gainDb);
-		const auto gainInfo = gainPRM(gain, numSamples);
+		const auto gainInfo = params.getGain(numSamples);
 		auto data = buffer.data();
 		if (gainInfo.smoothing)
 			return SIMD::multiply(data, gainInfo.buf, numSamples);
-		SIMD::multiply(data, gain, numSamples);
+		SIMD::multiply(data, params.gain, numSamples);
 	}
 
-	void EnvelopeFollower::synthesizeEnvelope(const Params& params, int numSamples) noexcept
+	void EnvelopeFollower::synthesizeEnvelope(int numSamples) noexcept
 	{
 		for (auto s = 0; s < numSamples; ++s)
 		{
 			const auto s0 = envLP.y1;
 			const auto s1 = static_cast<double>(buffer[s]);
 			if (attackState)
-				buffer[s] = static_cast<float>(processAttack(params, s0, s1));
+				buffer[s] = static_cast<float>(processAttack(s0, s1));
 			else
-				buffer[s] = static_cast<float>(processDecay(params, s0, s1));
+				buffer[s] = static_cast<float>(processDecay(s0, s1));
 		}
 	}
 
-	double EnvelopeFollower::processAttack(const Params& params, double s0, double s1) noexcept
+	double EnvelopeFollower::processAttack(double s0, double s1) noexcept
 	{
 		if (s0 <= s1)
 			return envLP(s1);
 		attackState = false;
-		envLP.makeFromDecayInMs(params.dcyMs, sampleRate);
-		return processDecay(params, s0, s1);
+		envLP.setX(params.dcy);
+		return processDecay(s0, s1);
 	}
 
-	double EnvelopeFollower::processDecay(const Params& params, double s0, double s1) noexcept
+	double EnvelopeFollower::processDecay(double s0, double s1) noexcept
 	{
 		if (s0 >= s1)
 			return envLP(s1);
 		attackState = true;
-		envLP.makeFromDecayInMs(params.atkMs, sampleRate);
-		return processAttack(params, s0, s1);
+		envLP.setX(params.atk);
+		return processAttack(s0, s1);
 	}
 
-	void EnvelopeFollower::smoothen(double _smoothMs, int numSamples) noexcept
+	void EnvelopeFollower::processMeter(int numSamples) noexcept
 	{
-		if (smoothMs != _smoothMs)
-		{
-			smoothMs = _smoothMs;
-			smooth.makeFromDecayInMs(smoothMs, sampleRate);
-		}
-		smooth(buffer.data(), numSamples);
-	}
-
-	void EnvelopeFollower::processMeter() noexcept
-	{
-		const auto max = *std::max_element(buffer.begin(), buffer.end());
+		auto begin = buffer.begin();
+		const auto max = *std::max_element(begin, begin + numSamples);
 		meter.store(max);
 	}
 }

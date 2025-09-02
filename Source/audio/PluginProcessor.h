@@ -3,7 +3,7 @@
 #include "dsp/Transport.h"
 #include "../arch/Param.h"
 //
-#include "dsp/freqshifter/FreqShifter.h"
+#include "dsp/OnsetDetector.h"
 
 namespace dsp
 {
@@ -39,6 +39,6 @@ namespace dsp
 
 		double sampleRate;
 		//
-		FreqShifter freqShifter;
+		OnsetDetector onsetDetector;
 	};
 }

@@ -114,16 +114,11 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
-		case PID::Reflect: return "Reflect";
-		case PID::Temposync: return "Temposync";
-		case PID::ShiftHz: return "Shift Hz";
-		case PID::ShiftBeats: return "Shift Beats";
-		case PID::PhaseOffset: return "Phase Offset";
-		case PID::Feedback: return "Feedback";
-		case PID::ShiftHzWidth: return "Shift Hz Width";
-		case PID::ShiftBeatsWidth: return "Shift Beats Width";
-		case PID::PhaseOffsetWidth: return "Phase Offset Width";
-		case PID::FeedbackWidth: return "Feedback Width";
+		case PID::Smooth: return "Smooth";
+		case PID::Atk0: return "Atk 0";
+		case PID::Dcy0: return "Dcy 0";
+		case PID::Atk1: return "Atk 1";
+		case PID::Dcy1: return "Dcy 1";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -286,6 +281,11 @@ namespace param
 	}
 
 	// PARAM::CB:
+
+	double Param::CB::denormD() const noexcept
+	{
+		return static_cast<double>(denorm());
+	}
 
 	float Param::CB::denorm() const noexcept
 	{
@@ -1605,16 +1605,11 @@ namespace param
 		}
 
 		// LOW LEVEL PARAMS:
-		params.push_back(makeParam(PID::Reflect, 0.f, makeRange::toggle(), Unit::Power, false));
-		params.push_back(makeParam(PID::Temposync, 0, makeRange::toggle(), Unit::Power, false));
-		params.push_back(makeParam(PID::ShiftHz, 50.f, makeRange::withCentre(-10000, -100, 0, 100, 10000), Unit::Hz, true));
-		params.push_back(makeParam(PID::ShiftBeats, 1.f / 4.f, makeRange::beats(64, 1, false), Unit::Beats));
-		params.push_back(makeParam(PID::PhaseOffset, 0.f, makeRange::lin(0.f, 1.f), Unit::Phase360, true));
-		params.push_back(makeParam(PID::Feedback, 0.f, makeRange::lin(-1.2f, 1.2f)));
-		params.push_back(makeParam(PID::ShiftHzWidth, 0.f, makeRange::withCentre(-5000, -50, 0, 50, 5000), Unit::Hz, true));
-		params.push_back(makeParam(PID::ShiftBeatsWidth, 0.f, makeRange::beats(64, 1, true), Unit::Beats, true));
-		params.push_back(makeParam(PID::PhaseOffsetWidth, 0.f, makeRange::lin(-1, 1), Unit::Phase360, true));
-		params.push_back(makeParam(PID::FeedbackWidth, 0.f, makeRange::lin(-1, 1)));
+		params.push_back(makeParam(PID::Smooth, 0.f, makeRange::quad(0, 24, 2), Unit::Ms, true));
+		params.push_back(makeParam(PID::Atk0, 0.f, makeRange::quad(0.f, 24.f, 2), Unit::Ms, true));
+		params.push_back(makeParam(PID::Atk1, 1.f, makeRange::quad(0.f, 1000.f, 3), Unit::Ms, true));
+		params.push_back(makeParam(PID::Dcy0, 0.f, makeRange::quad(0.f, 24.f, 2), Unit::Ms, true));
+		params.push_back(makeParam(PID::Dcy1, 1.f, makeRange::quad(0.f, 1000.f, 3), Unit::Ms, true));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

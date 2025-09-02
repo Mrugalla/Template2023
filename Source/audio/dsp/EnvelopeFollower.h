@@ -1,4 +1,5 @@
 #pragma once
+#include "ProcessorBufferView.h"
 #include "PRM.h"
 
 namespace dsp
@@ -7,19 +8,54 @@ namespace dsp
 	{
 		struct Params
 		{
+			// gainDb, atkMs, dcyMs, smoothMs
+			Params(float = 0.f, float = 1.f,
+				float = 100.f, float = 1.f);
+
+			// sampleRate
+			void prepare(double) noexcept;
+
+			// db
+			void setGain(float) noexcept;
+
+			// ms
+			void setAtk(double) noexcept;
+
+			// ms
+			void setDcy(double) noexcept;
+
+			// ms
+			void setSmooth(double) noexcept;
+
+			PRMInfo getGain(int) noexcept;
+		private:
 			float gainDb;
-			double atkMs, dcyMs, smoothMs;
+			double sampleRate, atkMs, dcyMs, smoothMs;
+			PRM gainPRM;
+		public:
+			double atk, dcy, smooth;
+			float gain;
 		};
 
 		EnvelopeFollower();
 
-		void prepare(float) noexcept;
+		void prepare(double) noexcept;
 
-		// smpls, params, numSamples
-		void operator()(float*, const Params&, int) noexcept;
+		// parameters:
 
-		// samples, params, numChannels, numSamples
-		void operator()(float**, const Params&, int, int) noexcept;
+		void setGain(float) noexcept;
+
+		void setAttack(double) noexcept;
+
+		void setDecay(double) noexcept;
+
+		void setSmooth(double) noexcept;
+
+		// process:
+
+		void reset(double);
+
+		void operator()(ProcessorBufferView&) noexcept;
 
 		bool isSleepy() const noexcept;
 
@@ -27,35 +63,34 @@ namespace dsp
 
 		float getMeter() const noexcept;
 	private:
+		Params params;
 		std::atomic<float> meter;
 		std::array<float, BlockSize> buffer;
 		const double MinDb;
-		PRM gainPRM;
 		smooth::Lowpass envLP, smooth;
-		double sampleRate, smoothMs;
 		bool attackState;
 
-		// samples, numChannels, numSamples
-		void copyMid(float**, int, int) noexcept;
+		// smpls, numSamples
+		void operator()(float*, int) noexcept;
+
+		void copyMid(ProcessorBufferView&) noexcept;
 
 		// smpls, numSamples
 		void rectify(float*, int) noexcept;
 
-		// gainDb, numSamples
-		void applyGain(float, int) noexcept;
+		// numSamples
+		void applyGain(int) noexcept;
 
-		// params, numSamples
-		void synthesizeEnvelope(const Params&, int) noexcept;
+		// numSamples
+		void synthesizeEnvelope(int) noexcept;
 
-		// params, s0, s1
-		double processAttack(const Params&, double, double) noexcept;
+		// s0, s1
+		double processAttack(double, double) noexcept;
 
-		// params, s0, s1
-		double processDecay(const Params&, double, double) noexcept;
+		// s0, s1
+		double processDecay(double, double) noexcept;
 
-		// _smoothMs, numSamples
-		void smoothen(double, int) noexcept;
-
-		void processMeter() noexcept;
+		// numSamples
+		void processMeter(int) noexcept;
 	};
 }

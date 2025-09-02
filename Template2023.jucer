@@ -91,6 +91,9 @@
           <FILE id="cUTvc3" name="MixProcessor.h" compile="0" resource="0" file="Source/audio/dsp/MixProcessor.h"/>
           <FILE id="EQvfoT" name="NoiseSynth.cpp" compile="1" resource="0" file="Source/audio/dsp/NoiseSynth.cpp"/>
           <FILE id="qJ0kww" name="NoiseSynth.h" compile="0" resource="0" file="Source/audio/dsp/NoiseSynth.h"/>
+          <FILE id="XJkim2" name="OnsetDetector.cpp" compile="1" resource="0"
+                file="Source/audio/dsp/OnsetDetector.cpp"/>
+          <FILE id="kpild9" name="OnsetDetector.h" compile="0" resource="0" file="Source/audio/dsp/OnsetDetector.h"/>
           <FILE id="M8PBME" name="Oscilloscope.cpp" compile="1" resource="0"
                 file="Source/audio/dsp/Oscilloscope.cpp"/>
           <FILE id="CP76Qk" name="Oscilloscope.h" compile="0" resource="0" file="Source/audio/dsp/Oscilloscope.h"/>
