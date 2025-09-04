@@ -63,6 +63,9 @@ namespace audio
         State state;
         dsp::PluginRecorder pluginRecorder;
         dsp::Transport transport;
+#if PPDHasOnsetDetector
+        dsp::OnsetDetector onsetDetector;
+#endif
         dsp::PluginProcessor pluginProcessor;
         dsp::MixProcessor mixProcessor;
 

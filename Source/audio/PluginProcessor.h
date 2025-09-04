@@ -39,6 +39,5 @@ namespace dsp
 
 		double sampleRate;
 		//
-		OnsetDetector onsetDetector;
 	};
 }

@@ -56,8 +56,8 @@ namespace param
 		Power,
 
 		// low level parameters
-		Smooth,
-		Atk0,
+		ResoCutoff,
+		ResoQ,
 		Atk1,
 		Dcy0,
 		Dcy1,

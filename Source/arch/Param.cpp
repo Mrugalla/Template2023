@@ -114,10 +114,10 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
-		case PID::Smooth: return "Smooth";
-		case PID::Atk0: return "Atk 0";
-		case PID::Dcy0: return "Dcy 0";
+		case PID::ResoCutoff: return "Reso Cutoff";
+		case PID::ResoQ: return "Reso Q";
 		case PID::Atk1: return "Atk 1";
+		case PID::Dcy0: return "Dcy 0";
 		case PID::Dcy1: return "Dcy 1";
 
 		default: return "Invalid Parameter Name";
@@ -1605,11 +1605,13 @@ namespace param
 		}
 
 		// LOW LEVEL PARAMS:
-		params.push_back(makeParam(PID::Smooth, 0.f, makeRange::quad(0, 24, 2), Unit::Ms, true));
-		params.push_back(makeParam(PID::Atk0, 0.f, makeRange::quad(0.f, 24.f, 2), Unit::Ms, true));
-		params.push_back(makeParam(PID::Atk1, 1.f, makeRange::quad(0.f, 1000.f, 3), Unit::Ms, true));
-		params.push_back(makeParam(PID::Dcy0, 0.f, makeRange::quad(0.f, 24.f, 2), Unit::Ms, true));
-		params.push_back(makeParam(PID::Dcy1, 1.f, makeRange::quad(0.f, 1000.f, 3), Unit::Ms, true));
+		const auto cutoff = math::freqHzToNote2(5320.f);
+		const auto q = math::freqHzToNote2(232.29f);
+		params.push_back(makeParamPitch(PID::ResoCutoff, cutoff, false));
+		params.push_back(makeParamPitch(PID::ResoQ, q, false));
+		params.push_back(makeParam(PID::Atk1, .2f, makeRange::quad(0.f, 1000.f, 3), Unit::Ms, true));
+		params.push_back(makeParam(PID::Dcy0, .21f, makeRange::quad(0.f, 24.f, 2), Unit::Ms, true));
+		params.push_back(makeParam(PID::Dcy1, 80.65f, makeRange::quad(0.f, 1000.f, 3), Unit::Ms, true));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

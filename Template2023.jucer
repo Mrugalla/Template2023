@@ -7,7 +7,7 @@
               pluginDesc="Plugin Template" pluginManufacturer="Mrugalla" pluginManufacturerCode="BBBB"
               pluginCode="BBBB" pluginVST3Category="Fx" pluginAAXCategory="0"
               pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
-              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=1&#10;PPDHasSidechain=0&#10;PPDHasLookahead=0&#10;PPDHasTuningEditor=0"
+              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=1&#10;PPDHasSidechain=0&#10;PPDHasLookahead=0&#10;PPDHasTuningEditor=0&#10;PPDHasOnsetDetector=1"
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'" maxBinaryFileSize="20971520"
               pluginCharacteristicsValue="pluginWantsMidiIn">
   <MAINGROUP id="WYhkvs" name="Template2023">
@@ -49,6 +49,8 @@
             <FILE id="SeS3Rp" name="MPESplit.h" compile="0" resource="0" file="Source/audio/dsp/midi/MPESplit.h"/>
             <FILE id="Na1QUE" name="NoteDelay.cpp" compile="1" resource="0" file="Source/audio/dsp/midi/NoteDelay.cpp"/>
             <FILE id="dFo2vt" name="NoteDelay.h" compile="0" resource="0" file="Source/audio/dsp/midi/NoteDelay.h"/>
+            <FILE id="k3bpdC" name="Sysex.cpp" compile="1" resource="0" file="Source/audio/dsp/midi/Sysex.cpp"/>
+            <FILE id="JmopHJ" name="Sysex.h" compile="0" resource="0" file="Source/audio/dsp/midi/Sysex.h"/>
             <FILE id="s1S13b" name="XenDemoSynth.cpp" compile="1" resource="0"
                   file="Source/audio/dsp/midi/XenDemoSynth.cpp"/>
             <FILE id="T923Yg" name="XenDemoSynth.h" compile="0" resource="0" file="Source/audio/dsp/midi/XenDemoSynth.h"/>
@@ -74,6 +76,8 @@
                 file="Source/audio/dsp/EnvelopeGenerator.cpp"/>
           <FILE id="KPBZHw" name="EnvelopeGenerator.h" compile="0" resource="0"
                 file="Source/audio/dsp/EnvelopeGenerator.h"/>
+          <FILE id="fOVzb7" name="EventBuffer.cpp" compile="1" resource="0" file="Source/audio/dsp/EventBuffer.cpp"/>
+          <FILE id="X3PODd" name="EventBuffer.h" compile="0" resource="0" file="Source/audio/dsp/EventBuffer.h"/>
           <FILE id="e2wBkc" name="FFT.cpp" compile="1" resource="0" file="Source/audio/dsp/FFT.cpp"/>
           <FILE id="pyF6Cu" name="FFT.h" compile="0" resource="0" file="Source/audio/dsp/FFT.h"/>
           <FILE id="fXtFnB" name="Filter.cpp" compile="1" resource="0" file="Source/audio/dsp/Filter.cpp"/>

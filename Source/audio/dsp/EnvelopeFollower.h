@@ -6,35 +6,26 @@ namespace dsp
 {
 	struct EnvelopeFollower
 	{
+		using FilterFunc = std::function<void(float*, int)>;
+
 		struct Params
 		{
-			// gainDb, atkMs, dcyMs, smoothMs
-			Params(float = 0.f, float = 1.f,
-				float = 100.f, float = 1.f);
+			// atkMs, dcyMs
+			Params(float = 1.f, float = 100.f);
 
 			// sampleRate
 			void prepare(double) noexcept;
-
-			// db
-			void setGain(float) noexcept;
 
 			// ms
 			void setAtk(double) noexcept;
 
 			// ms
 			void setDcy(double) noexcept;
-
-			// ms
-			void setSmooth(double) noexcept;
-
-			PRMInfo getGain(int) noexcept;
 		private:
-			float gainDb;
-			double sampleRate, atkMs, dcyMs, smoothMs;
+			double sampleRate, atkMs, dcyMs;
 			PRM gainPRM;
 		public:
-			double atk, dcy, smooth;
-			float gain;
+			double atk, dcy;
 		};
 
 		EnvelopeFollower();
@@ -43,19 +34,18 @@ namespace dsp
 
 		// parameters:
 
-		void setGain(float) noexcept;
-
 		void setAttack(double) noexcept;
 
 		void setDecay(double) noexcept;
-
-		void setSmooth(double) noexcept;
 
 		// process:
 
 		void reset(double);
 
 		void operator()(ProcessorBufferView&) noexcept;
+
+		// smpls, numSamples
+		void operator()(float*, int) noexcept;
 
 		bool isSleepy() const noexcept;
 
@@ -67,19 +57,13 @@ namespace dsp
 		std::atomic<float> meter;
 		std::array<float, BlockSize> buffer;
 		const double MinDb;
-		smooth::Lowpass envLP, smooth;
+		smooth::Lowpass envLP;
 		bool attackState;
-
-		// smpls, numSamples
-		void operator()(float*, int) noexcept;
 
 		void copyMid(ProcessorBufferView&) noexcept;
 
 		// smpls, numSamples
 		void rectify(float*, int) noexcept;
-
-		// numSamples
-		void applyGain(int) noexcept;
 
 		// numSamples
 		void synthesizeEnvelope(int) noexcept;

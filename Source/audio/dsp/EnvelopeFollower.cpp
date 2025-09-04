@@ -4,18 +4,13 @@ namespace dsp
 {
 	// Params
 
-	EnvelopeFollower::Params::Params(float _gainDb, float _atkMs,
-		float _dcyMs, float _smoothMs) :
-		gainDb(_gainDb),
+	EnvelopeFollower::Params::Params(float _atkMs,
+		float _dcyMs) :
 		sampleRate(1.),
 		atkMs(_atkMs),
 		dcyMs(_dcyMs),
-		smoothMs(_smoothMs),
-		gainPRM(0.f),
 		atk(0.),
-		dcy(0.),
-		smooth(0.),
-		gain(math::dbToAmp(_gainDb))
+		dcy(0.)
 	{
 	}
 
@@ -24,14 +19,6 @@ namespace dsp
 		sampleRate = _sampleRate;
 		setAtk(atkMs);
 		setDcy(dcyMs);
-		setSmooth(smoothMs);
-		gainPRM.prepare(static_cast<float>(sampleRate), 4.f);
-	}
-
-	void EnvelopeFollower::Params::setGain(float db) noexcept
-	{
-		gainDb = db;
-		gain = math::dbToAmp(gainDb);
 	}
 
 	void EnvelopeFollower::Params::setAtk(double ms) noexcept
@@ -46,17 +33,6 @@ namespace dsp
 		dcy = smooth::Lowpass::getXFromMs(dcyMs, sampleRate);
 	}
 
-	void EnvelopeFollower::Params::setSmooth(double ms) noexcept
-	{
-		smoothMs = ms;
-		smooth = smooth::Lowpass::getXFromMs(smoothMs, sampleRate);
-	}
-
-	PRMInfo EnvelopeFollower::Params::getGain(int numSamples) noexcept
-	{
-		return gainPRM(gain, numSamples);
-	}
-
 	// EnvelopeFollower
 
 	EnvelopeFollower::EnvelopeFollower() :
@@ -65,7 +41,6 @@ namespace dsp
 		buffer(),
 		MinDb(math::dbToAmp(-60.)),
 		envLP(0.),
-		smooth(0.f),
 		attackState(false)
 	{
 	}
@@ -76,11 +51,6 @@ namespace dsp
 		reset(-120.);
 	}
 
-	void EnvelopeFollower::setGain(float db) noexcept
-	{
-		params.setGain(db);
-	}
-
 	void EnvelopeFollower::setAttack(double ms) noexcept
 	{
 		params.setAtk(ms);
@@ -89,12 +59,6 @@ namespace dsp
 	void EnvelopeFollower::setDecay(double ms) noexcept
 	{
 		params.setDcy(ms);
-	}
-
-	void EnvelopeFollower::setSmooth(double ms) noexcept
-	{
-		params.setSmooth(ms);
-		smooth.setX(params.smooth);
 	}
 
 	void EnvelopeFollower::operator()(ProcessorBufferView& view) noexcept
@@ -122,7 +86,6 @@ namespace dsp
 	{
 		const auto vF = static_cast<float>(v);
 		meter.store(vF);
-		smooth.reset(v);
 		envLP.reset(v);
 		attackState = false;
 	}
@@ -130,9 +93,7 @@ namespace dsp
 	void EnvelopeFollower::operator()(float* smpls, int numSamples) noexcept
 	{
 		rectify(smpls, numSamples);
-		applyGain(numSamples);
 		synthesizeEnvelope(numSamples);
-		smooth(buffer.data(), numSamples);
 		processMeter(numSamples);
 	}
 
@@ -152,15 +113,6 @@ namespace dsp
 	{
 		for (auto s = 0; s < numSamples; ++s)
 			buffer[s] = std::abs(smpls[s]);
-	}
-
-	void EnvelopeFollower::applyGain(int numSamples) noexcept
-	{
-		const auto gainInfo = params.getGain(numSamples);
-		auto data = buffer.data();
-		if (gainInfo.smoothing)
-			return SIMD::multiply(data, gainInfo.buf, numSamples);
-		SIMD::multiply(data, params.gain, numSamples);
 	}
 
 	void EnvelopeFollower::synthesizeEnvelope(int numSamples) noexcept
@@ -196,7 +148,7 @@ namespace dsp
 
 	void EnvelopeFollower::processMeter(int numSamples) noexcept
 	{
-		auto begin = buffer.begin();
+		const auto begin = buffer.begin();
 		const auto max = *std::max_element(begin, begin + numSamples);
 		meter.store(max);
 	}

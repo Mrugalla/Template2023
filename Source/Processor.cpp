@@ -39,6 +39,9 @@ namespace audio
         state(),
         pluginRecorder(),
         transport(),
+#if PPDHasOnsetDetector
+        onsetDetector(),
+#endif
         pluginProcessor
         (
             params,
@@ -80,6 +83,37 @@ namespace audio
         initFile.create();
         const auto xmlString = init.toXmlString();
 		initFile.replaceWithText(xmlString);
+
+#if PPDHasOnsetDetector
+        params(PID::ResoCutoff).callback = [&](dsp::CB cb)
+        {
+            const auto pitch = cb.denormD();
+            const auto freq = math::noteToFreqHz(pitch);
+            onsetDetector.setResoCutoff(freq);
+        };
+
+        params(PID::ResoQ).callback = [&](dsp::CB cb)
+        {
+            const auto pitch = cb.denormD();
+            const auto freq = math::noteToFreqHz(pitch);
+            onsetDetector.setResoQ(freq);
+        };
+
+        params(PID::Atk1).callback = [&](dsp::CB cb)
+        {
+            onsetDetector.setAttack(cb.denormD());
+        };
+
+        params(PID::Dcy0).callback = [&](dsp::CB cb)
+        {
+            onsetDetector.setDecay(cb.denormD(), 0);
+        };
+
+        params(PID::Dcy1).callback = [&](dsp::CB cb)
+        {
+            onsetDetector.setDecay(cb.denormD(), 1);
+        };
+#endif
     }
 
     Processor::~Processor()
@@ -166,6 +200,7 @@ namespace audio
         pluginRecorder.prepare(sampleRateF);
         mixProcessor.prepare(sampleRateF);
         transport.prepare(1. / sampleRate);
+        onsetDetector.prepare(sampleRate);
         pluginProcessor.prepare(sampleRate);
         setLatencySamples(latency);
         startTimerHz(4);
@@ -280,6 +315,15 @@ namespace audio
         if (bufferView.getNumSamples() == 0)
             return;
         transport(playHead, bufferView.getNumChannelsMain());
+#if PPDHasOnsetDetector
+        onsetDetector
+        (
+            buffer.getArrayOfWritePointers(),
+            midiMessages,
+            bufferView.getNumChannelsMain(),
+            bufferView.numSamples
+        );
+#endif
 #if PPDHasStereoConfig
         bool midSide = false;
         if (bufferView.getNumChannelsMain() == 2)
