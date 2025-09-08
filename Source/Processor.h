@@ -2,7 +2,9 @@
 #include "audio/PluginProcessor.h"
 #include "audio/dsp/PluginRecorder.h"
 #include "audio/dsp/MixProcessor.h"
-
+#if PPDHasOnsetDetector
+#include "audio/dsp/onset/OnsetDetector.h"
+#endif
 namespace audio
 {
     using ChannelSet = juce::AudioChannelSet;
@@ -64,13 +66,13 @@ namespace audio
         dsp::PluginRecorder pluginRecorder;
         dsp::Transport transport;
 #if PPDHasOnsetDetector
-        dsp::OnsetDetector onsetDetector;
+        dsp::OnsetDetector2 onsetDetector;
 #endif
         dsp::PluginProcessor pluginProcessor;
         dsp::MixProcessor mixProcessor;
 
         void processIGuess(dsp::ProcessorBufferView&, float, float, float, bool) noexcept;
 
-        //JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Processor)
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Processor)
     };
 }

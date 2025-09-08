@@ -125,6 +125,12 @@ namespace dsp
 			scEnabled = buffer.scEnabled;
 		}
 
+		void clearMain() noexcept
+		{
+			for (auto ch = 0; ch < main.numChannels; ++ch)
+				SIMD::clear(main.view[ch], numSamples);
+		}
+
 		BufferView2X getViewMain() noexcept
 		{
 			return main;

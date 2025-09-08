@@ -9,7 +9,7 @@
               pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
               defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIsNonlinear=false&#10;PPDIO=PPDIOWetMix&#10;&#10;PPDHasStereoConfig=1&#10;PPDHasSidechain=0&#10;PPDHasLookahead=0&#10;PPDHasTuningEditor=0&#10;PPDHasOnsetDetector=1"
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'" maxBinaryFileSize="20971520"
-              pluginCharacteristicsValue="pluginWantsMidiIn">
+              pluginCharacteristicsValue="pluginProducesMidiOut,pluginWantsMidiIn">
   <MAINGROUP id="WYhkvs" name="Template2023">
     <GROUP id="{266E5E69-4D9A-EB45-6039-F732E39E290B}" name="Source">
       <GROUP id="{B2DD672C-3747-AD06-804C-97143B931D2A}" name="arch">
@@ -31,6 +31,15 @@
       </GROUP>
       <GROUP id="{BDD2C9EC-5D51-F998-00A7-68F46D9ECD50}" name="audio">
         <GROUP id="{46DD4EC8-38A2-51F4-A277-D310BC24E85C}" name="dsp">
+          <GROUP id="{034101C2-6585-5F0A-E88F-584D30E872AA}" name="onset">
+            <FILE id="eUePtR" name="OnsetAxiom.cpp" compile="1" resource="0" file="Source/audio/dsp/onset/OnsetAxiom.cpp"/>
+            <FILE id="AYUaX5" name="OnsetAxiom.h" compile="0" resource="0" file="Source/audio/dsp/onset/OnsetAxiom.h"/>
+            <FILE id="MoY09s" name="OnsetBuffer.cpp" compile="1" resource="0" file="Source/audio/dsp/onset/OnsetBuffer.cpp"/>
+            <FILE id="d46h5R" name="OnsetBuffer.h" compile="0" resource="0" file="Source/audio/dsp/onset/OnsetBuffer.h"/>
+            <FILE id="fHnPjP" name="OnsetDetector.cpp" compile="1" resource="0"
+                  file="Source/audio/dsp/onset/OnsetDetector.cpp"/>
+            <FILE id="GbbkVc" name="OnsetDetector.h" compile="0" resource="0" file="Source/audio/dsp/onset/OnsetDetector.h"/>
+          </GROUP>
           <GROUP id="{8AA512F4-0B3E-C652-4124-DBD6D3B5E7FA}" name="freqshifter">
             <FILE id="MWypeE" name="FreqShifter.cpp" compile="1" resource="0" file="Source/audio/dsp/freqshifter/FreqShifter.cpp"/>
             <FILE id="xIqpHl" name="FreqShifter.h" compile="0" resource="0" file="Source/audio/dsp/freqshifter/FreqShifter.h"/>
@@ -95,9 +104,6 @@
           <FILE id="cUTvc3" name="MixProcessor.h" compile="0" resource="0" file="Source/audio/dsp/MixProcessor.h"/>
           <FILE id="EQvfoT" name="NoiseSynth.cpp" compile="1" resource="0" file="Source/audio/dsp/NoiseSynth.cpp"/>
           <FILE id="qJ0kww" name="NoiseSynth.h" compile="0" resource="0" file="Source/audio/dsp/NoiseSynth.h"/>
-          <FILE id="XJkim2" name="OnsetDetector.cpp" compile="1" resource="0"
-                file="Source/audio/dsp/OnsetDetector.cpp"/>
-          <FILE id="kpild9" name="OnsetDetector.h" compile="0" resource="0" file="Source/audio/dsp/OnsetDetector.h"/>
           <FILE id="M8PBME" name="Oscilloscope.cpp" compile="1" resource="0"
                 file="Source/audio/dsp/Oscilloscope.cpp"/>
           <FILE id="CP76Qk" name="Oscilloscope.h" compile="0" resource="0" file="Source/audio/dsp/Oscilloscope.h"/>

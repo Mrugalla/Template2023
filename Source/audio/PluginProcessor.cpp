@@ -27,10 +27,11 @@ namespace dsp
 		{
 			const auto data = view.msg.getSysExData();
 			const auto size = view.msg.getSysExDataSize();
-			const auto identifier = Sysex::decode(data, size);
-			const auto bytes = Sysex::makeBytesOnset();
-			const auto decoded = Sysex::decode(bytes);
-			if (identifier == decoded)
+			Sysex sysexMessage(data, size);
+
+			Sysex sysexOnset;
+			sysexOnset.makeBytesOnset();
+			if (sysexMessage == sysexOnset)
 			{
 				const auto onsetIdx = static_cast<int>(view.msg.getTimeStamp());
 				for (auto ch = 0; ch < view.getNumChannelsMain(); ++ch)

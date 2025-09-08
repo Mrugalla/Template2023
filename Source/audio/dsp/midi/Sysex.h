@@ -7,11 +7,6 @@ namespace dsp
     {
 		using ByteArray = std::array<uint8_t, 128>;
 
-        static ByteArray makeBytesOnset() noexcept
-        {
-            return { 0x00, 0x69, 0x42, 0x01 };
-        }
-
         struct Info
         {
             uint8_t* data;
@@ -20,66 +15,45 @@ namespace dsp
 
         Sysex() :
             bytes(),
-            length(0)
+            length(3)
         {
-            for(auto& d : bytes)
-				d = 0;
+            // dev id i guess:
+            bytes[0] = 0x29;
+            bytes[1] = 0x10;
+			bytes[2] = 0x91;
         }
 
-        Info encode(int val) noexcept
+        Sysex(const uint8_t* data, const int size) :
+            bytes(),
+            length(size)
         {
-            auto i = 0;
-            while (val > 0 && i < bytes.size() - 1)
-            {
-                bytes[i] = val & 0x7F;
-                val >>= 7;
-                ++i;
-            }
-            bytes[i] = 0;
-            length = i;
-            return Info( bytes.data(), getSize() );
-        }
-
-        MidiMessage midify(int val) noexcept
-        {
-            const auto info = encode(val);
-            return MidiMessage::createSysExMessage(info.data, info.size);
-        }
-
-        MidiMessage midify(const ByteArray& b) noexcept
-        {
-            length = static_cast<int>(b.size());
             for (auto i = 0; i < length; ++i)
-                bytes[i] = b[i];
-            return MidiMessage::createSysExMessage(bytes.data(), getSize());
+                bytes[i] = data[i];
         }
 
-        static int decode(const uint8_t* _bytes, int size) noexcept
+        MidiMessage midify() noexcept
         {
-            int val = 0;
-            for (auto i = size - 1; i >= 0; --i)
-            {
-                val <<= 7;
-                val |= _bytes[i] & 0x7F;
-            }
-			return val;
+            return MidiMessage::createSysExMessage(bytes.data(), length);
+        }
+
+        void makeBytesOnset() noexcept
+        {
+			bytes[3] = 0x01;
+            length = 4;
+        }
+
+        bool operator==(const Sysex& o) const noexcept
+        {
+            if (length != o.length)
+                return false;
+            for (auto i = 0; i < length; ++i)
+                if (bytes[i] != o.bytes[i])
+                    return false;
+            return true;
 		}
-
-        static int decode(const ByteArray& b) noexcept
-        {
-			return decode(b.data(), static_cast<int>(b.size()));
-        }
-
     private:
         ByteArray bytes;
         int length;
-
-		int getSize() const noexcept
-        {
-            static constexpr auto Byte = sizeof(uint8_t);
-            return length * sizeof(Byte);
-        }
     };
 }
-// todo:
 // SYSEX ID TABLE https://midi.org/SysExIDtable

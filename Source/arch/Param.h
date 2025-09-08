@@ -56,11 +56,12 @@ namespace param
 		Power,
 
 		// low level parameters
-		ResoCutoff,
-		ResoQ,
 		Atk1,
 		Dcy0,
 		Dcy1,
+		Tilt,
+		Threshold,
+		HoldLength,
 		//
 		
 		NumParams

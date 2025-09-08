@@ -85,34 +85,38 @@ namespace audio
 		initFile.replaceWithText(xmlString);
 
 #if PPDHasOnsetDetector
-        params(PID::ResoCutoff).callback = [&](dsp::CB cb)
-        {
-            const auto pitch = cb.denormD();
-            const auto freq = math::noteToFreqHz(pitch);
-            onsetDetector.setResoCutoff(freq);
-        };
-
-        params(PID::ResoQ).callback = [&](dsp::CB cb)
-        {
-            const auto pitch = cb.denormD();
-            const auto freq = math::noteToFreqHz(pitch);
-            onsetDetector.setResoQ(freq);
-        };
-
         params(PID::Atk1).callback = [&](dsp::CB cb)
         {
-            onsetDetector.setAttack(cb.denormD());
+            onsetDetector.setAttack(std::pow(2., cb.denormD()));
         };
 
         params(PID::Dcy0).callback = [&](dsp::CB cb)
         {
-            onsetDetector.setDecay(cb.denormD(), 0);
+            onsetDetector.setDecay(std::pow(2., cb.denormD()), 0);
         };
 
         params(PID::Dcy1).callback = [&](dsp::CB cb)
         {
-            onsetDetector.setDecay(cb.denormD(), 1);
+            onsetDetector.setDecay(std::pow(2., cb.denormD()), 1);
         };
+
+        params(PID::Tilt).callback = [&](dsp::CB cb)
+        {
+            const auto db = cb.denorm();
+			onsetDetector.setTilt(db);
+		};
+
+        params(PID::Threshold).callback = [&](dsp::CB cb)
+        {
+            const auto db = cb.denorm();
+            onsetDetector.setThreshold(db);
+		};
+
+        params(PID::HoldLength).callback = [&](dsp::CB cb)
+        {
+            const auto ms = cb.denormD();
+            onsetDetector.setHoldLength(ms);
+		};
 #endif
     }
 
@@ -443,11 +447,6 @@ namespace audio
 #endif
         pluginProcessor(bufferViewBlock, transport.info);
         transport(bufferViewBlock.numSamples);
-#if JucePlugin_ProducesMidiOutput
-        midiMessages.clear();
-        for (auto it : midiSubBuffer)
-            midiMessages.addEvent(it.getMessage(), it.samplePosition + s);
-#endif
 #if PPDIO == PPDIOOut
 #if PPDIsNonlinear
         mixProcessor.join

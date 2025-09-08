@@ -175,4 +175,29 @@ namespace math
     bool stringNegates(const String&);
 
     Point getAspectRatio(const String&);
+
+    // returns length
+    inline int intToByteArray(std::array<uint8_t, 128>& byteArray, int val) noexcept
+    {
+        auto i = 0;
+        while (val > 0 && i < byteArray.size() - 1)
+        {
+            byteArray[i] = val & 0x7F;
+            val >>= 7;
+            ++i;
+        }
+        byteArray[i] = 0;
+		return i;
+    }
+
+    inline int byteArrayToInt(const uint8_t* byteArray, int size) noexcept
+    {
+        auto val = 0;
+        for (auto i = size - 1; i >= 0; --i)
+        {
+            val <<= 7;
+            val |= byteArray[i] & 0x7F;
+        }
+		return val;
+	}
 }

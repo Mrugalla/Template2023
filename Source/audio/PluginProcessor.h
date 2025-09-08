@@ -3,7 +3,6 @@
 #include "dsp/Transport.h"
 #include "../arch/Param.h"
 //
-#include "dsp/OnsetDetector.h"
 
 namespace dsp
 {

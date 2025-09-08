@@ -3,6 +3,8 @@
 #include "../arch/Range.h"
 #include "../arch/Math.h"
 
+#include "../audio/dsp/onset/OnsetAxiom.h"
+
 namespace param
 {
 	String toID(const String& name)
@@ -114,11 +116,12 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
-		case PID::ResoCutoff: return "Reso Cutoff";
-		case PID::ResoQ: return "Reso Q";
 		case PID::Atk1: return "Atk 1";
 		case PID::Dcy0: return "Dcy 0";
 		case PID::Dcy1: return "Dcy 1";
+		case PID::Tilt: return "Tilt";
+		case PID::Threshold: return "Threshold";
+		case PID::HoldLength: return "Hold Length";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -1605,13 +1608,12 @@ namespace param
 		}
 
 		// LOW LEVEL PARAMS:
-		const auto cutoff = math::freqHzToNote2(5320.f);
-		const auto q = math::freqHzToNote2(232.29f);
-		params.push_back(makeParamPitch(PID::ResoCutoff, cutoff, false));
-		params.push_back(makeParamPitch(PID::ResoQ, q, false));
-		params.push_back(makeParam(PID::Atk1, .2f, makeRange::quad(0.f, 1000.f, 3), Unit::Ms, true));
-		params.push_back(makeParam(PID::Dcy0, .21f, makeRange::quad(0.f, 24.f, 2), Unit::Ms, true));
-		params.push_back(makeParam(PID::Dcy1, 80.65f, makeRange::quad(0.f, 1000.f, 3), Unit::Ms, true));
+		params.push_back(makeParam(PID::Atk1, dsp::OnsetAtk1Default, makeRange::lin(dsp::OnsetAtkDcyTiltMin, dsp::OnsetAtk1Max), Unit::Percent, true));
+		params.push_back(makeParam(PID::Dcy0, dsp::OnsetDcy0Default, makeRange::lin(dsp::OnsetAtkDcyTiltMin, dsp::OnsetDcy0Max), Unit::Percent, true));
+		params.push_back(makeParam(PID::Dcy1, dsp::OnsetDcy1Default, makeRange::lin(dsp::OnsetAtkDcyTiltMin, dsp::OnsetDcy1Max), Unit::Percent, true));
+		params.push_back(makeParam(PID::Tilt, dsp::OnsetTiltDefault, makeRange::lin(dsp::OnsetAtkDcyTiltMin, dsp::OnsetTiltMax), Unit::Decibel, true));
+		params.push_back(makeParam(PID::Threshold, dsp::OnsetThresholdDefault, makeRange::lin(dsp::OnsetThresholdMin, dsp::OnsetThresholdMax), Unit::Decibel, true));
+		params.push_back(makeParam(PID::HoldLength, dsp::OnsetHoldDefault, makeRange::quad(dsp::OnsetHoldMin, dsp::OnsetHoldMax, dsp::OnsetHoldQuad), Unit::Ms, true));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)
