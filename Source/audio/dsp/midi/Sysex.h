@@ -20,9 +20,9 @@ namespace dsp
             // dev id i guess:
             bytes[0] = 0x29;
             bytes[1] = 0x10;
-			bytes[2] = 0x91;
+			bytes[2] = 0x91 & 127;
         }
-
+          
         Sysex(const uint8_t* data, const int size) :
             bytes(),
             length(size)

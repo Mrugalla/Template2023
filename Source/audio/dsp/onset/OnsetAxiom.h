@@ -12,13 +12,13 @@ namespace dsp
 	static constexpr auto OnsetDcy1Default = 4.18f;
 	// Decibel params (lin)
 	static constexpr auto OnsetTiltMax = 36;
-	static constexpr auto OnsetTiltDefault = 22.9f;
+	static constexpr auto OnsetTiltDefault = 28.3f;
 	static constexpr auto OnsetThresholdMin = -40;
 	static constexpr auto OnsetThresholdMax = 0;
-	static constexpr auto OnsetThresholdDefault = -24.4f;
+	static constexpr auto OnsetThresholdDefault = -32.4f;
 	// Millisecond params (quad)
 	static constexpr auto OnsetHoldMin = 0;
 	static constexpr auto OnsetHoldMax = 60;
 	static constexpr auto OnsetHoldQuad = 2;
-	static constexpr auto OnsetHoldDefault = 16.f;
+	static constexpr auto OnsetHoldDefault = 6.79f;
 }
