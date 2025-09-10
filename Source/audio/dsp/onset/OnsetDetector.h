@@ -375,7 +375,8 @@ namespace dsp
 			onsetOut = -1;
 			for (auto s = 0; s < numSamples; s += BlockSize)
 			{
-				const auto numSamplesBlock = std::min(BlockSize, numSamples - s);
+				const auto remainingSamples = numSamples - s;
+				const auto numSamplesBlock = std::min(BlockSize, remainingSamples);
 				float* block[] = { &samples[0][s], &samples[1][s] };
 				ProcessorBufferView view;
 				view.assignMain(block, numChannels, numSamplesBlock);

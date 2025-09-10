@@ -371,13 +371,14 @@ namespace audio
             dsp::ProcessorBufferView bufferViewBlock;
             for (const auto it : midiMessages)
             {
-                const auto msg = it.getMessage();
+                auto msg = it.getMessage();
                 const auto ts = it.samplePosition;
                 do
                 {
                     const auto numSamplesToEvt = ts - s;
                     if (numSamplesToEvt < dsp::BlockSize)
                     {
+                        msg.setTimeStamp(static_cast<double>(numSamplesToEvt));
                         bufferViewBlock.fillBlock(bufferView, msg, s, numSamplesToEvt);
 						s += numSamplesToEvt;
                     }

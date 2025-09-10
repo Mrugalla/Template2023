@@ -25,17 +25,24 @@ namespace dsp
 	{
 		if (view.msg.isSysEx())
 		{
-			const auto data = view.msg.getSysExData();
 			const auto size = view.msg.getSysExDataSize();
-			Sysex sysexMessage(data, size);
-
-			Sysex sysexOnset;
-			sysexOnset.makeBytesOnset();
-			if (sysexMessage == sysexOnset)
+			if (size != 0)
 			{
-				const auto onsetIdx = static_cast<int>(view.msg.getTimeStamp());
-				for (auto ch = 0; ch < view.getNumChannelsMain(); ++ch)
-					view.getSamplesMain(ch)[onsetIdx] = 1.f;
+				const auto data = view.msg.getSysExData();
+				Sysex sysexMessage(data, size);
+
+				Sysex sysexOnset;
+				sysexOnset.makeBytesOnset();
+				if (sysexMessage == sysexOnset)
+				{
+					const auto onsetIdx = static_cast<int>(view.msg.getTimeStamp());
+					//oopsie(onsetIdx < 0 || onsetIdx >= view.numSamples);
+					for (auto ch = 0; ch < view.getNumChannelsMain(); ++ch)
+					{
+						auto smpls = view.getSamplesMain(ch);
+						smpls[onsetIdx] = 1.f;
+					}
+				}
 			}
 		}
 	}
