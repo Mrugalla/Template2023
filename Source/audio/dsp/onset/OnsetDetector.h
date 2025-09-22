@@ -6,14 +6,6 @@
 #include "../EnvelopeFollower.h"
 #include "../midi/Sysex.h"
 
-#define NoDebug 0
-#define DebugRatioSum 1
-#define DebugRatioMax 2
-#define DebugSpecEnv 3
-#define DebugMode 2
-
-#define SendEvent true
-
 namespace dsp
 {
 	// ✨ The onset detectow cwass detectsy the sampwe index of an onset, if 1 existsy >w< ✨
@@ -31,10 +23,9 @@ namespace dsp
 			envFols(),
 			buffer(),
 			sampleRate(1.),
-			freqHz(1.),
-			attack(OnsetAtk1Default),
-			decay(OnsetDcy0Default),
-			bw(5000.),
+			freqHz(5000.), bwHz(5000.), bwPercent(1.),
+			attack(OnsetAtkDefault),
+			decay(OnsetDcyDefault),
 			gain(1.f)
 		{
 		}
@@ -68,9 +59,14 @@ namespace dsp
 
 		void setBandwidth(double q) noexcept
 		{
-			bw = q;
-			reso.setBandwidth(math::freqHzToFc(bw, sampleRate));
-			reso.update();
+			bwHz = q;
+			updateBandwidth();
+		}
+
+		void setBandwidthPercent(double p) noexcept
+		{
+			bwPercent = p;
+			updateBandwidth();
 		}
 
 		void setGain(float g) noexcept
@@ -78,16 +74,22 @@ namespace dsp
 			gain = g;
 		}
 
+		void setFreqHz(double f) noexcept
+		{
+			freqHz = f;
+			reso.setCutoffFc(math::freqHzToFc(freqHz, sampleRate));
+			reso.update();
+		}
+
 		// process:
 
-		void prepare(double _freqHz, double _sampleRate) noexcept
+		void prepare(double _sampleRate) noexcept
 		{
-			freqHz = _freqHz;
 			sampleRate = _sampleRate;
 			for (auto& e : envFols)
 				e.prepare(sampleRate);
 			setCutoff(freqHz);
-			setBandwidth(bw);
+			setBandwidth(bwHz);
 			reso.reset();
 			setAttack(attack);
 			setDecay(decay, 0);
@@ -113,21 +115,6 @@ namespace dsp
 				e(samples, numSamples);
 		}
 
-		void addTo(OnsetBuffer& _buffer, int numSamples) noexcept
-		{
-			const auto& e1 = envFols[0];
-			const auto& e2 = envFols[1];
-			for (auto s = 0; s < numSamples; ++s)
-			{
-				const auto v0 = e1[s];
-				const auto v1 = e2[s];
-				const auto v2 = v1 + 1e-6f;
-				oopsie(v2 == 0.f);
-				const auto y = gain * v0 / v2;
-				_buffer[s] += y;
-			}
-		}
-
 		void operator()(int numSamples) noexcept
 		{
 			const auto& e1 = envFols[0];
@@ -143,7 +130,7 @@ namespace dsp
 			}
 		}
 
-		float processSample(int s) noexcept
+		void addTo(OnsetBuffer& _buffer, int s) noexcept
 		{
 			const auto& e1 = envFols[0];
 			const auto& e2 = envFols[1];
@@ -152,8 +139,25 @@ namespace dsp
 			const auto v2 = v1 + 1e-6f;
 			oopsie(v2 == 0.f);
 			const auto y = gain * v0 / v2;
-			buffer[s] = y;
+			_buffer[s] += y;
+		}
+
+		float processSample(OnsetBuffer& _buffer, int s) noexcept
+		{
+			const auto& e1 = envFols[0];
+			const auto& e2 = envFols[1];
+			const auto v0 = e1[s];
+			const auto v1 = e2[s];
+			const auto v2 = v1 + 1e-6f;
+			oopsie(v2 == 0.f);
+			const auto y = gain * v0 / v2;
+			_buffer[s] = y;
 			return y;
+		}
+
+		float processSample(int s) noexcept
+		{
+			return processSample(buffer, s);
 		}
 
 		// getters:
@@ -176,8 +180,15 @@ namespace dsp
 		Resonator3 reso;
 		std::array<EnvelopeFollower, 2> envFols;
 		OnsetBuffer buffer;
-		double sampleRate, freqHz, attack, decay, bw;
+		double sampleRate, freqHz, bwHz, bwPercent, attack, decay;
 		float gain;
+
+		void updateBandwidth() noexcept
+		{
+			const auto b = bwHz * bwPercent;
+			reso.setBandwidth(math::freqHzToFc(b, sampleRate));
+			reso.update();
+		}
 	};
 
 	struct OnsetStrongHold
@@ -227,24 +238,160 @@ namespace dsp
 		int timer, length;
 	};
 
+	struct Wavelet
+	{
+		static constexpr int Order = 14;
+		static constexpr int Size = 1 << Order;
+
+		Wavelet() :
+			callback(nullptr),
+			wavelet(),
+			mag(0.f),
+			idx(0),
+			length(0)
+		{
+		}
+
+		void setFreqSamples(int n) noexcept
+		{
+			length = n;
+			for (auto i = 0; i < Size; ++i)
+			{
+				const auto iF = static_cast<float>(i);
+				const auto iR = iF / static_cast<float>(Size);
+				const auto x = 2.f * (iR - .5f);
+				const auto w = morletWindow(2.f * x);
+				const auto c = std::cos(Tau * x / static_cast<float>(length));
+				const auto s = std::sin(Tau * x / static_cast<float>(length));
+				wavelet[i] = std::complex<float>(w * c, w * s);
+			}
+		}
+
+		void setFreqHz(float hz, float sampleRate) noexcept
+		{
+			const auto waveLength = math::freqHzToSamples(hz, sampleRate);
+			const auto n = std::max(1, static_cast<int>(std::round(waveLength)));
+			setFreqSamples(n);
+		}
+
+		void operator()(float* smpls, int numSamples) noexcept
+		{
+			for(auto s = 0; s < numSamples; ++s)
+			{
+				const auto smpl = smpls[s];
+				const auto y = std::abs(smpl * wavelet[idx]);
+				mag = std::max(mag, y);
+				++idx;
+				if (idx == Size)
+				{
+					callback(mag);
+					idx = 0;
+					mag = 0.f;
+				}
+			}
+		}
+
+		std::function<void(float)> callback;
+
+		int getLength() const noexcept
+		{
+			return length;
+		}
+	protected:
+		std::array<std::complex<float>, Size> wavelet;
+		float mag;
+		int idx, length;
+
+		// x [-1, 1]
+		float morletWindow(float x) const noexcept
+		{
+			return std::exp(-.5f * x * x);
+		}
+	};
+
+	struct RhythmWavelet
+	{
+		RhythmWavelet() :
+			callback(),
+			wl8th(),
+			wl16th(),
+			bpm(120.f),
+			sampleRate(1.),
+			mag8(0.f),
+			mag16(0.f)
+		{
+			wl8th.callback = [&](float m)
+			{
+				mag8 = m;
+				callback(mag8 > mag16 ? wl8th.getLength() : wl16th.getLength());
+				DBG(mag8 << " :: " << mag16);
+			};
+			wl16th.callback = [&](float m)
+			{
+				mag16 = m;
+				callback(mag8 > mag16 ? wl8th.getLength() : wl16th.getLength());
+				DBG(mag8 << " :: " << mag16);
+			};
+		}
+
+		void prepare(float _sampleRate) noexcept
+		{
+			sampleRate = _sampleRate;
+			updateWavelets();
+		}
+
+		void setBpm(float _bpm) noexcept
+		{
+			bpm = _bpm;
+			updateWavelets();
+		}
+
+		void operator()(float* smpls, int numSamples) noexcept
+		{
+			wl8th(smpls, numSamples);
+			wl16th(smpls, numSamples);
+		}
+
+		std::function<void(int)> callback;
+	protected:
+		Wavelet wl8th, wl16th;
+		float bpm, sampleRate;
+		float mag8, mag16;
+
+		void updateWavelets() noexcept
+		{
+			const auto bps = bpm / 60.f;
+			const auto beatLenSamples = sampleRate / bps;
+			const auto eighthLenSamples = beatLenSamples * .5f;
+			const auto sixteenthLenSamples = beatLenSamples * .25f;
+			wl8th.setFreqSamples(static_cast<int>(std::round(eighthLenSamples)));
+			wl16th.setFreqSamples(static_cast<int>(std::round(sixteenthLenSamples)));
+		}
+	};
+
 	class OnsetDetector2
 	{
-		static constexpr auto NumBands = 32;
-		static constexpr auto LowestFreqHz = 1000.f;
-		static constexpr auto HighestFreqHz = 15000.f;
-		static constexpr auto NumBandsInv = 1.f / static_cast<float>(NumBands);
-		static constexpr auto MaxBands = NumBands - 1;
+		static constexpr auto Decay0Percent = .354066985646;
 	public:
 		OnsetDetector2() :
+			wavelet(),
 			buffer(),
 			detectors(),
 			strongHold(),
-			threshold(OnsetThresholdDefault),
-			onset(-1), onsetOut(-1),
+			sampleRate(44100.), lowestPitch(math::freqHzToNote2(4000.)), highestPitch(math::freqHzToNote2(15000.)),
+			threshold(OnsetThresholdDefault), tilt(0.f),
+			numBands(16), onset(-1), onsetOut(-1),
 			sysex()
 		{
-			for (auto& d : detectors)
-				d.setDecay(OnsetDcy1Default, 1);
+			wavelet.callback = [&](int len)
+			{
+				const auto lenD = static_cast<double>(len / 2);
+				strongHold.setLength(math::samplesToMs(lenD, 1.f / sampleRate));
+			};
+
+			const auto bwPercentDefault = std::pow(2., static_cast<double>(OnsetBandwidthDefault));
+			setBandwidth(bwPercentDefault);
+			setDecay(OnsetDcyDefault);
 			setTilt(OnsetTiltDefault);
 			sysex.makeBytesOnset();
 		}
@@ -257,25 +404,19 @@ namespace dsp
 				d.setAttack(x);
 		}
 
-		void setDecay(double x, int i) noexcept
+		void setDecay(double x) noexcept
 		{
 			for (auto& d : detectors)
-				d.setDecay(x, i);
+				d.setDecay(x, 1);
+			auto d = Decay0Percent * x;
+			for (auto& dtr : detectors)
+				dtr.setDecay(d, 0);
 		}
 
 		void setTilt(float db) noexcept
 		{
-			db *= .5f;
-			const auto lowestGain = math::dbToAmp(-db);
-			const auto highestGain = math::dbToAmp(db);
-			const auto rangeGain = highestGain - lowestGain;
-			for (auto i = 0; i < NumBands; ++i)
-			{
-				const auto iF = static_cast<float>(i);
-				const auto iR = iF / static_cast<float>(MaxBands);
-				const auto gain = lowestGain + iR * rangeGain;
-				detectors[i].setGain(gain * NumBandsInv * NumBandsInv);
-			}
+			tilt = db;
+			updateTilt();
 		}
 
 		void setThreshold(float db) noexcept
@@ -285,24 +426,48 @@ namespace dsp
 
 		void setHoldLength(double ms) noexcept
 		{
-			strongHold.setLength(ms);
+			//strongHold.setLength(ms);
+		}
+
+		void setBandwidth(double b) noexcept
+		{
+			for(auto& d : detectors)
+				d.setBandwidthPercent(b);
+		}
+
+		void setNumBands(int n) noexcept
+		{
+			numBands = n;
+			updatePitchRange();
+			updateTilt();
+		}
+
+		void setLowestPitch(double p) noexcept
+		{
+			lowestPitch = p;
+			updatePitchRange();
+		}
+
+		void setHighestPitch(double p) noexcept
+		{
+			highestPitch = p;
+			updatePitchRange();
+		}
+
+		void setBpm(float bpm) noexcept
+		{
+			wavelet.setBpm(bpm);
 		}
 
 		// process:
 
-		void prepare(double sampleRate) noexcept
+		void prepare(double _sampleRate) noexcept
 		{
-			const auto lowestPitch = math::freqHzToNote2(LowestFreqHz);
-			const auto highestPitch = math::freqHzToNote2(HighestFreqHz);
-			const auto rangePitch = highestPitch - lowestPitch;
-			for (auto i = 0; i < NumBands; ++i)
-			{
-				const auto iF = static_cast<float>(i);
-				const auto iR = iF / static_cast<float>(MaxBands);
-				const auto pitch = lowestPitch + iR * rangePitch;
-				const auto freqHz = static_cast<double>(math::noteToFreqHz2(pitch));
-				detectors[i].prepare(freqHz, sampleRate);
-			}
+			wavelet.prepare(static_cast<float>(_sampleRate));
+			sampleRate = _sampleRate;
+			for(auto& d : detectors)
+				d.prepare(sampleRate);
+			updatePitchRange();
 			strongHold.prepare(sampleRate);
 		}
 
@@ -311,30 +476,23 @@ namespace dsp
 			onset = -1;
 			strongHold(view.numSamples);
 			buffer.copyFromMid(view);
+			wavelet(buffer.getSamples(), view.numSamples);
 			buffer.rectify(view.numSamples);
-			for (auto i = 0; i < NumBands; ++i)
+			for (auto i = 0; i < numBands; ++i)
 			{
 				auto& detector = detectors[i];
 				detector.copyFrom(buffer, view.numSamples);
 				detector.resonate(view.numSamples);
 				detector.synthesizeEnvelopeFollowers(view.numSamples);
 			}
-#if DebugMode == DebugRatioSum
-			buffer.clear(view.numSamples);
-			for (auto i = 0; i < NumBands; ++i)
-			{
-				auto& detector = detectors[i];
-				detector(buffer, view.numSamples);
-			}
-#elif DebugMode == DebugRatioMax
 			for (auto s = 0; s < view.numSamples; ++s)
 			{
 				auto max = 0.f;
-				for (auto i = 0; i < NumBands; ++i)
+				for (auto i = 0; i < numBands; ++i)
 				{
 					auto& detector = detectors[i];
 					detector.processSample(s);
-					if(max < detector[s])
+					if (max < detector[s])
 						max = detector[s];
 				}
 				if (max > threshold)
@@ -343,30 +501,7 @@ namespace dsp
 						onset = s;
 					strongHold.reset();
 				}
-				if(strongHold.youShallPass())
-					buffer[s] = max;
-				else
-					buffer[s] = 0.f;
-				
 			}
-#elif DebugMode == DebugSpecEnv
-			for (auto s = 0; s < view.numSamples; ++s)
-			{
-				auto idx = 0;
-				for (auto i = 1; i < NumBands; ++i)
-				{
-					auto& detector = detectors[i];
-					detector.processSample(s);
-					if (detector[s] > specEnvThreshold)
-						idx = i;
-				}
-				const auto y = static_cast<float>(idx) / static_cast<float>(NumBands - 1);
-				buffer[s] = y;
-			}
-#else
-			// final implementation and stuff
-#endif
-			buffer.copyTo(view);
 		}
 
 		void operator()(float* const* samples, MidiBuffer& midi,
@@ -384,34 +519,59 @@ namespace dsp
 				if (onsetOut == -1 && onset != -1)
 				{
 					onsetOut = onset + s;
-#if SendEvent
 					midi.addEvent(sysex.midify(), onsetOut);
-#endif
 				}
 			}
 		}
 	private:
+		RhythmWavelet wavelet;
 		OnsetBuffer buffer;
-		std::array<OnsetDetector, NumBands> detectors;
+		std::array<OnsetDetector, OnsetNumBandsMax> detectors;
 		OnsetStrongHold strongHold;
-		float threshold;
-		int onset, onsetOut;
+		double sampleRate, lowestPitch, highestPitch;
+		float threshold, tilt;
+		int numBands, onset, onsetOut;
 		Sysex sysex;
+
+		void updatePitchRange() noexcept
+		{
+			const auto rangePitch = highestPitch - lowestPitch;
+			for (auto i = 0; i < numBands; ++i)
+			{
+				const auto iF = static_cast<float>(i);
+				const auto iR = iF / static_cast<float>(numBands - 1);
+				const auto pitch = lowestPitch + iR * rangePitch;
+				const auto freqHz = static_cast<double>(math::noteToFreqHz2(pitch));
+				const auto pitchLow = pitch - .5f;
+				const auto pitchHigh = pitch + .5f;
+				const auto freqLow = static_cast<double>(math::noteToFreqHz2(pitchLow));
+				const auto freqHigh = static_cast<double>(math::noteToFreqHz2(pitchHigh));
+				const auto bwHz = freqHigh - freqLow;
+				detectors[i].setFreqHz(freqHz);
+				detectors[i].setBandwidth(bwHz);
+			}
+		}
+
+		void updateTilt() noexcept
+		{
+			const auto lowestGain = math::dbToAmp(-tilt);
+			const auto highestGain = math::dbToAmp(tilt);
+			const auto rangeGain = highestGain - lowestGain;
+			const auto numBandsInv = 1.f / static_cast<float>(numBands);
+			const auto bandCompensate = numBandsInv * numBandsInv;
+			for (auto i = 0; i < numBands; ++i)
+			{
+				const auto iF = static_cast<float>(i);
+				const auto iR = iF / static_cast<float>(numBands);
+				const auto gain = lowestGain + iR * rangeGain;
+				detectors[i].setGain(gain * bandCompensate);
+			}
+		}
 	};
 }
-
-#undef NoDebug
-#undef DebugRatioSum
-#undef DebugRatioMax
-#undef DebugSpecEnv
-#undef DebugMode
-#undef SendEvent
 #endif
 
 /*
 todo:
-make bandwidth related to pitch
-	scale bandwidth with parameter
-try different freq ranges and NumBands
-find crash in bitwig
+freq range und numBands parameters
 */

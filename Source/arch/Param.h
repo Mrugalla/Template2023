@@ -56,12 +56,15 @@ namespace param
 		Power,
 
 		// low level parameters
-		Atk1,
-		Dcy0,
-		Dcy1,
+		NumBands,
+		LowestPitch,
+		HighestPitch,
+		Atk,
+		Dcy,
 		Tilt,
 		Threshold,
 		HoldLength,
+		Bandwidth,
 		//
 		
 		NumParams

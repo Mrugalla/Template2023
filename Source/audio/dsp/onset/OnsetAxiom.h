@@ -2,23 +2,27 @@
 
 namespace dsp
 {
+	static constexpr auto OnsetNumBandsDefault = 12.f;
+	static constexpr auto OnsetNumBandsMax = 16;
+	static constexpr auto OnsetLowestFreqHz = 287.76f;
+	static constexpr auto OnsetHighestFreqHz = 14660.f;
 	// Percent params (lin)
-	static constexpr auto OnsetAtkDcyTiltMin = 0;
-	static constexpr auto OnsetAtk1Max = 8;
-	static constexpr auto OnsetAtk1Default = 7.f;
-	static constexpr auto OnsetDcy0Max = 8;
-	static constexpr auto OnsetDcy0Default = 1.48f;
-	static constexpr auto OnsetDcy1Max = 11;
-	static constexpr auto OnsetDcy1Default = 4.18f;
+	static constexpr auto OnsetTimeMin = 0;
+	static constexpr auto OnsetTimeMax = 8;
+	static constexpr auto OnsetAtkDefault = 7.f;
+	static constexpr auto OnsetDcyMax = 11;
+	static constexpr auto OnsetDcyDefault = 5.62f;
+	static constexpr auto OnsetBandwidthMin = -12;
+	static constexpr auto OnsetBandwidthMax = 0;
+	static constexpr auto OnsetBandwidthDefault = -4.f;
 	// Decibel params (lin)
+	static constexpr auto OnsetTiltMin = 0;
 	static constexpr auto OnsetTiltMax = 36;
-	static constexpr auto OnsetTiltDefault = 28.3f;
+	static constexpr auto OnsetTiltDefault = 26.8f;
 	static constexpr auto OnsetThresholdMin = -40;
 	static constexpr auto OnsetThresholdMax = 0;
-	static constexpr auto OnsetThresholdDefault = -32.4f;
-	// Millisecond params (quad)
-	static constexpr auto OnsetHoldMin = 0;
+	static constexpr auto OnsetThresholdDefault = -7.3f;
+	static constexpr auto OnsetHoldMin = 10;
 	static constexpr auto OnsetHoldMax = 60;
-	static constexpr auto OnsetHoldQuad = 2;
-	static constexpr auto OnsetHoldDefault = 6.79f;
+	static constexpr auto OnsetHoldDefault = 24.56f;
 }

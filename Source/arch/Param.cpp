@@ -116,12 +116,15 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
-		case PID::Atk1: return "Atk 1";
-		case PID::Dcy0: return "Dcy 0";
-		case PID::Dcy1: return "Dcy 1";
+		case PID::NumBands: return "Num Bands";
+		case PID::LowestPitch: return "Lowest Pitch";
+		case PID::HighestPitch: return "Highest Pitch";
+		case PID::Atk: return "Atk";
+		case PID::Dcy: return "Dcy";
 		case PID::Tilt: return "Tilt";
 		case PID::Threshold: return "Threshold";
 		case PID::HoldLength: return "Hold Length";
+		case PID::Bandwidth: return "Bandwidth";
 
 		default: return "Invalid Parameter Name";
 		}
@@ -1608,12 +1611,15 @@ namespace param
 		}
 
 		// LOW LEVEL PARAMS:
-		params.push_back(makeParam(PID::Atk1, dsp::OnsetAtk1Default, makeRange::lin(dsp::OnsetAtkDcyTiltMin, dsp::OnsetAtk1Max), Unit::Percent, true));
-		params.push_back(makeParam(PID::Dcy0, dsp::OnsetDcy0Default, makeRange::lin(dsp::OnsetAtkDcyTiltMin, dsp::OnsetDcy0Max), Unit::Percent, true));
-		params.push_back(makeParam(PID::Dcy1, dsp::OnsetDcy1Default, makeRange::lin(dsp::OnsetAtkDcyTiltMin, dsp::OnsetDcy1Max), Unit::Percent, true));
-		params.push_back(makeParam(PID::Tilt, dsp::OnsetTiltDefault, makeRange::lin(dsp::OnsetAtkDcyTiltMin, dsp::OnsetTiltMax), Unit::Decibel, true));
+		params.push_back(makeParam(PID::NumBands, dsp::OnsetNumBandsDefault, makeRange::stepped(1, 16), Unit::Voices, false));
+		params.push_back(makeParamPitch(PID::LowestPitch, math::freqHzToNote2(dsp::OnsetLowestFreqHz), true));
+		params.push_back(makeParamPitch(PID::HighestPitch, math::freqHzToNote2(dsp::OnsetHighestFreqHz), true));
+		params.push_back(makeParam(PID::Atk, dsp::OnsetAtkDefault, makeRange::lin(dsp::OnsetTimeMin, dsp::OnsetTimeMax), Unit::Percent, true));
+		params.push_back(makeParam(PID::Dcy, dsp::OnsetDcyDefault, makeRange::lin(dsp::OnsetTimeMin, dsp::OnsetTimeMax), Unit::Percent, true));
+		params.push_back(makeParam(PID::Tilt, dsp::OnsetTiltDefault, makeRange::lin(dsp::OnsetTiltMin, dsp::OnsetTiltMax), Unit::Decibel, true));
 		params.push_back(makeParam(PID::Threshold, dsp::OnsetThresholdDefault, makeRange::lin(dsp::OnsetThresholdMin, dsp::OnsetThresholdMax), Unit::Decibel, true));
-		params.push_back(makeParam(PID::HoldLength, dsp::OnsetHoldDefault, makeRange::quad(dsp::OnsetHoldMin, dsp::OnsetHoldMax, dsp::OnsetHoldQuad), Unit::Ms, true));
+		params.push_back(makeParam(PID::HoldLength, dsp::OnsetHoldDefault, makeRange::lin(dsp::OnsetHoldMin, dsp::OnsetHoldMax), Unit::Ms, true));
+		params.push_back(makeParam(PID::Bandwidth, dsp::OnsetBandwidthDefault, makeRange::lin(dsp::OnsetBandwidthMin, dsp::OnsetBandwidthMax), Unit::Percent, true));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

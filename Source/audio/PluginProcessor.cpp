@@ -24,7 +24,7 @@ namespace dsp
 	void PluginProcessor::operator()(ProcessorBufferView& view,
 		const Transport::Info&) noexcept
 	{
-		if(onsetDetected)
+		if(onsetDetected && view.numSamples)
 		{
 			onsetDetected = false;
 			for (auto ch = 0; ch < view.getNumChannelsMain(); ++ch)
