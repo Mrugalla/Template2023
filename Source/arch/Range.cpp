@@ -114,9 +114,10 @@ namespace makeRange
 
 	Range withCentre(float start, float end, float centre) noexcept
 	{
+		if (start == -end && centre == 0.f)
+			return lin(start, end);
 		const auto r = end - start;
 		const auto v = (centre - start) / r;
-
 		return makeRange::biased(start, end, 2.f * v - 1.f);
 	}
 

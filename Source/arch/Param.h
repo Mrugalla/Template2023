@@ -35,9 +35,6 @@ namespace param
 #if PPDHasStereoConfig
 		StereoConfig,
 #endif
-#if PPDHasHQ
-		HQ,
-#endif
 #if PPDHasLookahead
 		Lookahead,
 #endif
@@ -53,18 +50,22 @@ namespace param
 		TempC3, TempDb3, TempD3, TempEb3, TempE3, TempF3, TempGb3, TempG3, TempAb3, TempA3, TempBb3, TempB3,
 		TempC4, TempDb4, TempD4, TempEb4, TempE4, TempF4, TempGb4, TempG4, TempAb4, TempA4, TempBb4, TempB4,
 #endif
+#if PPDHasOnsetDetector
+		OnsetSensitivity,
+#if PPDOnsetDebugParameters
+		OnsetNumBands,
+		OnsetLowestPitch,
+		OnsetHighestPitch,
+		OnsetAtk,
+		OnsetDcy,
+		OnsetTilt,
+		OnsetHoldLength,
+		OnsetBandwidth,
+#endif
+#endif
 		Power,
 
 		// low level parameters
-		NumBands,
-		LowestPitch,
-		HighestPitch,
-		Atk,
-		Dcy,
-		Tilt,
-		Threshold,
-		HoldLength,
-		Bandwidth,
 		//
 		
 		NumParams

@@ -14,7 +14,7 @@ namespace dsp
 		{
 			Info() :
 				ppq(0.),
-				bpm(120.),
+				bpm(1.),
 				timeSecs(0.),
 				numerator(3.),
 				denominator(4.),

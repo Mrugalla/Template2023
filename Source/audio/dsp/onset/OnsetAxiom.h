@@ -19,10 +19,12 @@ namespace dsp
 	static constexpr auto OnsetTiltMin = 0;
 	static constexpr auto OnsetTiltMax = 36;
 	static constexpr auto OnsetTiltDefault = 26.8f;
-	static constexpr auto OnsetThresholdMin = -40;
+	static constexpr auto OnsetThresholdMin = -24;
 	static constexpr auto OnsetThresholdMax = 0;
 	static constexpr auto OnsetThresholdDefault = -7.3f;
 	static constexpr auto OnsetHoldMin = 10;
 	static constexpr auto OnsetHoldMax = 60;
-	static constexpr auto OnsetHoldDefault = 24.56f;
+	static constexpr auto OnsetHoldDefault = 30.f;
+	// No Param
+	static constexpr auto OnsetDecay0Percent = .354066985646;
 }

@@ -1,356 +1,285 @@
 #pragma once
-#include "ParallelProcessor.h"
-#include "Gain.h"
-#include "WHead.h"
+#include "ProcessorBufferView.h"
+#include "PRM.h"
 
 namespace dsp
 {	
-	struct LatencyCompensation
-	{
-		using DryBuffers = std::array<std::array<float, BlockSize>, 2>;
-
-		LatencyCompensation() :
-			ring(),
-			wHead(),
-			latency(0)
-		{}
-
-		void prepare(int _latency)
-		{
-			latency = _latency;
-			if (latency != 0)
-			{
-				ring.setSize(2, latency, false, true, false);
-				wHead.prepare(latency);
-			}
-			else
-			{
-				ring.setSize(0, 0);
-				wHead.prepare(0);
-			}
-		}
-
-		void operator()(DryBuffers& dryBuffers, const float* const* inputSamples,
-			int numChannels, int numSamples) noexcept
-		{
-			if (latency != 0)
-			{
-				wHead(numSamples);
-
-				for (auto ch = 0; ch < numChannels; ++ch)
-				{
-					const auto smpls = inputSamples[ch];
-
-					auto rng = ring.getWritePointer(ch);
-					auto dry = dryBuffers[ch].data();
-
-					for (auto s = 0; s < numSamples; ++s)
-					{
-						const auto w = wHead[s];
-						const auto r = (w + 1) % latency;
-
-						rng[w] = smpls[s];
-						dry[s] = rng[r];
-					}
-				}
-			}
-			else
-				for (auto ch = 0; ch < numChannels; ++ch)
-					SIMD::copy(dryBuffers[ch].data(), inputSamples[ch], numSamples);
-		}
-
-		void operator()(float* const* samples, int numChannels, int numSamples) noexcept
-		{
-			if (latency != 0)
-			{
-				wHead(numSamples);
-
-				for (auto ch = 0; ch < numChannels; ++ch)
-				{
-					const auto smpls = samples[ch];
-					auto rng = ring.getWritePointer(ch);
-
-					for (auto s = 0; s < numSamples; ++s)
-					{
-						const auto w = wHead[s];
-						const auto r = (w + 1) % latency;
-
-						rng[w] = smpls[s];
-						smpls[s] = rng[r];
-					}
-				}
-			}
-		}
-
-	private:
-		AudioBuffer ring;
-		WHead wHead;
-	public:
-		int latency;
-	};
-
-	using Gain13 = Gain<13.f>;
-
-	struct MixProcessorNonlinear
-	{
-		MixProcessorNonlinear() :
-			gainIn(0.f)
-		{}
-
-		void prepare(float sampleRate)
-		{
-			gainIn.prepare(sampleRate);
-		}
-
-		void split(ProcessorBufferView& view, float gainInDb) noexcept
-		{
-			gainIn(view, gainInDb);
-		}
-
-		void join(ProcessorBufferView& view, bool unityGain) noexcept
-		{
-			if(unityGain)
-				gainIn.applyInverse(view);
-		}
-
-		Gain13 gainIn;
-	};
-
-	struct MixProcessorDryWet
-	{
-		MixProcessorDryWet() :
-			parallelProcessor(),
-			gainDry(0.f),
-			gainWetIn(0.f),
-			gainWetOut(0.f)
-		{}
-
-		void prepare(float sampleRate)
-		{
-			gainDry.prepare(sampleRate);
-			gainWetIn.prepare(sampleRate);
-			gainWetOut.prepare(sampleRate);
-		}
-
-		// samples, gainDryDb, numChannels, numSamples
-		void splitLinear(ProcessorBufferView& view, float gainDryDb) noexcept
-		{
-			parallelProcessor.split(view);
-			const auto band = parallelProcessor.getBand(0);
-			gainDry(band, gainDryDb, view.getNumChannelsMain(), view.getNumSamples());
-		}
-
-		// samples, gainDryDb, gainWetInDb, numChannels, numSamples
-		void splitNonlinear(ProcessorBufferView& view,
-			float gainDryDb, float gainWetInDb) noexcept
-		{
-			splitLinear(view, gainDryDb);
-			gainWetIn(view, gainWetInDb);
-		}
-
-		// samples, gainWetDb, numChannels, numSamples 
-		void joinLinear(ProcessorBufferView& view, float gainWetOutDb) noexcept
-		{
-			gainWetOut(view, gainWetOutDb);
-			parallelProcessor.join(view);
-		}
-
-		// samples, gainWetDb, numChannels, numSamples, unityGain
-		void joinNonlinear(ProcessorBufferView& view,
-			float gainWetOutDb, bool unityGain) noexcept
-		{
-			if(unityGain)
-				gainWetIn.applyInverse(view);
-			joinLinear(view, gainWetOutDb);
-		}
-
-	private:
-		PP2Band parallelProcessor;
-		Gain13 gainDry, gainWetIn, gainWetOut;
-	};
-
-	struct MixProcessorWetMix
-	{
-		MixProcessorWetMix() :
-			parallelProcessor(),
-			gainWetIn(0.f),
-			gainWetOut(0.f),
-			mixPRM(1.f)
-		{}
-
-		void prepare(float sampleRate)
-		{
-			gainWetIn.prepare(sampleRate);
-			gainWetOut.prepare(sampleRate);
-			mixPRM.prepare(sampleRate, 13.f);
-		}
-
-		// view
-		void splitLinear(ProcessorBufferView& view) noexcept
-		{
-			parallelProcessor.split(view);
-		}
-
-		// view, gainWetInDb
-		void splitNonlinear(ProcessorBufferView& view, float gainWetInDb) noexcept
-		{
-			splitLinear(view);
-			gainWetIn(view, gainWetInDb);
-		}
-
-		// view, mix, gainWetOutDb, delta 
-		void joinLinear(ProcessorBufferView& view,
-			float mix, float gainWetOutDb, bool delta) noexcept
-		{
-			gainWetOut(view, gainWetOutDb);
-			if (delta)
-				joinDelta(view, mix);
-			else
-				joinMix(view, mix);
-		}
-
-		// view, mix, gainWetOutDb, unityGain, delta 
-		void joinNonlinear(ProcessorBufferView& view,
-			float mix, float gainWetOutDb, bool unityGain, bool delta) noexcept
-		{
-			if (unityGain)
-				gainWetIn.applyInverse(view);
-			joinLinear(view, mix, gainWetOutDb, delta);
-		};
-	
-	private:
-		PP2Band parallelProcessor;
-		Gain13 gainWetIn, gainWetOut;
-		PRM mixPRM;
-
-		// view, mix
-		void joinMix(ProcessorBufferView& view, float mix) noexcept
-		{
-			const auto numSamples = view.getNumSamples();
-			const auto mixInfo = mixPRM(mix, numSamples);
-			if (mixInfo.smoothing)
-				parallelProcessor.joinMix(view, mixInfo.buf);
-			else
-				parallelProcessor.joinMix(view, mixInfo.val);
-		}
-
-		// view, mix
-		void joinDelta(ProcessorBufferView& view, float mix) noexcept
-		{
-			const auto numSamples = view.getNumSamples();
-			const auto mixInfo = mixPRM(mix, numSamples);
-			if (mixInfo.smoothing)
-				parallelProcessor.joinDelta(view, mixInfo.buf);
-			else
-				parallelProcessor.joinDelta(view, mixInfo.val);
-		}
-	};
-
 	struct MixProcessor
 	{
+		static constexpr auto SmoothTimeMs = 4.f;
+
 		MixProcessor() :
-			mixProcessor(),
-			gainOut(0.f)
-		{}
+			bandDry(),
+			gainWetIn(1.f),
+			gainDryOut(0.f),
+			gainWetOut(1.f),
+			mix(1.f),
+			gainOut(1.f),
+			unityGain(true),
+			delta(false)
+		{
+		}
 
 		void prepare(float sampleRate)
 		{
-			mixProcessor.prepare(sampleRate);
-			gainOut.prepare(sampleRate);
+			gainWetIn.prepare(sampleRate, SmoothTimeMs);
+			gainDryOut.prepare(sampleRate, SmoothTimeMs);
+			gainWetOut.prepare(sampleRate, SmoothTimeMs);
+			mix.prepare(sampleRate, SmoothTimeMs);
+			gainOut.prepare(sampleRate, SmoothTimeMs);
 		}
 
-#if PPDIO == PPDIOOut
-	#if PPDIsNonlinear
-		// samples, gainInDb, numChannels, numSamples
-		void split(float* const* samples, float gainInDb,
-			int numChannels, int numSamples) noexcept
+		// parameters:
+
+		void setGainDryOut(float g) noexcept
 		{
-			mixProcessor.split(samples, gainInDb, numChannels, numSamples);
-		}
-		// samples, gainOutDb, numChannels, numSamples, unityGain
-		void join(float* const* samples, float gainOutDb,
-			int numChannels, int numSamples, bool unityGain) noexcept
-		{
-			mixProcessor.join(samples, numChannels, numSamples, unityGain);
-			gainOut(samples, gainOutDb, numChannels, numSamples);
-		}
-	#else
-		void join(ProcessorBufferView& view, float gainOutDb) noexcept
-		{
-			gainOut(view, gainOutDb);
-		}
-	#endif
-#elif PPDIO == PPDIODryWet
-	#if PPDIsNonlinear
-		// samples, gainDryDb, gainWetInDb, numChannels, numSamples
-		void split(float* const* samples, float gainDryDb, float gainWetInDb,
-			int numChannels, int numSamples) noexcept
-		{
-			mixProcessor.splitNonlinear(samples, gainDryDb, gainWetInDb, numChannels, numSamples);
+			gainDryOut.value = g;
 		}
 
-		// samples, gainWetOutDb, gainOutDb, numChannels, numSamples, unityGain
-		void join(float* const* samples, float gainWetOutDb, float gainOutDb,
-			int numChannels, int numSamples, bool unityGain) noexcept
+		void setGainWetIn(float g) noexcept
 		{
-			mixProcessor.joinNonlinear(samples, gainWetOutDb, numChannels, numSamples, unityGain);
-			gainOut(samples, gainOutDb, numChannels, numSamples);
-		}
-	#else
-		// samples, gainDryDb, numChannels, numSamples
-		void split(float* const* samples, float gainDryDb,
-			int numChannels, int numSamples) noexcept
-		{
-			mixProcessor.splitLinear(samples, gainDryDb, numChannels, numSamples);
+			gainWetIn.value = g;
 		}
 
-		// samples, gainWetOutDb, gainOutDb, numChannels, numSamples
-		void join(float* const* samples, float gainWetOutDb, float gainOutDb,
-			int numChannels, int numSamples) noexcept
+		void setGainWetOut(float g) noexcept
 		{
-			mixProcessor.joinLinear(samples, gainWetOutDb, numChannels, numSamples);
-			gainOut(samples, gainOutDb, numChannels, numSamples);
-		}
-	#endif
-#else
-	#if PPDIsNonlinear
-		// view, gainWetInDb
-		void split(ProcessorBufferView& view, float gainWetInDb) noexcept
-		{
-			mixProcessor.splitNonlinear(view, gainWetInDb);
+			gainWetOut.value = g;
 		}
 
-		// samples, mix, gainWetDb, gainOutDb, numChannels, numSamples, unityGain, delta
-		void join(ProcessorBufferView& view, float mix,
-			float gainWetDb, float gainOutDb, bool unityGain, bool delta) noexcept
+		void setMix(float m) noexcept
 		{
-			mixProcessor.joinNonlinear(view, mix, gainWetDb, unityGain, delta);
-			gainOut(view, gainOutDb);
+			mix.value = m;
 		}
-	#else
+
+		void setGainOut(float g) noexcept
+		{
+			gainOut.value = g;
+		}
+
+		void setUnityGain(bool u) noexcept
+		{
+			unityGain = u;
+		}
+
+		void setDelta(bool d) noexcept
+		{
+			delta = d;
+		}
+
+		// process:
+
 		void split(ProcessorBufferView& view) noexcept
 		{
-			mixProcessor.splitLinear(view);
+#if PPDIO == PPDIODryWet || PPDIO == PPDIOWetMix
+			copyDry(view);
+#endif
+#if PPDIsNonlinear
+			processGain(view, gainWetIn);
+#endif
 		}
 
-		// samples, mix, gainWetDb, gainOutDb, numChannels, numSamples, delta
-		void join(ProcessorBufferView& view, float mix, float gainWetDb, float gainOutDb,
-			bool delta) noexcept
+		void join(ProcessorBufferView& view) noexcept
 		{
-			mixProcessor.joinLinear(view, mix, gainWetDb, delta);
-			gainOut(view, gainOutDb);
+#if PPDIsNonlinear
+			if (unityGain)
+				inverseGainWetIn(view);
+#endif
+#if PPDIO == PPDIODryWet
+			processGain(view, gainWetOut);
+			processGainDryOut(view);
+			
+			joinDry(view);
+#elif PPDIO == PPDIOWetMix
+			processGain(view, gainWetOut);
+			processMixOrDelta(view);
+#endif
+			processGain(view, gainOut);
 		}
-	#endif
-#endif
-
 	private:
-#if PPDIO == PPDIOOut
-		MixProcessorNonlinear mixProcessor;
-#elif PPDIO == PPDIODryWet
-		MixProcessorDryWet mixProcessor;
-#else
-		MixProcessorWetMix mixProcessor;
+		std::array<std::array<float, BlockSize>, 2> bandDry;
+		PRM gainWetIn, gainDryOut, gainWetOut, mix, gainOut;
+		bool unityGain, delta;
+
+		void processGain(ProcessorBufferView& view, PRM& prm) noexcept
+		{
+			const auto numChannels = view.getNumChannelsMain();
+			const auto numSamples = view.numSamples;
+			const auto prmInfo = prm(view.numSamples);
+			if (prmInfo.smoothing)
+			{
+				for (auto ch = 0; ch < numChannels; ++ch)
+					SIMD::multiply(view.getSamplesMain(ch), prmInfo.buf, numSamples);
+				return;
+			}
+			if (prmInfo.val == 0.f)
+				view.clearMain();
+			else if (prmInfo.val == 1.f)
+				return;
+			for (auto ch = 0; ch < numChannels; ++ch)
+				SIMD::multiply(view.getSamplesMain(ch), prmInfo.val, numSamples);
+		}
+
+		void inverseGainWetIn(ProcessorBufferView& view) noexcept
+		{
+			const auto numChannels = view.getNumChannelsMain();
+			const auto numSamples = view.numSamples;
+			if (gainWetIn.smoothing)
+			{
+				for (auto ch = 0; ch < numChannels; ++ch)
+				{
+					auto smpls = view.getSamplesMain(ch);
+					for (auto s = 0; s < numSamples; ++s)
+						smpls[s] /= gainWetIn[s];
+				}
+				return;
+			}
+			// gainWetIn shall never be 0, as that is not invertable!
+			oopsie(gainWetIn.value == 0.f);
+			if (gainWetIn.value == 1.f)
+				return;
+			const auto g = 1.f / gainWetIn.value;
+			for (auto ch = 0; ch < numChannels; ++ch)
+				SIMD::multiply(view.getSamplesMain(ch), g, numSamples);
+		}
+
+		void copyDry(ProcessorBufferView& view) noexcept
+		{
+			const auto numSamples = view.numSamples;
+			const auto numChannels = view.getNumChannelsMain();
+			for (auto ch = 0; ch < numChannels; ++ch)
+				SIMD::copy(bandDry[ch].data(), view.getSamplesMain(ch), numSamples);
+#if PPDIO == PPDIODryWet
+			const auto gainDryOutInfo = gainDryOut(numSamples);
+			if (gainDryOutInfo.smoothing)
+			{
+				for (auto ch = 0; ch < numChannels; ++ch)
+					SIMD::multiply(bandDry[ch].data(), gainDryOutInfo.buf, numSamples);
+				return;
+			}
+			if (gainDryOutInfo.val == 1.f)
+				return;
+			for (auto ch = 0; ch < numChannels; ++ch)
+				SIMD::multiply(bandDry[ch].data(), gainDryOutInfo.val, numSamples);
 #endif
-		Gain13 gainOut;
+		}
+
+		void joinDry(ProcessorBufferView& view) noexcept
+		{
+			const auto numChannels = view.getNumChannelsMain();
+			const auto numSamples = view.numSamples;
+			for(auto ch = 0; ch < numChannels; ++ch)
+				SIMD::add(view.getSamplesMain(ch), bandDry[ch].data(), numSamples);
+		}
+
+		void processGainDryOut(const ProcessorBufferView& view) noexcept
+		{
+			const auto numChannels = view.getNumChannelsMain();
+			const auto numSamples = view.numSamples;
+			const auto gainDryOutInfo = gainDryOut(numSamples);
+			if (gainDryOutInfo.smoothing)
+			{
+				for(auto ch = 0; ch < numChannels; ++ch)
+					SIMD::multiply(bandDry[ch].data(), gainDryOutInfo.buf, numSamples);
+				return;
+			}
+			if (gainDryOutInfo.val == 1.f)
+				return;
+			for (auto ch = 0; ch < numChannels; ++ch)
+				SIMD::multiply(bandDry[ch].data(), gainDryOutInfo.val, numSamples);
+		}
+
+		float processMix(float m, float x0, float x1) noexcept
+		{
+#if PPDEqualLoudnessMix
+			const auto m0 = std::sqrt(1.f - m);
+			const auto m1 = std::sqrt(m);
+			return m0 * x0 + m1 * x1;
+#else
+			return x0 + m * (x1 - x0);
+#endif
+		}
+
+		void processMix(ProcessorBufferView& view) noexcept
+		{
+			const auto numChannels = view.getNumChannelsMain();
+			const auto numSamples = view.numSamples;
+			const auto mixInfo = mix(numSamples);
+			if (mixInfo.smoothing)
+			{
+				for (auto ch = 0; ch < numChannels; ++ch)
+				{
+					const auto dry = bandDry[ch].data();
+					auto smpls = view.getSamplesMain(ch);
+					for (auto s = 0; s < numSamples; ++s)
+					{
+						const auto m = mixInfo[s];
+						const auto x0 = dry[s];
+						const auto x1 = smpls[s];
+						smpls[s] = processMix(m, x0, x1);
+					}
+				}
+				return;
+			}
+			const auto m = mixInfo.val;
+			if (m == 1.f)
+				return;
+			for (auto ch = 0; ch < numChannels; ++ch)
+			{
+				const auto dry = bandDry[ch].data();
+				auto smpls = view.getSamplesMain(ch);
+				for (auto s = 0; s < numSamples; ++s)
+				{
+					const auto x0 = dry[s];
+					const auto x1 = smpls[s];
+					smpls[s] = processMix(m, x0, x1);
+				}
+			}
+		}
+
+		void processDelta(ProcessorBufferView& view) noexcept
+		{
+			const auto numChannels = view.getNumChannelsMain();
+			const auto numSamples = view.numSamples;
+			const auto mixInfo = mix(numSamples);
+			if (mixInfo.smoothing)
+			{
+				for (auto ch = 0; ch < numChannels; ++ch)
+				{
+					const auto dry = bandDry[ch].data();
+					auto smpls = view.getSamplesMain(ch);
+					for (auto s = 0; s < numSamples; ++s)
+					{
+						const auto m = mixInfo[s];
+						const auto x0 = dry[s];
+						const auto x1 = smpls[s];
+						smpls[s] = m * (x1 - x0);
+					}
+				}
+				return;
+			}
+			const auto m = mixInfo.val;
+			if (m == 0.f)
+				return view.clearMain();
+			for (auto ch = 0; ch < numChannels; ++ch)
+			{
+				const auto dry = bandDry[ch].data();
+				auto smpls = view.getSamplesMain(ch);
+				for (auto s = 0; s < numSamples; ++s)
+				{
+					const auto x0 = dry[s];
+					const auto x1 = smpls[s];
+					smpls[s] = m * (x1 - x0);
+				}
+			}
+		}
+
+		void processMixOrDelta(ProcessorBufferView& view) noexcept
+		{
+#if PPDHasDelta
+			if (delta)
+				return processDelta(view);
+#endif
+			processMix(view);
+		}
 	};
 }

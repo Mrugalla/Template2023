@@ -83,8 +83,61 @@ namespace audio
         initFile.create();
         const auto xmlString = init.toXmlString();
 		initFile.replaceWithText(xmlString);
-
+        
+        params(PID::GainOut).callback = [&](dsp::CB cb)
+        {
+            const auto db = cb.denorm();
+            mixProcessor.setGainOut(math::dbToAmp(db));
+        };
+#if PPDIsNonlinear
+        params(PID::GainIn).callback = [&](dsp::CB cb)
+        {
+            const auto db = cb.denorm();
+            mixProcessor.setGainWetIn(math::dbToAmp(db));
+        };
+        params(PID::UnityGain).callback = [&](dsp::CB cb)
+        {
+            const auto u = cb.getBool();
+            mixProcessor.setUnityGain(u);
+        };
+#endif
+#if PPDIO == PPDIODryWet
+        params(PID::GainDry).callback = [&](dsp::CB cb)
+        {
+            const auto db = cb.denorm();
+            mixProcessor.setGainDryOut(math::dbToAmp(db));
+        };
+        params(PID::GainWet).callback = [&](dsp::CB cb)
+        {
+            const auto db = cb.denorm();
+            mixProcessor.setGainWetOut(math::dbToAmp(db));
+        };
+#elif PPDIO == PPDIOWetMix
+        params(PID::GainWet).callback = [&](dsp::CB cb)
+        {
+            const auto db = cb.denorm();
+            mixProcessor.setGainWetOut(math::dbToAmp(db));
+		};
+        params(PID::Mix).callback = [&](dsp::CB cb)
+        {
+            const auto mix = cb.norm;
+            mixProcessor.setMix(mix);
+		};
+#if PPDHasDelta
+        params(PID::Delta).callback = [&](dsp::CB cb)
+        {
+            const auto d = cb.getBool();
+            mixProcessor.setDelta(d);
+		};
+#endif
+#endif
 #if PPDHasOnsetDetector
+        params(PID::OnsetSensitivity).callback = [&](dsp::CB cb)
+        {
+            const auto db = cb.denorm();
+            onsetDetector.setThreshold(db);
+        };
+#if PPDOnsetDebugParameters
         params(PID::Atk).callback = [&](dsp::CB cb)
         {
             onsetDetector.setAttack(std::pow(2., cb.denormD()));
@@ -101,46 +154,36 @@ namespace audio
 			onsetDetector.setTilt(db);
 		};
 
-        params(PID::Threshold).callback = [&](dsp::CB cb)
-        {
-            const auto db = cb.denorm();
-            onsetDetector.setThreshold(db);
-		};
-
         params(PID::HoldLength).callback = [&](dsp::CB cb)
         {
             const auto ms = cb.denormD();
             onsetDetector.setHoldLength(ms);
-		};
+        };
 
         params(PID::Bandwidth).callback = [&](dsp::CB cb)
         {
             const auto b = cb.denorm();
             onsetDetector.setBandwidth(std::pow(2., b));
-		};
+        };
 
         params(PID::NumBands).callback = [&](dsp::CB cb)
         {
             const auto n = cb.getInt();
             onsetDetector.setNumBands(n);
-		};
+        };
 
         params(PID::LowestPitch).callback = [&](dsp::CB cb)
         {
             const auto p = cb.denormD();
-			onsetDetector.setLowestPitch(p);
+            onsetDetector.setLowestPitch(p);
         };
-        
+
         params(PID::HighestPitch).callback = [&](dsp::CB cb)
         {
-			const auto p = cb.denormD();
+            const auto p = cb.denormD();
             onsetDetector.setHighestPitch(p);
-		};
-
-        transport.callback = [&](dsp::Transport::Info info)
-        {
-            onsetDetector.setBpm(info.bpm);
         };
+#endif
 #endif
     }
 
@@ -361,24 +404,6 @@ namespace audio
                 dsp::midSideEncode(bufferView);
         }
 #endif
-#if PPDIsNonlinear
-        const auto gainInDb = params(PID::GainIn).getValModDenorm();
-        const auto unityGain = params(PID::UnityGain).getValMod() > .5f;
-#endif
-#if PPDIO == PPDIODryWet
-        const auto gainDryDb = params(PID::GainDry).getValModDenorm();
-        const auto gainWetDb = params(PID::GainWet).getValModDenorm();
-#elif PPDIO == PPDIOWetMix
-        const auto gainWetDb = params(PID::GainWet).getValModDenorm();
-        const auto mix = params(PID::Mix).getValMod();
-#if PPDHasDelta
-        const auto delta = params(PID::Delta).getValMod() > .5f;
-#else
-        static constexpr bool delta = false;
-#endif
-#endif
-        const auto gainOutDb = params(PID::GainOut).getValModDenorm();
-
 #if PPDHasTuningEditor
         auto xen = params(PID::Xen).getValModDenorm();
         const auto xenSnap = params(PID::XenSnap).getValMod() > .5f;
@@ -389,45 +414,19 @@ namespace audio
         const auto pitchbendRange = std::round(params(PID::PitchbendRange).getValModDenorm());
         xenManager({ xen, masterTune, anchor, pitchbendRange }, numChannels);
 #endif
-        {
-            const auto dummy = juce::MidiMessage::createSysExMessage(nullptr, 0);
-            auto s = 0;
-            dsp::ProcessorBufferView bufferViewBlock;
-            for (const auto it : midiMessages)
-            {
-                auto msg = it.getMessage();
-                const auto ts = it.samplePosition;
-                do
-                {
-                    const auto numSamplesToEvt = ts - s;
-                    if (numSamplesToEvt < dsp::BlockSize)
-                    {
-                        msg.setTimeStamp(static_cast<double>(numSamplesToEvt));
-                        bufferViewBlock.fillBlock(bufferView, msg, s, numSamplesToEvt);
-						s += numSamplesToEvt;
-                    }
-                    else
-                    {
-                        bufferViewBlock.fillBlock(bufferView, dummy, s, dsp::BlockSize);
-						s += dsp::BlockSize;
-                    }
-                    processIGuess(bufferViewBlock, mix, gainWetDb, gainOutDb, delta);
-                } while (s < ts);
-            }
-            while (s < bufferView.getNumSamples())
-            {
-                const auto numSamplesToEnd = bufferView.getNumSamples() - s;
-                const auto numSamples = std::min(dsp::BlockSize, numSamplesToEnd);
-                bufferViewBlock.fillBlock(bufferView, dummy, s, numSamples);
-                processIGuess(bufferViewBlock, mix, gainWetDb, gainOutDb, delta);
-                s += numSamples;
-            }
-        }
+        processSubBlocks
+        (
+            bufferView,
+            midiMessages
+        );
 #if PPDHasStereoConfig
         if (midSide)
             dsp::midSideDecode(bufferView);
 #endif
         pluginRecorder(bufferView);
+#if !JucePlugin_ProducesMidiOutput
+        midiMessages.clear();
+#endif
 #if JUCE_DEBUG && false
         for (auto ch = 0; ch < numChannels; ++ch)
         {
@@ -438,77 +437,49 @@ namespace audio
 #endif
     }
 
-    void Processor::processIGuess(dsp::ProcessorBufferView& bufferViewBlock,
-        float mix, float gainWetDb, float gainOutDb, bool delta) noexcept
+    void Processor::processSubBlocks(dsp::ProcessorBufferView& bufferView,
+        MidiBuffer& midiMessages) noexcept
     {
-#if PPDIO == PPDIOOut
-#if PPDIsNonlinear
-        mixProcessor.split
-        (
-            samples, gainInDb, numChannels, numSamples
-        );
-#endif
-#elif PPDIO == PPDIODryWet
-#if PPDIsNonlinear
-        mixProcessor.split
-        (
-            samples, gainDryDb, gainInDb, numChannels, numSamples
-        );
-#else
-        mixProcessor.split
-        (
-            samples, gainDryDb, numChannels, numSamples
-        );
-#endif
-#else
-#if PPDIsNonlinear
-        mixProcessor.split(bufferViewBlock, gainInDb);
-#else
-        mixProcessor.split
-        (
-            bufferViewBlock
-        );
-#endif
-#endif
+        const auto dummy = juce::MidiMessage::createSysExMessage(nullptr, 0);
+        auto s = 0;
+        dsp::ProcessorBufferView bufferViewBlock;
+        for (const auto it : midiMessages)
+        {
+            auto msg = it.getMessage();
+            const auto ts = it.samplePosition;
+            do
+            {
+                const auto numSamplesToEvt = ts - s;
+                if (numSamplesToEvt < dsp::BlockSize)
+                {
+                    msg.setTimeStamp(static_cast<double>(numSamplesToEvt));
+                    bufferViewBlock.fillBlock(bufferView, msg, s, numSamplesToEvt);
+                    s += numSamplesToEvt;
+                }
+                else
+                {
+                    bufferViewBlock.fillBlock(bufferView, dummy, s, dsp::BlockSize);
+                    s += dsp::BlockSize;
+                }
+                processSubBlock(bufferViewBlock);
+            } while (s < ts);
+        }
+        while (s < bufferView.getNumSamples())
+        {
+            const auto numSamplesToEnd = bufferView.getNumSamples() - s;
+            const auto numSamples = std::min(dsp::BlockSize, numSamplesToEnd);
+            bufferViewBlock.fillBlock(bufferView, dummy, s, numSamples);
+            processSubBlock(bufferViewBlock);
+            s += numSamples;
+        }
+    }
+
+    void Processor::processSubBlock(dsp::ProcessorBufferView& bufferViewBlock) noexcept
+    {
+        mixProcessor.split(bufferViewBlock);
         pluginProcessor(bufferViewBlock, transport.info);
         transport(bufferViewBlock.numSamples);
-#if PPDIO == PPDIOOut
-#if PPDIsNonlinear
-        mixProcessor.join
-        (
-            bufferViewBlock, gainOutDb, unityGain
-        );
-#else
-        mixProcessor.join
-        (
-            bufferViewBlock, gainOutDb
-        );
-#endif
-#elif PPDIO == PPDIODryWet
-#if PPDIsNonlinear
-        mixProcessor.join
-        (
-            samples, gainWetDb, gainOutDb, numChannels, numSamples, unityGain
-        );
-#else
-        mixProcessor.join
-        (
-            samples, gainWetDb, gainOutDb, numChannels, numSamples
-        );
-#endif
-#else
-#if PPDIsNonlinear
-        mixProcessor.join
-        (
-            bufferViewBlock, mix, gainWetDb, gainOutDb, unityGain, delta
-        );
-#else
-        mixProcessor.join
-        (
-            bufferViewBlock, mix, gainWetDb, gainOutDb, delta
-        );
-#endif
-#endif
+        mixProcessor.join(bufferViewBlock);
     }
 
     void Processor::processBlockBypassed(AudioBufferF& buffer, MidiBuffer& midiMessages)
@@ -529,7 +500,6 @@ namespace audio
             float* samples[] = { &samplesMain[0][s], &samplesMain[1][s] };
             const auto dif = numSamplesMain - s;
             const auto numSamples = dif < dsp::BlockSize ? dif : dsp::BlockSize;
-
             pluginProcessor.processBlockBypassed(samples, midiMessages, numChannels, numSamples);
         }
     }

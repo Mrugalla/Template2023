@@ -113,18 +113,23 @@ namespace param
 		case PID::TempBb4: return "Temp Bb4";
 		case PID::TempB4: return "Temp B4";
 #endif
+#if PPDHasOnsetDetector
+		case PID::OnsetSensitivity: return "Onset Sensitivity";
+#if PPDOnsetDebugParameters
+		case PID::OnsetNumBands: return "Onset Num Bands";
+		case PID::OnsetLowestPitch: return "Onset Lowest Pitch";
+		case PID::OnsetHighestPitch: return "Onset Highest Pitch";
+		case PID::OnsetAtk: return "Onset Atk";
+		case PID::OnsetDcy: return "Onset Dcy";
+		case PID::OnsetTilt: return "Onset Tilt";
+		case PID::OnsetHoldLength: return "Onset Hold Length";
+		case PID::OnsetBandwidth: return "Onset Bandwidth";
+#endif
+#endif
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
-		case PID::NumBands: return "Num Bands";
-		case PID::LowestPitch: return "Lowest Pitch";
-		case PID::HighestPitch: return "Highest Pitch";
-		case PID::Atk: return "Atk";
-		case PID::Dcy: return "Dcy";
-		case PID::Tilt: return "Tilt";
-		case PID::Threshold: return "Threshold";
-		case PID::HoldLength: return "Hold Length";
-		case PID::Bandwidth: return "Bandwidth";
+		//
 
 		default: return "Invalid Parameter Name";
 		}
@@ -242,6 +247,19 @@ namespace param
 		case PID::TempA4: return "The temperament of the pitch class A4";
 		case PID::TempBb4: return "The temperament of the pitch class A#4";
 		case PID::TempB4: return "The temperament of the pitch class B4";
+#endif
+#if PPDHasOnsetDetector
+		case PID::OnsetSensitivity: return "Adjust the sensitivity of the onset detector.";
+#if PPDOnsetDebugParameters
+		case PID::OnsetNumBands: return "The number of frequency bands the onset detector uses.";
+		case PID::OnsetLowestPitch: return "The lowest pitch the onset detector uses.";
+		case PID::OnsetHighestPitch: return "The highest pitch the onset detector uses.";
+		case PID::OnsetAtk: return "The order of attack of the 2nd envelope follower.";
+		case PID::OnsetDcy: return "The order of decay of the envelope followers.";
+		case PID::OnsetTilt: return "Tilt of the band energies before they are fed into the onset detection algorithm.";
+		case PID::OnsetHoldLength: return "The hold length of the onset detector.";
+		case PID::OnsetBandwidth: return "The bandwidth of the bandpass filters.";
+#endif
 #endif
 		case PID::Power: return "Dis/Enable the plugin.";
 
@@ -1572,11 +1590,11 @@ namespace param
 			params.push_back(makeParam(PID::UnityGain, 1.f, makeRange::toggle(), Unit::Polarity, false));
 #endif
 #if PPDIO == PPDIODryWet
-			const auto gainRangeCentre = -20.f;
-			const auto gainDryRange = makeRange::withCentre(PPDGainDryMin, PPDGainDryMax, gainRangeCentre);
-			const auto gainWetRange = makeRange::withCentre(PPDGainWetMin, PPDGainWetMax, gainRangeCentre);
-			params.push_back(makeParam(PID::GainDry, PPDGainDryMin, gainDryRange, Unit::Decibel));
-			params.push_back(makeParam(PID::GainWet, -18.f, gainWetRange, Unit::Decibel));
+			const auto gainRangeCentre = -6;
+			const auto gainDryRange = makeRange::withCentre(-60, 0, gainRangeCentre);
+			const auto gainWetRange = makeRange::withCentre(-60, 0, gainRangeCentre);
+			params.push_back(makeParam(PID::GainDry, -60.f, gainDryRange, Unit::Decibel));
+			params.push_back(makeParam(PID::GainWet, 0.f, gainWetRange, Unit::Decibel));
 #elif PPDIO == PPDIOWetMix
 			params.push_back(makeParam(PID::GainWet, 0.f, makeRange::lin(-24, 24), Unit::Decibel));
 			params.push_back(makeParam(PID::Mix, 1.f));
@@ -1607,19 +1625,23 @@ namespace param
 				params.push_back(makeParam(id, 0.f, makeRange::lin(-1.f, 1.f), Unit::Fine));
 			}
 #endif
+#if PPDHasOnsetDetector
+			params.push_back(makeParam(PID::OnsetSensitivity, dsp::OnsetThresholdDefault, makeRange::lin(dsp::OnsetThresholdMin, dsp::OnsetThresholdMax), Unit::Decibel, true));
+#if PPDOnsetDebugParameters
+			params.push_back(makeParam(PID::OnsetNumBands, dsp::OnsetNumBandsDefault, makeRange::stepped(1, 16), Unit::Voices, false));
+			params.push_back(makeParamPitch(PID::OnsetLowestPitch, math::freqHzToNote2(dsp::OnsetLowestFreqHz), true));
+			params.push_back(makeParamPitch(PID::OnsetHighestPitch, math::freqHzToNote2(dsp::OnsetHighestFreqHz), true));
+			params.push_back(makeParam(PID::OnsetAtk, dsp::OnsetAtkDefault, makeRange::lin(dsp::OnsetTimeMin, dsp::OnsetTimeMax), Unit::FFTOrder, true));
+			params.push_back(makeParam(PID::OnsetDcy, dsp::OnsetDcyDefault, makeRange::lin(dsp::OnsetTimeMin, dsp::OnsetTimeMax), Unit::FFTOrder, true));
+			params.push_back(makeParam(PID::OnsetTilt, dsp::OnsetTiltDefault, makeRange::lin(dsp::OnsetTiltMin, dsp::OnsetTiltMax), Unit::Decibel, true));
+			params.push_back(makeParam(PID::HoldLength, dsp::OnsetHoldDefault, makeRange::lin(dsp::OnsetHoldMin, dsp::OnsetHoldMax), Unit::Ms, true));
+			params.push_back(makeParam(PID::Bandwidth, dsp::OnsetBandwidthDefault, makeRange::lin(dsp::OnsetBandwidthMin, dsp::OnsetBandwidthMax), Unit::Percent, true));
+#endif
+#endif
 			params.push_back(makeParam(PID::Power, 1.f, makeRange::toggle(), Unit::Power, false));
 		}
 
 		// LOW LEVEL PARAMS:
-		params.push_back(makeParam(PID::NumBands, dsp::OnsetNumBandsDefault, makeRange::stepped(1, 16), Unit::Voices, false));
-		params.push_back(makeParamPitch(PID::LowestPitch, math::freqHzToNote2(dsp::OnsetLowestFreqHz), true));
-		params.push_back(makeParamPitch(PID::HighestPitch, math::freqHzToNote2(dsp::OnsetHighestFreqHz), true));
-		params.push_back(makeParam(PID::Atk, dsp::OnsetAtkDefault, makeRange::lin(dsp::OnsetTimeMin, dsp::OnsetTimeMax), Unit::Percent, true));
-		params.push_back(makeParam(PID::Dcy, dsp::OnsetDcyDefault, makeRange::lin(dsp::OnsetTimeMin, dsp::OnsetTimeMax), Unit::Percent, true));
-		params.push_back(makeParam(PID::Tilt, dsp::OnsetTiltDefault, makeRange::lin(dsp::OnsetTiltMin, dsp::OnsetTiltMax), Unit::Decibel, true));
-		params.push_back(makeParam(PID::Threshold, dsp::OnsetThresholdDefault, makeRange::lin(dsp::OnsetThresholdMin, dsp::OnsetThresholdMax), Unit::Decibel, true));
-		params.push_back(makeParam(PID::HoldLength, dsp::OnsetHoldDefault, makeRange::lin(dsp::OnsetHoldMin, dsp::OnsetHoldMax), Unit::Ms, true));
-		params.push_back(makeParam(PID::Bandwidth, dsp::OnsetBandwidthDefault, makeRange::lin(dsp::OnsetBandwidthMin, dsp::OnsetBandwidthMax), Unit::Percent, true));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

@@ -66,12 +66,15 @@ namespace audio
         dsp::PluginRecorder pluginRecorder;
         dsp::Transport transport;
 #if PPDHasOnsetDetector
-        dsp::OnsetDetector2 onsetDetector;
+        dsp::OnsetDetector onsetDetector;
 #endif
         dsp::PluginProcessor pluginProcessor;
         dsp::MixProcessor mixProcessor;
 
-        void processIGuess(dsp::ProcessorBufferView&, float, float, float, bool) noexcept;
+        // view, midi
+        void processSubBlocks(dsp::ProcessorBufferView&, MidiBuffer&) noexcept;
+
+        void processSubBlock(dsp::ProcessorBufferView&) noexcept;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Processor)
     };
