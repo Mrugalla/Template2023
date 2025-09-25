@@ -155,7 +155,7 @@ namespace gui
     String ButtonRandomizer::makeTooltip()
     {
         Random rand;
-        static constexpr auto count = 274;
+        static constexpr auto count = 275;
         const auto v = rand.nextInt(count + 1);
         switch (v)
         {
@@ -433,6 +433,7 @@ namespace gui
         case 272: return "Delete all your social media accounts now!";
         case 273: return "Au5 is a bitch.";
         case 274: return "I don't remember specific things, I just stumble into patterns.";
+        case 275: return "Release the Epstein files!";
         default: "Are you sure?";
         }
         return "You are not supposed to read this message!";

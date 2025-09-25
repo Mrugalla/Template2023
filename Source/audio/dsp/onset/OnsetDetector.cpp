@@ -314,15 +314,25 @@ namespace dsp
 		}
 		for (auto s = 0; s < view.numSamples; ++s)
 		{
-			auto max = 0.f;
+			auto val = 0.f;
+#if PPDOnsetAlgo == PPDOnsetAlgoMax
 			for (auto i = 0; i < numBands; ++i)
 			{
 				auto& detector = detectors[i];
 				detector.processSample(s);
-				if (max < detector[s])
-					max = detector[s];
+				if (val < detector[s])
+					val = detector[s];
 			}
-			if (max > threshold)
+#elif PPDOnsetAlgo == PPDOnsetAlgoSum
+			for (auto i = 0; i < numBands; ++i)
+			{
+				auto& detector = detectors[i];
+				detector.processSample(s);
+				val += detector[s];
+			}
+			val = std::sqrt(val / static_cast<float>(numBands));
+#endif
+			if (val > threshold)
 			{
 				if (strongHold.youShallPass())
 					onset = s;

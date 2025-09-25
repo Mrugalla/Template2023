@@ -1631,11 +1631,11 @@ namespace param
 			params.push_back(makeParam(PID::OnsetNumBands, dsp::OnsetNumBandsDefault, makeRange::stepped(1, 16), Unit::Voices, false));
 			params.push_back(makeParamPitch(PID::OnsetLowestPitch, math::freqHzToNote2(dsp::OnsetLowestFreqHz), true));
 			params.push_back(makeParamPitch(PID::OnsetHighestPitch, math::freqHzToNote2(dsp::OnsetHighestFreqHz), true));
-			params.push_back(makeParam(PID::OnsetAtk, dsp::OnsetAtkDefault, makeRange::lin(dsp::OnsetTimeMin, dsp::OnsetTimeMax), Unit::FFTOrder, true));
-			params.push_back(makeParam(PID::OnsetDcy, dsp::OnsetDcyDefault, makeRange::lin(dsp::OnsetTimeMin, dsp::OnsetTimeMax), Unit::FFTOrder, true));
+			params.push_back(makeParam(PID::OnsetAtk, dsp::OnsetAtkDefault, makeRange::lin(dsp::OnsetTimeMin, dsp::OnsetTimeMax), Unit::Percent, true));
+			params.push_back(makeParam(PID::OnsetDcy, dsp::OnsetDcyDefault, makeRange::lin(dsp::OnsetTimeMin, dsp::OnsetTimeMax), Unit::Percent, true));
 			params.push_back(makeParam(PID::OnsetTilt, dsp::OnsetTiltDefault, makeRange::lin(dsp::OnsetTiltMin, dsp::OnsetTiltMax), Unit::Decibel, true));
-			params.push_back(makeParam(PID::HoldLength, dsp::OnsetHoldDefault, makeRange::lin(dsp::OnsetHoldMin, dsp::OnsetHoldMax), Unit::Ms, true));
-			params.push_back(makeParam(PID::Bandwidth, dsp::OnsetBandwidthDefault, makeRange::lin(dsp::OnsetBandwidthMin, dsp::OnsetBandwidthMax), Unit::Percent, true));
+			params.push_back(makeParam(PID::OnsetHoldLength, dsp::OnsetHoldDefault, makeRange::lin(dsp::OnsetHoldMin, dsp::OnsetHoldMax), Unit::Ms, true));
+			params.push_back(makeParam(PID::OnsetBandwidth, dsp::OnsetBandwidthDefault, makeRange::lin(dsp::OnsetBandwidthMin, dsp::OnsetBandwidthMax), Unit::Percent, true));
 #endif
 #endif
 			params.push_back(makeParam(PID::Power, 1.f, makeRange::toggle(), Unit::Power, false));

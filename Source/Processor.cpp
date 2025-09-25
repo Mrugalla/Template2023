@@ -138,47 +138,47 @@ namespace audio
             onsetDetector.setThreshold(db);
         };
 #if PPDOnsetDebugParameters
-        params(PID::Atk).callback = [&](dsp::CB cb)
+        params(PID::OnsetAtk).callback = [&](dsp::CB cb)
         {
             onsetDetector.setAttack(std::pow(2., cb.denormD()));
         };
 
-        params(PID::Dcy).callback = [&](dsp::CB cb)
+        params(PID::OnsetDcy).callback = [&](dsp::CB cb)
         {
             onsetDetector.setDecay(std::pow(2., cb.denormD()));
         };
 
-        params(PID::Tilt).callback = [&](dsp::CB cb)
+        params(PID::OnsetTilt).callback = [&](dsp::CB cb)
         {
             const auto db = cb.denorm();
 			onsetDetector.setTilt(db);
 		};
 
-        params(PID::HoldLength).callback = [&](dsp::CB cb)
+        params(PID::OnsetHoldLength).callback = [&](dsp::CB cb)
         {
             const auto ms = cb.denormD();
             onsetDetector.setHoldLength(ms);
         };
 
-        params(PID::Bandwidth).callback = [&](dsp::CB cb)
+        params(PID::OnsetBandwidth).callback = [&](dsp::CB cb)
         {
             const auto b = cb.denorm();
             onsetDetector.setBandwidth(std::pow(2., b));
         };
 
-        params(PID::NumBands).callback = [&](dsp::CB cb)
+        params(PID::OnsetNumBands).callback = [&](dsp::CB cb)
         {
             const auto n = cb.getInt();
             onsetDetector.setNumBands(n);
         };
 
-        params(PID::LowestPitch).callback = [&](dsp::CB cb)
+        params(PID::OnsetLowestPitch).callback = [&](dsp::CB cb)
         {
             const auto p = cb.denormD();
             onsetDetector.setLowestPitch(p);
         };
 
-        params(PID::HighestPitch).callback = [&](dsp::CB cb)
+        params(PID::OnsetHighestPitch).callback = [&](dsp::CB cb)
         {
             const auto p = cb.denormD();
             onsetDetector.setHighestPitch(p);
