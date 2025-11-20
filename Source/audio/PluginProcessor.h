@@ -1,4 +1,5 @@
 #pragma once
+#include "../arch/TuneSys.h"
 #include "dsp/ProcessorBufferView.h"
 #include "dsp/Transport.h"
 #include "../arch/Param.h"
@@ -11,17 +12,11 @@ namespace dsp
 	using PID = param::PID;
 	using State = arch::State;
 	using CB = param::Param::CB;
-#if PPDHasTuningEditor
-	using XenManager = arch::XenManager;
-#endif
+	using TuneSys = arch::TuneSys;
+
 	struct PluginProcessor
 	{
-		PluginProcessor(Params&,
-#if PPDHasTuningEditor
-			XenManager&,
-#endif
-			Transport&
-		);
+		PluginProcessor(Params&, TuneSys&, Transport&);
 
 		// sampleRate
 		void prepare(double);

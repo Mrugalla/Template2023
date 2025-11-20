@@ -18,6 +18,7 @@ namespace gui
 	private:
 		Label message;
 		std::vector<std::unique_ptr<Button>> buttons;
+		LabelGroup buttonLabels;
 	};
 }
 

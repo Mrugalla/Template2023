@@ -1,6 +1,6 @@
 #pragma once
 #include "juce_audio_processors/juce_audio_processors.h"
-#include "../arch/XenManager.h"
+#include "TuneSys.h"
 #include "../arch/State.h"
 
 namespace param
@@ -38,17 +38,8 @@ namespace param
 #if PPDHasLookahead
 		Lookahead,
 #endif
-		// tuning parameters
-#if PPDHasTuningEditor
-		Xen,
-		XenSnap,
-		MasterTune,
-		AnchorPitch,
-		PitchbendRange,
-		TempC, TempDb, TempD, TempEb, TempE, TempF, TempGb, TempG, TempAb, TempA, TempBb, TempB,
-		TempC2, TempDb2, TempD2, TempEb2, TempE2, TempF2, TempGb2, TempG2, TempAb2, TempA2, TempBb2, TempB2,
-		TempC3, TempDb3, TempD3, TempEb3, TempE3, TempF3, TempGb3, TempG3, TempAb3, TempA3, TempBb3, TempB3,
-		TempC4, TempDb4, TempD4, TempEb4, TempE4, TempF4, TempGb4, TempG4, TempAb4, TempA4, TempBb4, TempB4,
+#if PPDHasMTSESP
+		MTSESP,
 #endif
 #if PPDHasOnsetDetector
 		OnsetSensitivity,
@@ -133,9 +124,8 @@ namespace param
 
 	using Range = juce::NormalisableRange<float>;
 	using ParameterBase = juce::AudioProcessorParameter;
-	
-	using Xen = arch::XenManager&;
 	using State = arch::State;
+	using TuneSys = arch::TuneSys;
 
 	class Param :
 		public ParameterBase
@@ -277,11 +267,7 @@ namespace param
 		using AudioProcessor = juce::AudioProcessor;
 		using Parameters = std::vector<Param*>;
 	public:
-		Params(AudioProcessor&
-#if PPDHasTuningEditor
-			, const Xen&
-#endif
-		);
+		Params(AudioProcessor&, TuneSys&);
 
 		void prepare() noexcept;
 

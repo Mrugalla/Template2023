@@ -1,5 +1,5 @@
 #include "OnsetDetector.h"
-
+#if PPDHasOnsetDetector
 namespace dsp
 {
 	// ONSET CORE:
@@ -398,3 +398,4 @@ namespace dsp
 		}
 	}
 }
+#endif

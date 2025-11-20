@@ -30,12 +30,8 @@ namespace audio
     Processor::Processor() :
         juce::AudioProcessor(makeBusesProps()),
 		Timer(),
-#if PPDHasTuningEditor
-		xenManager(),
-        params(*this, xenManager),
-#else
-		params(*this),
-#endif
+        tuneSys(),
+        params(*this, tuneSys),
         state(),
         pluginRecorder(),
         transport(),
@@ -45,9 +41,7 @@ namespace audio
         pluginProcessor
         (
             params,
-#if PPDHasTuningEditor
-            xenManager,
-#endif
+            tuneSys,
 			transport
         ),
         mixProcessor()
@@ -131,6 +125,13 @@ namespace audio
 		};
 #endif
 #endif
+#if PPDHasMTSESP
+        params(PID::MTSESP).callback = [&](dsp::CB cb)
+        {
+            const auto m = cb.getBool();
+            tuneSys.setMTSEnabled(m);
+		};
+#endif
 #if PPDHasOnsetDetector
         params(PID::OnsetSensitivity).callback = [&](dsp::CB cb)
         {
@@ -203,7 +204,6 @@ namespace audio
     {
         if (wrapperType == wrapperType_Standalone)
             return false;
-
         return PPDHasSidechain ? isInput : false;
     }
 	
@@ -271,7 +271,9 @@ namespace audio
         pluginRecorder.prepare(sampleRateF);
         mixProcessor.prepare(sampleRateF);
         transport.prepare(1. / sampleRate);
+#if PPDHasOnsetDetector
         onsetDetector.prepare(sampleRate);
+#endif
         pluginProcessor.prepare(sampleRate);
         setLatencySamples(latency);
         startTimerHz(4);
@@ -310,7 +312,7 @@ namespace audio
 
     bool Processor::hasEditor() const
     {
-        return false;
+        return true;
     }
 
     juce::AudioProcessorEditor* Processor::createEditor()
@@ -383,6 +385,7 @@ namespace audio
             for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
                 buffer.clear(i, 0, bufferView.getNumSamples());
         }
+        tuneSys();
         if (bufferView.getNumSamples() == 0)
             return;
         transport(playHead, bufferView.getNumChannelsMain());
@@ -403,16 +406,6 @@ namespace audio
             if (midSide)
                 dsp::midSideEncode(bufferView);
         }
-#endif
-#if PPDHasTuningEditor
-        auto xen = params(PID::Xen).getValModDenorm();
-        const auto xenSnap = params(PID::XenSnap).getValMod() > .5f;
-        if (xenSnap)
-            xen = std::round(xen);
-        const auto masterTune = std::round(params(PID::MasterTune).getValModDenorm());
-        const auto anchor = std::round(params(PID::AnchorPitch).getValModDenorm());
-        const auto pitchbendRange = std::round(params(PID::PitchbendRange).getValModDenorm());
-        xenManager({ xen, masterTune, anchor, pitchbendRange }, numChannels);
 #endif
         processSubBlocks
         (

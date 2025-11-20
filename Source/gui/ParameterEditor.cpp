@@ -47,6 +47,11 @@ namespace gui
 				giveAwayKeyboardFocus();
 				setVisible(false);
 			}
+			else if (t == evt::Type::ClickedEmpty)
+			{
+				giveAwayKeyboardFocus();
+				setVisible(false);
+			}
 		});
 	}
 }

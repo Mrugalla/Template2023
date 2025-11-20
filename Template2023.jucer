@@ -7,7 +7,7 @@
               pluginDesc="Plugin Template" pluginManufacturer="Mrugalla" pluginManufacturerCode="BBBB"
               pluginCode="BBBB" pluginVST3Category="Fx" pluginAAXCategory="0"
               pluginVSTCategory="kPlugCategEffect" cppLanguageStandard="latest"
-              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIO=2&#10;PPDIsNonlinear=false&#10;PPDHasDelta=true&#10;PPDEqualLoudnessMix=false&#10;&#10;PPDHasStereoConfig=0&#10;PPDHasSidechain=0&#10;PPDHasLookahead=0&#10;PPDHasTuningEditor=0&#10;&#10;PPDHasOnsetDetector=1&#10;PPDOnsetDebugParameters=1&#10;&#10;PPDOnsetAlgoMax=0&#10;PPDOnsetAlgoSum=1&#10;PPDOnsetAlgo=1"
+              defines="PPDIOOut=0&#10;PPDIODryWet=1&#10;PPDIOWetMix=2&#10;&#10;PPDIO=2&#10;PPDIsNonlinear=false&#10;PPDHasDelta=true&#10;PPDEqualLoudnessMix=false&#10;&#10;PPDHasStereoConfig=0&#10;PPDHasSidechain=0&#10;PPDHasLookahead=0&#10;PPDHasMTSESP=1&#10;&#10;PPDHasOnsetDetector=0&#10;PPDOnsetDebugParameters=1&#10;&#10;PPDOnsetAlgoMax=0&#10;PPDOnsetAlgoSum=1&#10;PPDOnsetAlgo=1"
               includeBinaryInJuceHeader="1" pluginAUMainType="'aufx'" maxBinaryFileSize="20971520"
               pluginCharacteristicsValue="pluginProducesMidiOut,pluginWantsMidiIn">
   <MAINGROUP id="WYhkvs" name="Template2023">
@@ -26,8 +26,8 @@
         <FILE id="IZcZ6G" name="Range.h" compile="0" resource="0" file="Source/arch/Range.h"/>
         <FILE id="Lx4pf4" name="State.cpp" compile="1" resource="0" file="Source/arch/State.cpp"/>
         <FILE id="vSDMO8" name="State.h" compile="0" resource="0" file="Source/arch/State.h"/>
-        <FILE id="nOQbAV" name="XenManager.cpp" compile="1" resource="0" file="Source/arch/XenManager.cpp"/>
-        <FILE id="x1e9Cn" name="XenManager.h" compile="0" resource="0" file="Source/arch/XenManager.h"/>
+        <FILE id="xyqGoS" name="TuneSys.cpp" compile="1" resource="0" file="Source/arch/TuneSys.cpp"/>
+        <FILE id="RZTDSr" name="TuneSys.h" compile="0" resource="0" file="Source/arch/TuneSys.h"/>
       </GROUP>
       <GROUP id="{BDD2C9EC-5D51-F998-00A7-68F46D9ECD50}" name="audio">
         <GROUP id="{46DD4EC8-38A2-51F4-A277-D310BC24E85C}" name="dsp">
@@ -95,8 +95,6 @@
           <FILE id="DPhUQD" name="Gain.h" compile="0" resource="0" file="Source/audio/dsp/Gain.h"/>
           <FILE id="lvVfiD" name="Gate.cpp" compile="1" resource="0" file="Source/audio/dsp/Gate.cpp"/>
           <FILE id="N79acs" name="Gate.h" compile="0" resource="0" file="Source/audio/dsp/Gate.h"/>
-          <FILE id="jiceou" name="KeySelector.cpp" compile="1" resource="0" file="Source/audio/dsp/KeySelector.cpp"/>
-          <FILE id="V9wed0" name="KeySelector.h" compile="0" resource="0" file="Source/audio/dsp/KeySelector.h"/>
           <FILE id="gGuXR3" name="MidSide.cpp" compile="1" resource="0" file="Source/audio/dsp/MidSide.cpp"/>
           <FILE id="NmqfES" name="MidSide.h" compile="0" resource="0" file="Source/audio/dsp/MidSide.h"/>
           <FILE id="n9wG4q" name="MixProcessor.cpp" compile="1" resource="0"
@@ -203,10 +201,6 @@
         <FILE id="wqqSqd" name="HeaderEditor.h" compile="0" resource="0" file="Source/gui/HeaderEditor.h"/>
         <FILE id="lVJPt0" name="IOEditor.cpp" compile="1" resource="0" file="Source/gui/IOEditor.cpp"/>
         <FILE id="tPRJHz" name="IOEditor.h" compile="0" resource="0" file="Source/gui/IOEditor.h"/>
-        <FILE id="tSaTeP" name="KeySelectorEditor.cpp" compile="1" resource="0"
-              file="Source/gui/KeySelectorEditor.cpp"/>
-        <FILE id="qIxWWz" name="KeySelectorEditor.h" compile="0" resource="0"
-              file="Source/gui/KeySelectorEditor.h"/>
         <FILE id="KCrx6t" name="Knob.cpp" compile="1" resource="0" file="Source/gui/Knob.cpp"/>
         <FILE id="T794aw" name="Knob.h" compile="0" resource="0" file="Source/gui/Knob.h"/>
         <FILE id="o5EfB2" name="Knob2.cpp" compile="1" resource="0" file="Source/gui/Knob2.cpp"/>
@@ -255,6 +249,15 @@
         <FILE id="P94380" name="Utils.h" compile="0" resource="0" file="Source/gui/Utils.h"/>
         <FILE id="P1fmxN" name="VoiceGrid.cpp" compile="1" resource="0" file="Source/gui/VoiceGrid.cpp"/>
         <FILE id="s5XjOb" name="VoiceGrid.h" compile="0" resource="0" file="Source/gui/VoiceGrid.h"/>
+      </GROUP>
+      <GROUP id="{0036B00E-0182-30EA-B7DE-DA273D7BFD90}" name="mtsesp">
+        <GROUP id="{1A5E2104-8051-E75B-9264-B30830C2CED9}" name="Client">
+          <FILE id="LGcNyZ" name="libMTSClient.cpp" compile="1" resource="0"
+                file="Source/mtsesp/Client/libMTSClient.cpp"/>
+          <FILE id="Oxi8rn" name="libMTSClient.h" compile="0" resource="0" file="Source/mtsesp/Client/libMTSClient.h"/>
+        </GROUP>
+        <FILE id="kcq5NP" name="LICENSE" compile="0" resource="1" file="Source/mtsesp/LICENSE"/>
+        <FILE id="QaIeLU" name="README.md" compile="0" resource="1" file="Source/mtsesp/README.md"/>
       </GROUP>
       <GROUP id="{837EECC8-4BF8-2F21-8382-C9CD494249C4}" name="srcs">
         <GROUP id="{14A92D60-DB1D-C17C-00AE-F19CC06658AD}" name="WDXL">

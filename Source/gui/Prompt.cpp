@@ -5,7 +5,8 @@ namespace gui
 	Prompt::Prompt(Utils& u) :
 		Comp(u),
 		message(u),
-		buttons()
+		buttons(),
+		buttonLabels()
 	{
 		layout.init
 		(
@@ -57,10 +58,12 @@ namespace gui
 			b->setBounds(BoundsF(x, y, inc, h).toNearestInt());
 			x += inc;
 		}
+		buttonLabels.setMaxHeight(utils.thicc);
 	}
 
 	void Prompt::activate(const PromptData& data)
 	{
+		buttonLabels.clear();
 		for (const auto& button : buttons)
 			removeChildComponent(button.get());
 		makeTextLabel(message, data.message, font::text(), Just::centred, CID::Txt);
@@ -72,9 +75,16 @@ namespace gui
 			makeTextButton(btn, d.text, d.tooltip, CID::Interact);
 			btn.onClick = [oc = d.onClick](const Mouse&) { oc(); };
 			buttons.push_back(std::move(b));
+			
 		}
 		for (auto& button : buttons)
+		{
 			addAndMakeVisible(*button);
+			auto& label = button->label;
+			label.autoMaxHeight = false;
+			buttonLabels.add(label);
+		}
+			
 		setVisible(true);
 		resized();
 	}

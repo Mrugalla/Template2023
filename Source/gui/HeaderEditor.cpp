@@ -15,6 +15,9 @@ namespace gui
 		buttonColours(coloursEditor),
 		buttonManifest(manifest),
 		buttonRandomizer(utils, "randall")
+#if PPDHasMTSESP
+		, mtsesp(utils)
+#endif
 #if PPDHasStereoConfig
 		, stereoConfig(utils)
 #endif
@@ -35,6 +38,10 @@ namespace gui
 		addAndMakeVisible(buttonColours);
 		addAndMakeVisible(buttonManifest);
 		addAndMakeVisible(buttonRandomizer);
+#if PPDHasMTSESP
+		addAndMakeVisible(mtsesp);
+		makeButton(PID::MTSESP, mtsesp, Button::Type::kToggle, "MTS-ESP");
+#endif
 #if PPDHasStereoConfig
 		addAndMakeVisible(stereoConfig);
 #endif
@@ -64,7 +71,13 @@ namespace gui
 		layout.place(buttonRandomizer, 8, 0, 1, 1);
 		layout.place(stereoConfig, 8, 1, 1, 1);
 #else
+#if PPDHasMTSESP
+		layout.place(mtsesp, 8, 0, 1, 1);
+		layout.place(buttonRandomizer, 8, 1, 1, 1);
+#else
 		layout.place(buttonRandomizer, 8, 0, 1, 2);
+#endif
+		
 #endif
 	}
 }

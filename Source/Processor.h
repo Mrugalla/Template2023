@@ -16,7 +16,6 @@ namespace audio
 	using String = juce::String;
 	using MemoryBlock = juce::MemoryBlock;
     
-	using XenManager = arch::XenManager;
     using State = arch::State;
     using Param = param::Param;
     using Params = param::Params;
@@ -58,9 +57,8 @@ namespace audio
         void timerCallback() override;
         bool supportsDoublePrecisionProcessing() const override;
         void forcePrepare();
-#if PPDHasTuningEditor
-        XenManager xenManager;
-#endif
+
+        arch::TuneSys tuneSys;
         Params params;
         State state;
         dsp::PluginRecorder pluginRecorder;
@@ -70,6 +68,8 @@ namespace audio
 #endif
         dsp::PluginProcessor pluginProcessor;
         dsp::MixProcessor mixProcessor;
+
+        void updateMTS() noexcept;
 
         // view, midi
         void processSubBlocks(dsp::ProcessorBufferView&, MidiBuffer&) noexcept;

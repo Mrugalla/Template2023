@@ -25,6 +25,9 @@ namespace gui
 		ButtonColours buttonColours;
 		ButtonWisdom buttonManifest;
 		ButtonRandomizer buttonRandomizer;
+#if PPDHasMTSESP
+		Button mtsesp;
+#endif
 #if PPDHasStereoConfig
 		Button stereoConfig;
 #endif

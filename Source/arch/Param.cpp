@@ -57,61 +57,8 @@ namespace param
 #if PPDHasLookahead
 		case PID::Lookahead: return "Lookahead";
 #endif
-#if PPDHasTuningEditor
-			// TUNING PARAM:
-		case PID::Xen: return "Xen";
-		case PID::XenSnap: return "Xen Snap";
-		case PID::MasterTune: return "Master Tune";
-		case PID::AnchorPitch: return "Anchor Pitch";
-		case PID::PitchbendRange: return "Pitchbend Range";
-		case PID::TempC: return "Temp C";
-		case PID::TempDb: return "Temp Db";
-		case PID::TempD: return "Temp D";
-		case PID::TempEb: return "Temp Eb";
-		case PID::TempE: return "Temp E";
-		case PID::TempF: return "Temp F";
-		case PID::TempGb: return "Temp Gb";
-		case PID::TempG: return "Temp G";
-		case PID::TempAb: return "Temp Ab";
-		case PID::TempA: return "Temp A";
-		case PID::TempBb: return "Temp Bb";
-		case PID::TempB: return "Temp B";
-		case PID::TempC2: return "Temp C2";
-		case PID::TempDb2: return "Temp Db2";
-		case PID::TempD2: return "Temp D2";
-		case PID::TempEb2: return "Temp Eb2";
-		case PID::TempE2: return "Temp E2";
-		case PID::TempF2: return "Temp F2";
-		case PID::TempGb2: return "Temp Gb2";
-		case PID::TempG2: return "Temp G2";
-		case PID::TempAb2: return "Temp Ab2";
-		case PID::TempA2: return "Temp A2";
-		case PID::TempBb2: return "Temp Bb2";
-		case PID::TempB2: return "Temp B2";
-		case PID::TempC3: return "Temp C3";
-		case PID::TempDb3: return "Temp Db3";
-		case PID::TempD3: return "Temp D3";
-		case PID::TempEb3: return "Temp Eb3";
-		case PID::TempE3: return "Temp E3";
-		case PID::TempF3: return "Temp F3";
-		case PID::TempGb3: return "Temp Gb3";
-		case PID::TempG3: return "Temp G3";
-		case PID::TempAb3: return "Temp Ab3";
-		case PID::TempA3: return "Temp A3";
-		case PID::TempBb3: return "Temp Bb3";
-		case PID::TempB3: return "Temp B3";
-		case PID::TempC4: return "Temp C4";
-		case PID::TempDb4: return "Temp Db4";
-		case PID::TempD4: return "Temp D4";
-		case PID::TempEb4: return "Temp Eb4";
-		case PID::TempE4: return "Temp E4";
-		case PID::TempF4: return "Temp F4";
-		case PID::TempGb4: return "Temp Gb4";
-		case PID::TempG4: return "Temp G4";
-		case PID::TempAb4: return "Temp Ab4";
-		case PID::TempA4: return "Temp A4";
-		case PID::TempBb4: return "Temp Bb4";
-		case PID::TempB4: return "Temp B4";
+#if PPDHasMTSESP
+		case PID::MTSESP: return "MTS-ESP";
 #endif
 #if PPDHasOnsetDetector
 		case PID::OnsetSensitivity: return "Onset Sensitivity";
@@ -192,61 +139,8 @@ namespace param
 #if PPDHasLookahead
 		case PID::Lookahead: return "Dis/Enabled lookahead.";
 #endif
-#if PPDHasTuningEditor
-		// TUNING PARAMS:
-		case PID::Xen: return "The xenharmony describes how many pitches per octave exist. Higher edo = smaller intervals.";
-		case PID::XenSnap: return "If disabled you can explore xen scales that have less or no octaves.";
-		case PID::MasterTune: return "This is the frequency the anchor pitch refers to. (Chamber Frequency)";
-		case PID::AnchorPitch: return "The anchor pitch refers to the same frequency regardless of xen scale.";
-		case PID::PitchbendRange: return "The pitchbend range in semitones describes how many pitches you can bend.";
-		case PID::TempC: return "The temperament of the pitch class C";
-		case PID::TempDb: return "The temperament of the pitch class C#";
-		case PID::TempD: return "The temperament of the pitch class D";
-		case PID::TempEb: return "The temperament of the pitch class D#";
-		case PID::TempE: return "The temperament of the pitch class E";
-		case PID::TempF: return "The temperament of the pitch class F";
-		case PID::TempGb: return "The temperament of the pitch class F#";
-		case PID::TempG: return "The temperament of the pitch class G";
-		case PID::TempAb: return "The temperament of the pitch class G#";
-		case PID::TempA: return "The temperament of the pitch class A";
-		case PID::TempBb: return "The temperament of the pitch class A#";
-		case PID::TempB: return "The temperament of the pitch class B";
-		case PID::TempC2: return "The temperament of the pitch class C2";
-		case PID::TempDb2: return "The temperament of the pitch class C#2";
-		case PID::TempD2: return "The temperament of the pitch class D2";
-		case PID::TempEb2: return "The temperament of the pitch class D#2";
-		case PID::TempE2: return "The temperament of the pitch class E2";
-		case PID::TempF2: return "The temperament of the pitch class F2";
-		case PID::TempGb2: return "The temperament of the pitch class F#2";
-		case PID::TempG2: return "The temperament of the pitch class G2";
-		case PID::TempAb2: return "The temperament of the pitch class G#2";
-		case PID::TempA2: return "The temperament of the pitch class A2";
-		case PID::TempBb2: return "The temperament of the pitch class A#2";
-		case PID::TempB2: return "The temperament of the pitch class B2";
-		case PID::TempC3: return "The temperament of the pitch class C3";
-		case PID::TempDb3: return "The temperament of the pitch class C#3";
-		case PID::TempD3: return "The temperament of the pitch class D3";
-		case PID::TempEb3: return "The temperament of the pitch class D#3";
-		case PID::TempE3: return "The temperament of the pitch class E3";
-		case PID::TempF3: return "The temperament of the pitch class F3";
-		case PID::TempGb3: return "The temperament of the pitch class F#3";
-		case PID::TempG3: return "The temperament of the pitch class G3";
-		case PID::TempAb3: return "The temperament of the pitch class G#3";
-		case PID::TempA3: return "The temperament of the pitch class A3";
-		case PID::TempBb3: return "The temperament of the pitch class A#3";
-		case PID::TempB3: return "The temperament of the pitch class B3";
-		case PID::TempC4: return "The temperament of the pitch class C4";
-		case PID::TempDb4: return "The temperament of the pitch class C#4";
-		case PID::TempD4: return "The temperament of the pitch class D4";
-		case PID::TempEb4: return "The temperament of the pitch class D#4";
-		case PID::TempE4: return "The temperament of the pitch class E4";
-		case PID::TempF4: return "The temperament of the pitch class F4";
-		case PID::TempGb4: return "The temperament of the pitch class F#4";
-		case PID::TempG4: return "The temperament of the pitch class G4";
-		case PID::TempAb4: return "The temperament of the pitch class G#4";
-		case PID::TempA4: return "The temperament of the pitch class A4";
-		case PID::TempBb4: return "The temperament of the pitch class A#4";
-		case PID::TempB4: return "The temperament of the pitch class B4";
+#if PPDHasMTSESP
+		case PID::MTSESP: return "If enabled, the tuning system is controlled by the MTS-ESP master.";
 #endif
 #if PPDHasOnsetDetector
 		case PID::OnsetSensitivity: return "Adjust the sensitivity of the onset detector.";
@@ -873,16 +767,6 @@ namespace param::strToVal
 		};
 	}
 
-	StrToValFunc xen()
-	{
-		return[p = parse()](const String& txt)
-		{
-			const auto text = txt.trimCharactersAtEnd(toString(Unit::Xen));
-			const auto val = p(text, 0.f);
-			return val;
-		};
-	}
-
 	StrToValFunc note()
 	{
 		return[p = parse()](const String& txt)
@@ -951,31 +835,19 @@ namespace param::strToVal
 		};
 	}
 
-#if PPDHasTuningEditor
-	StrToValFunc pitch(const Xen& xenManager)
+	StrToValFunc pitch(TuneSys& tuneSys)
 	{
-		return[hzFunc = hz(), noteFunc = note(), &xen = xenManager](const String& txt)
+		return[hzFunc = hz(), noteFunc = note(), &tune = tuneSys](const String& txt)
 		{
-			auto freqHz = hzFunc(txt);
+			const auto freqHz = hzFunc(txt);
 			if (freqHz != 0.f)
-				return xen.freqHzToNote(freqHz);
-
+			{
+				const auto noteNumber = tune.freqToNote(freqHz);
+				return noteNumber;
+			}
 			return noteFunc(txt);
 		};
 	}
-#else
-	StrToValFunc pitch()
-	{
-		return[hzFunc = hz(), noteFunc = note()](const String& txt)
-		{
-			auto freqHz = hzFunc(txt);
-			if (freqHz != 0.f)
-				return math::freqHzToNote(freqHz);
-
-			return noteFunc(txt);
-		};
-	}
-#endif
 
 	StrToValFunc q()
 	{
@@ -1242,7 +1114,6 @@ namespace param::valToStr
 				if (v >= 0.f)
 				{
 					enum pitchclass { C, Db, D, Eb, E, F, Gb, G, Ab, A, Bb, B, Num };
-
 					const auto note = static_cast<int>(std::round(v));
 					const auto octave = note / 12 - 1;
 					const auto noteName = note % 12;
@@ -1252,47 +1123,20 @@ namespace param::valToStr
 			};
 	}
 
-#if PPDHasTuningEditor
-	ValToStrFunc xen(const Params& params)
+	ValToStrFunc pitch(TuneSys& tuneSys, bool showsPitch)
 	{
-		return [&prms = params](float v)
-			{
-				const auto& snapParam = prms(PID::XenSnap);
-				const auto snap = snapParam.getValMod() > .5f;
-				if (snap)
-					v = std::round(v);
-				else
-					v = std::round(v * 100.f) * .01f;
-				return String(v) + " " + toString(Unit::Xen);
-			};
-	}
-
-	ValToStrFunc pitch(const Xen& xenManager, bool showsPitch)
-	{
-		return [noteFunc = note(), hzFunc = hz(), &xen = xenManager, showsPitch](float v)
+		return [noteFunc = note(), hzFunc = hz(), &tune = tuneSys, showsPitch](float v)
 		{
-			auto hzStr = hzFunc(xen.noteToFreqHz(v));
+			//auto hzStr = hzFunc(xen.noteToFreqHz(v));
+			const auto noteNumber = static_cast<char>(std::round(v));
+			const auto freqHz = tune.noteToFreq(static_cast<float>(noteNumber));
+			const auto hzStr = hzFunc(freqHz);
 			if(showsPitch)
 				return noteFunc(v) + "; " + hzStr;
 			else
 				return hzStr;
 		};
 	}
-#else
-	ValToStrFunc pitch(bool showsPitch)
-	{
-		if(showsPitch)
-			return [noteFunc = note(), hzFunc = hz()](float v)
-			{
-				return noteFunc(v) + "; " + hzFunc(math::noteToFreqHz(v));
-			};
-		else
-			return [hzFunc = hz()](float v)
-			{
-				return hzFunc(math::noteToFreqHz(v));
-			};
-	}
-#endif
 	
 	ValToStrFunc q()
 	{
@@ -1510,53 +1354,22 @@ namespace param
 		return new Param(id, { -1.f, 1.f }, 0.f, valToStrFunc, strToValFunc, Unit::Pan, true);
 	}
 
-#if PPDHasTuningEditor
-	// pID, valDenormDefault, range, Xen
+	// pID, valDenormDefault, range, mts
 	Param* makeParamPitch(PID id, float valDenormDefault,
-		const Range& range, const Xen& xen)
+		const Range& range, TuneSys& tuneSys, bool showsPitch)
 	{
-		ValToStrFunc valToStrFunc = valToStr::pitch(xen);
-		StrToValFunc strToValFunc = strToVal::pitch(xen);
-
-		return new Param(id, range, valDenormDefault, valToStrFunc, strToValFunc, Unit::Pitch);
+		ValToStrFunc valToStrFunc = valToStr::pitch(tuneSys, showsPitch);
+		StrToValFunc strToValFunc = strToVal::pitch(tuneSys);
+		return new Param(id, range, valDenormDefault, valToStrFunc, strToValFunc, Unit::Pitch, true);
 	}
 
-	Param* makeParamPitch(PID id, float valDenormDefault, const Xen& xen)
+	Param* makeParamPitch(PID id, float valDenormDefault, TuneSys& tuneSys, bool showsPitch)
 	{
 		const auto lowestPitch = math::freqHzToNote2(20.f);
 		const auto highestPitch = math::freqHzToNote2(20000.f);
 		const auto pitchRange = makeRange::lin(lowestPitch, highestPitch);
-		return makeParamPitch(id, valDenormDefault, pitchRange, xen);
+		return makeParamPitch(id, valDenormDefault, pitchRange, tuneSys, showsPitch);
 	}
-
-	Param* makeParamXen(const Params& params)
-	{
-		constexpr auto MaxXen = static_cast<float>(arch::MaxXen);
-		constexpr auto DefaultXen = 12.f;
-		const auto range = makeRange::withCentre(3.f, MaxXen, DefaultXen);
-		ValToStrFunc valToStrFunc = valToStr::xen(params);
-		StrToValFunc strToValFunc = strToVal::xen();
-		return new Param(PID::Xen, range, DefaultXen, valToStrFunc, strToValFunc, Unit::Xen);
-	}
-#else
-	// pID, valDenormDefault, start, end, showsPitch
-	Param* makeParamPitch(PID id, float valDenormDefault,
-		float start, float end, bool showsPitch)
-	{
-		ValToStrFunc valToStrFunc = valToStr::pitch(showsPitch);
-		StrToValFunc strToValFunc = strToVal::pitch();
-
-		return new Param(id, makeRange::lin(start, end), valDenormDefault, valToStrFunc, strToValFunc, Unit::Pitch, true);
-	}
-
-	// pID, valDenormDefault, showsPitch
-	Param* makeParamPitch(PID id, float valDenormDefault, bool showsPitch)
-	{
-		const auto lowestPitch = math::freqHzToNote2(20.f);
-		const auto highestPitch = math::freqHzToNote2(20000.f);
-		return makeParamPitch(id, valDenormDefault, lowestPitch, highestPitch, showsPitch);
-	}
-#endif
 
 	Param* makeParam(PID id, float valDenormDefault, const Range& range,
 		const ValToStrFunc& valToStrFunc, const StrToValFunc& strToValFunc = strToVal::standard(0.f), bool modulatable = true)
@@ -1567,13 +1380,7 @@ namespace param
 
 namespace param
 {
-	// PARAMS
-
-	Params::Params(AudioProcessor& audioProcessor
-#if PPDHasTuningEditor
-		, const Xen& xen
-#endif
-	) :
+	Params::Params(AudioProcessor& audioProcessor, TuneSys&) :
 		params(),
 		modDepthAbsolute(false),
 		tweaked(false)
@@ -1612,18 +1419,8 @@ namespace param
 #if PPDHasLookahead
 			params.push_back(makeParam(PID::Lookahead, 0.f, makeRange::toggle(), Unit::Power));
 #endif
-#if PPDHasTuningEditor
-			// TUNING PARAMS:
-			params.push_back(makeParamXen(*this));
-			params.push_back(makeParam(PID::XenSnap, 1.f, makeRange::toggle(), Unit::Power));
-			params.push_back(makeParam(PID::MasterTune, 440.f, makeRange::withCentre(420.f, 460.f, 440.f), Unit::Hz));
-			params.push_back(makeParam(PID::AnchorPitch, 69.f, makeRange::stepped(0.f, 127.f), Unit::Note));
-			params.push_back(makeParam(PID::PitchbendRange, 2.f, makeRange::stepped(1.f, 48.f), Unit::Semi));
-			for (auto i = 0; i < arch::MaxXen; ++i)
-			{
-				const auto id = offset(PID::TempC, i);
-				params.push_back(makeParam(id, 0.f, makeRange::lin(-1.f, 1.f), Unit::Fine));
-			}
+#if PPDHasMTSESP
+			params.push_back(makeParam(PID::MTSESP, 1.f, makeRange::toggle(), Unit::Power, false));
 #endif
 #if PPDHasOnsetDetector
 			params.push_back(makeParam(PID::OnsetSensitivity, dsp::OnsetThresholdDefault, makeRange::lin(dsp::OnsetThresholdMin, dsp::OnsetThresholdMax), Unit::Decibel, true));
