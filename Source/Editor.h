@@ -1,5 +1,4 @@
 #pragma once
-#include "gui/Prompt.h"
 #include "gui/CompTexture.h"
 #include "gui/HeaderEditor.h"
 #include "gui/Tooltip.h"
@@ -26,6 +25,7 @@ namespace gui
         evt::Member evtMember;
         CompTexture texture;
 
+        Prompt prompt;
         patch::Browser patchBrowser;
         ColoursEditor coloursEditor;
         ManifestOfWisdom manifest;
@@ -36,8 +36,7 @@ namespace gui
         Callback callback;
         CompPower powerComp;
 		Editor2 editor2;
-        Prompt prompt;
-
+        
         //JUCE_HEAVYWEIGHT_LEAK_DETECTOR(Editor)
     };
 }

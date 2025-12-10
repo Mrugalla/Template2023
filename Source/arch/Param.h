@@ -38,9 +38,6 @@ namespace param
 #if PPDHasLookahead
 		Lookahead,
 #endif
-#if PPDHasMTSESP
-		MTSESP,
-#endif
 #if PPDHasOnsetDetector
 		OnsetSensitivity,
 #if PPDOnsetDebugParameters

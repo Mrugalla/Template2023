@@ -3,7 +3,8 @@
 namespace gui
 {
 	HeaderEditor::HeaderEditor(ColoursEditor& coloursEditor,
-		ManifestOfWisdom& manifest, patch::Browser& patchBrowser) :
+		ManifestOfWisdom& manifest, patch::Browser& patchBrowser,
+		Prompt& prompt) :
 		Comp(manifest.utils),
 		title(utils, utils.audioProcessor.pluginRecorder),
 		buttonBrowser(patchBrowser),
@@ -39,8 +40,7 @@ namespace gui
 		addAndMakeVisible(buttonManifest);
 		addAndMakeVisible(buttonRandomizer);
 #if PPDHasMTSESP
-		addAndMakeVisible(mtsesp);
-		makeButton(PID::MTSESP, mtsesp, Button::Type::kToggle, "MTS-ESP");
+		initMTSButton(prompt);
 #endif
 #if PPDHasStereoConfig
 		addAndMakeVisible(stereoConfig);
@@ -80,4 +80,48 @@ namespace gui
 		
 #endif
 	}
+
+#if PPDHasMTSESP
+	void HeaderEditor::initMTSButton(Prompt& prompt)
+	{
+		addAndMakeVisible(mtsesp);
+		mtsesp.type = Button::Type::kTrigger;
+		makeTextButton(mtsesp, "MTS-ESP", "Open additional MTS-ESP settings.", CID::Interact, Colour(0x00000000));
+		mtsesp.onClick = [&](const Mouse&)
+		{
+			if (prompt.isVisible())
+				return prompt.deactivate();
+			const auto scaleName = utils.audioProcessor.tuneSys.getScaleName();
+			const auto masterExists = utils.audioProcessor.tuneSys.hasMaster();
+			PromptData pd;
+			pd.message = "MTS-ESP enables you to compose microtonally.\nHere are additional features and information.\nCurrent scale name: " + String(scaleName) + ".\nMaster: " + String(masterExists ? "active" : "inactive") + ".";
+			{
+				PromptButtonData pbd;
+				pbd.text = "Update";
+				pbd.tooltip = "This link leads you to the MTS-ESP installers.";
+				pbd.onClick = [&]()
+				{
+					auto& user = utils.getProps();
+					user.setValue("mtsinterest", true);
+					URL url("https://github.com/ODDSound/MTS-ESP/tree/main/libMTS");
+					url.launchInDefaultBrowser();
+					prompt.deactivate();
+				};
+				pd.buttons.push_back(pbd);
+			}
+			{
+				PromptButtonData pbd;
+				pbd.text = "Close";
+				pbd.tooltip = "This incredible button closes the menu!";
+				pbd.onClick = [&]()
+				{
+					prompt.deactivate();
+				};
+				pd.buttons.push_back(pbd);
+			}
+			
+			prompt.activate(pd);
+		};
+	}
+#endif
 }

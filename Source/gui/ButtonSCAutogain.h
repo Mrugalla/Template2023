@@ -1,5 +1,6 @@
 #pragma once
 #include "Button.h"
+#include "../audio/dsp/SCGain.h"
 
 namespace gui
 {
@@ -7,15 +8,18 @@ namespace gui
 	struct ButtonSCAutogain :
 		public Comp
 	{
-		ButtonSCAutogain(Utils&);
+		using SCGain = dsp::SCGain;
+
+		ButtonSCAutogain(Utils&, SCGain&);
 
 		~ButtonSCAutogain();
 
-		void paint(Graphics& g) override;
+		void paint(Graphics&) override;
 
 		void resized() override;
 	private:
 		Button btn;
+		SCGain& scGainer;
 	};
 #endif
 }

@@ -57,9 +57,6 @@ namespace param
 #if PPDHasLookahead
 		case PID::Lookahead: return "Lookahead";
 #endif
-#if PPDHasMTSESP
-		case PID::MTSESP: return "MTS-ESP";
-#endif
 #if PPDHasOnsetDetector
 		case PID::OnsetSensitivity: return "Onset Sensitivity";
 #if PPDOnsetDebugParameters
@@ -138,9 +135,6 @@ namespace param
 
 #if PPDHasLookahead
 		case PID::Lookahead: return "Dis/Enabled lookahead.";
-#endif
-#if PPDHasMTSESP
-		case PID::MTSESP: return "If enabled, the tuning system is controlled by the MTS-ESP master.";
 #endif
 #if PPDHasOnsetDetector
 		case PID::OnsetSensitivity: return "Adjust the sensitivity of the onset detector.";
@@ -1418,9 +1412,6 @@ namespace param
 #endif
 #if PPDHasLookahead
 			params.push_back(makeParam(PID::Lookahead, 0.f, makeRange::toggle(), Unit::Power));
-#endif
-#if PPDHasMTSESP
-			params.push_back(makeParam(PID::MTSESP, 1.f, makeRange::toggle(), Unit::Power, false));
 #endif
 #if PPDHasOnsetDetector
 			params.push_back(makeParam(PID::OnsetSensitivity, dsp::OnsetThresholdDefault, makeRange::lin(dsp::OnsetThresholdMin, dsp::OnsetThresholdMax), Unit::Decibel, true));

@@ -3,64 +3,62 @@
 namespace gui
 {
 #if PPDHasSidechain
-	struct ButtonSCAutogain::ButtonSCAutogain :
-		public Comp
-	{
-		ButtonSCAutogain::ButtonSCAutogain(Utils& u) :
+	ButtonSCAutogain::ButtonSCAutogain(Utils& u, SCGain& scGain) :
 			Comp(u),
-			btn(u)
+			btn(u),
+			scGainer(scGain)
 		{
 			const auto fps = cbFPS::k15;
 			add(Callback([&, speed = msToInc(5000.f, fps)]()
-				{
-					const auto listening = u.audioProcessor.scGainer.isListening();
-					if (!listening)
-						return;
-					auto& phase = callbacks[0].phase;
-					phase += speed;
-					if (phase >= 1.f)
-						--phase;
-					repaint();
-				}, 0, fps, true));
+			{
+				const auto listening = scGainer.isListening();
+				if (!listening)
+					return;
+				auto& phase = callbacks[0].phase;
+				phase += speed;
+				if (phase >= 1.f)
+					--phase;
+				repaint();
+			}, 0, fps, true));
 
 			addAndMakeVisible(btn);
 
 			makePaintButton(btn, [](Graphics& g, const Button& b)
+			{
+				const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
+				const auto toggleState = b.callbacks[Button::kToggleStateCB].phase;
+
+				const auto thicc = b.utils.thicc;
+				const auto thicc2 = thicc * 2.f;
+				const auto thicc5 = thicc * 5.f;
+				const auto thicc8 = thicc * 8.f;
+				g.setColour(getColour(CID::Interact).interpolatedWith(juce::Colours::red, toggleState));
+				const auto bounds = maxQuadIn(b.getLocalBounds());
+				const auto minDimen = std::min(bounds.getWidth(), bounds.getHeight());
+				const auto rad = minDimen * .5f;
+
+				const auto margin = thicc5 - hoverPhase * thicc;
+				const auto circleBounds = bounds.reduced(margin);
+				g.drawEllipse(circleBounds, thicc);
+				if (hoverPhase != 0.f)
 				{
-					const auto hoverPhase = b.callbacks[Button::kHoverAniCB].phase;
-					const auto toggleState = b.callbacks[Button::kToggleStateCB].phase;
-
-					const auto thicc = b.utils.thicc;
-					const auto thicc2 = thicc * 2.f;
-					const auto thicc5 = thicc * 5.f;
-					const auto thicc8 = thicc * 8.f;
-					g.setColour(getColour(CID::Interact).interpolatedWith(juce::Colours::red, toggleState));
-					const auto bounds = maxQuadIn(b.getLocalBounds());
-					const auto minDimen = std::min(bounds.getWidth(), bounds.getHeight());
-					const auto rad = minDimen * .5f;
-
-					const auto margin = thicc5 - hoverPhase * thicc;
-					const auto circleBounds = bounds.reduced(margin);
-					g.drawEllipse(circleBounds, thicc);
-					if (hoverPhase != 0.f)
-					{
-						const auto circleHoverBounds = bounds.reduced(rad + hoverPhase * (thicc8 - rad));
-						g.drawEllipse(circleHoverBounds, thicc2);
-					}
-				}, "The plugin listens to the sidechain input to normalize it.");
+					const auto circleHoverBounds = bounds.reduced(rad + hoverPhase * (thicc8 - rad));
+					g.drawEllipse(circleHoverBounds, thicc2);
+				}
+			}, "The plugin listens to the sidechain input to normalize it.");
 
 			btn.type = Button::Type::kToggle;
 			btn.onClick = [&](const Mouse&)
-				{
-					btn.value = 1.f - btn.value;
-					u.audioProcessor.scGainer.setListening(btn.value);
-				};
+			{
+				btn.value = 1.f - btn.value;
+				scGainer.setListening(btn.value);
+			};
 			btn.value = 0.f;
 		}
 
 		ButtonSCAutogain::~ButtonSCAutogain()
 		{
-			utils.audioProcessor.scGainer.reset();
+			scGainer.reset();
 		}
 
 		void ButtonSCAutogain::paint(Graphics& g)
@@ -98,9 +96,5 @@ namespace gui
 			Comp::resized();
 			btn.setBounds(getLocalBounds());
 		}
-
-	private:
-		Button btn;
-	};
 #endif
 }

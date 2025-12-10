@@ -125,13 +125,6 @@ namespace audio
 		};
 #endif
 #endif
-#if PPDHasMTSESP
-        params(PID::MTSESP).callback = [&](dsp::CB cb)
-        {
-            const auto m = cb.getBool();
-            tuneSys.setMTSEnabled(m);
-		};
-#endif
 #if PPDHasOnsetDetector
         params(PID::OnsetSensitivity).callback = [&](dsp::CB cb)
         {
@@ -362,7 +355,7 @@ namespace audio
             if (scBus)
                 if (scBus->isEnabled())
                 {
-                    const auto scEnabled = params(PID::Sidechain).getValue() > .5f;
+                    const auto scListen = params(PID::SCListen).getValue() > .5f;
                     const auto& scGainParam = params(PID::SCGain);
                     const auto scGainDb = scGainParam.getValModDenorm();
                     const auto scGain = math::dbToAmp(scGainDb);
@@ -370,7 +363,7 @@ namespace audio
                     auto scBuffer = scBus->getBusBuffer(buffer);
                     auto scSamples = scBuffer.getArrayOfWritePointers();
                     const auto numChannelsSC = scBuffer.getNumChannels();
-                    bufferView.assignSC(scSamples, scGain, numChannelsSC, scEnabled);
+                    bufferView.assignSC(scSamples, scGain, numChannelsSC, scListen);
                 }
         }
         bufferView.useMainForSCIfRequired();

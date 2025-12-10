@@ -1,4 +1,5 @@
 #pragma once
+#include "Prompt.h"
 #include "LabelPluginRecorder.h"
 #include "PatchBrowser.h"
 #include "MacroEditor.h"
@@ -12,7 +13,7 @@ namespace gui
 	struct HeaderEditor :
 		public Comp
 	{
-		HeaderEditor(ColoursEditor&, ManifestOfWisdom&, patch::Browser&);
+		HeaderEditor(ColoursEditor&, ManifestOfWisdom&, patch::Browser&, Prompt& prompt);
 
 		void resized() override;
 	private:
@@ -27,6 +28,7 @@ namespace gui
 		ButtonRandomizer buttonRandomizer;
 #if PPDHasMTSESP
 		Button mtsesp;
+		void initMTSButton(Prompt&);
 #endif
 #if PPDHasStereoConfig
 		Button stereoConfig;

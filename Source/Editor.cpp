@@ -63,10 +63,11 @@ namespace gui
         layout(),
         evtMember(utils.eventSystem, makeEvt(*this)),
         texture(utils, BinaryData::texture_png, BinaryData::texture_pngSize, .1f, 4),
+        prompt(utils),
         patchBrowser(utils),
         coloursEditor(utils),
         manifest(utils),
-        header(coloursEditor, manifest, patchBrowser),
+        header(coloursEditor, manifest, patchBrowser, prompt),
         tooltip(utils),
         toast(utils),
         parameterEditor(utils),
@@ -74,8 +75,7 @@ namespace gui
         {
         }, 0, cbFPS::k_1_875, false),
         powerComp(utils),
-        editor2(utils),
-        prompt(utils)
+        editor2(utils)
     {
         layout.init
         (
@@ -103,7 +103,7 @@ namespace gui
         if (interested && audioProcessor.tuneSys.wannaUpdate())
         {
             PromptData pd;
-            pd.message = "MTS-ESP is a feature that enables you to compose microtonally.\nUnfortunately your MTS-ESP is out of touch.\nDownload and run the latest installer, if you enjoy MTS-ESP!";
+            pd.message = "MTS-ESP enables you to compose microtonally.\nUnfortunately your MTS-ESP is out of touch :<\nDownload and run the latest installer, if you enjoy MTS-ESP!";
             PromptButtonData pbdOk;
             pbdOk.text = "Alright";
             pbdOk.tooltip = "This link leads you to the GitHub page of MTS-ESP, where you can download the installer.";
