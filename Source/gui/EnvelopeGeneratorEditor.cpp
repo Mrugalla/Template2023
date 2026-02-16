@@ -179,7 +179,7 @@ namespace gui
 		susV = sus;
 		rlsV = rlsDenorm;
 
-		ruler.setLength(atkDenorm + dcyDenorm + rlsDenorm);
+		ruler.update(0.f, atkDenorm + dcyDenorm + rlsDenorm);
 
 		// denormalized parameter end values
 		const auto atkEndDenorm = atkParam->range.end;

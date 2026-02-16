@@ -7,7 +7,7 @@ namespace gui
 		labels(),
 		getIncFunc([](float l) { return l / 4.f; }),
 		valToStrFunc([](float v) { return String(v); }),
-		length(0.f),
+		start(0.f), end(0.f),
 		cID(CID::Txt),
 		drawFirstVal(true)
 	{
@@ -15,7 +15,7 @@ namespace gui
 
 	void Ruler::makeIncExpansionOfGF()
 	{
-		getIncFunc = [](float length)
+		setGetIncFunc([](float length)
 		{
 			float v[] = { 1.f, 2.f, 5.f, .2f, .5f, 1.f };
 
@@ -30,7 +30,7 @@ namespace gui
 				for (auto i = 0; i < 6; ++i)
 					v[i] *= 10.f;
 			}
-		};
+		});
 	}
 
 	void Ruler::setGetIncFunc(std::function<float(float)>&& f) noexcept
@@ -50,7 +50,7 @@ namespace gui
 
 	void Ruler::paint(Graphics& g)
 	{
-		if (length == 0.f)
+		if (start == end)
 			return;
 		const auto thiccInt = static_cast<int>(utils.thicc * 2.f);
 		const auto h = static_cast<float>(getHeight());
@@ -68,11 +68,12 @@ namespace gui
 		update();
 	}
 
-	void Ruler::setLength(float l) noexcept
+	void Ruler::update(float s, float e) noexcept
 	{
-		if (length == l)
+		if (start == s && end == e)
 			return;
-		length = l;
+		start = s;
+		end = e;
 		update();
 	}
 
@@ -82,7 +83,7 @@ namespace gui
 			removeChildComponent(label.get());
 		labels.clear();
 
-		if (length <= 0.f)
+		if (start >= end)
 			return;
 
 		const auto just = Just::centredLeft;
@@ -93,12 +94,13 @@ namespace gui
 		const auto wF = static_cast<float>(w);
 		const auto h = getHeight();
 
+		const auto length = end - start;
 		const auto inc = getIncFunc(length);
 		const auto numLabels = static_cast<int>(std::ceil(length / inc));
 		const auto lenInv = 1.f / length;
 		labels.reserve(numLabels);
-		auto val = drawFirstVal ? 0.f : inc;
-		auto xF = drawFirstVal ? 0.f : val * lenInv * wF;
+		auto val = drawFirstVal ? start : start + inc;
+		auto xF = drawFirstVal ? 0.f : inc * lenInv * wF;
 		for (auto i = 0; i < numLabels; ++i)
 		{
 			const auto x = static_cast<int>(xF);
@@ -157,12 +159,13 @@ namespace gui
 
 	double Ruler::getSnappedToGrid(double val, double inc) const noexcept
 	{
-		const auto a = std::floor((val - 1.) / inc);
-		return a * inc + 1.;
+		const auto a = std::floor((val - start) / inc);
+		return a * inc + start;
 	}
 
 	double Ruler::getNextHigherSnapped(double val) const noexcept
 	{
+		const auto length = end - start;
 		const auto inc = getIncFunc(length);
 		val += inc;
 		return getSnappedToGrid(val, inc);
@@ -170,6 +173,7 @@ namespace gui
 
 	double Ruler::getNextLowerSnapped(double val) const noexcept
 	{
+		const auto length = end - start;
 		const auto inc = getIncFunc(length);
 		val -= inc;
 		return getSnappedToGrid(val, inc);

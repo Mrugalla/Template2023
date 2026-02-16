@@ -23,7 +23,8 @@ namespace gui
 
 		void resized() override;
 
-		void setLength(float) noexcept;
+		// start, end
+		void update(float, float) noexcept;
 
 		void update();
 
@@ -45,7 +46,7 @@ namespace gui
 		Labels labels;
 		std::function<float(float)> getIncFunc;
 		std::function<String(float)> valToStrFunc;
-		float length;
+		float start, end;
 		CID cID;
 		bool drawFirstVal;
     };

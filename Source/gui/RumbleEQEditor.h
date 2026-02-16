@@ -124,7 +124,7 @@ namespace gui
 			rulerFreq.makeIncExpansionOfGF();
 			const auto minPitch = math::freqHzToNote(dsp::EQMinFreq);
 			const auto maxPitch = math::freqHzToNote(dsp::EQMaxFreq);
-			rulerFreq.setLength(maxPitch);
+			rulerFreq.update(minPitch, maxPitch);
 			rulerFreq.setValToStrFunc([](float val)
 			{
 				const auto freqHz = math::noteToFreqHz(val);
