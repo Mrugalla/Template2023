@@ -42,6 +42,7 @@ namespace audio
         (
             params,
             tuneSys,
+            state,
 			transport
         ),
         mixProcessor()
@@ -426,7 +427,6 @@ namespace audio
     void Processor::processSubBlocks(dsp::ProcessorBufferView& bufferView,
         MidiBuffer& midiMessages) noexcept
     {
-        const auto dummy = juce::MidiMessage::createSysExMessage(nullptr, 0);
         auto s = 0;
         dsp::ProcessorBufferView bufferViewBlock;
         for (const auto it : midiMessages)
@@ -444,7 +444,7 @@ namespace audio
                 }
                 else
                 {
-                    bufferViewBlock.fillBlock(bufferView, dummy, s, dsp::BlockSize);
+                    bufferViewBlock.fillBlock(bufferView, s, dsp::BlockSize);
                     s += dsp::BlockSize;
                 }
                 processSubBlock(bufferViewBlock);
@@ -454,7 +454,7 @@ namespace audio
         {
             const auto numSamplesToEnd = bufferView.getNumSamples() - s;
             const auto numSamples = std::min(dsp::BlockSize, numSamplesToEnd);
-            bufferViewBlock.fillBlock(bufferView, dummy, s, numSamples);
+            bufferViewBlock.fillBlock(bufferView, s, numSamples);
             processSubBlock(bufferViewBlock);
             s += numSamples;
         }

@@ -139,6 +139,46 @@ namespace math
     Float lerp(const Float*, Float, int) noexcept;
 
     template<typename Float>
+    inline float lerp(Float x0, Float x1, Float t) noexcept
+    {
+        return x0 + (x1 - x0) * t;
+    }
+
+    template<typename Float>
+    inline float cubicHermiteSpline(Float x0, Float x1, Float x2, Float x3, Float t) noexcept
+    {
+        static constexpr auto p5 = static_cast<Float>(.5);
+		static constexpr auto twoP5 = static_cast<Float>(2.5);
+		static constexpr auto two = static_cast<Float>(2);
+		static constexpr auto oneP5 = static_cast<Float>(1.5);
+
+        const auto c0 = x1;
+        const auto c1 = p5 * (x2 - x0);
+        const auto c2 = x0 - twoP5 * x1 + two * x2 - p5 * x3;
+        const auto c3 = -p5 * x0 + oneP5 * x1 - oneP5 * x2 + p5 * x3;
+        return ((c3 * t + c2) * t + c1) * t + c0;
+    }
+
+    template<typename Float>
+    inline float lagrange(Float x0, Float x1, Float x2, Float x3, Float t) noexcept
+    {
+		static constexpr auto one = static_cast<Float>(1);
+		static constexpr auto two = static_cast<Float>(2);
+		static constexpr auto twoInv = static_cast<Float>(.5);
+		static constexpr auto sixInv = static_cast<Float>(1. / 6.);
+
+		const auto tPlusOne = t + one;
+		const auto tMinOne = t - one;
+		const auto tMinTwo = t - two;
+
+        const auto l0 = -t * tMinOne * tMinTwo * sixInv;
+        const auto l1 = tPlusOne * tMinOne * tMinTwo * twoInv;
+        const auto l2 = -tPlusOne * t * tMinTwo * twoInv;
+        const auto l3 = tPlusOne * t * tMinOne * sixInv;
+        return x0 * l0 + x1 * l1 + x2 * l2 + x3 * l3;
+    }
+
+    template<typename Float>
 	// buffer, readHead, size
     Float cubicHermiteSpline(const Float*, Float, int) noexcept;
 

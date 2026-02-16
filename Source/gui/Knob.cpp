@@ -328,10 +328,7 @@ namespace gui
         {
             const auto cID = CID::Interact;
             k.notify(evt::Type::ToastColour, &cID);
-            const auto windowPos = k.utils.pluginTop.getScreenPosition();
-            auto knobBounds = k.getScreenBounds();
-            knobBounds.setX(knobBounds.getX() - windowPos.x);
-            knobBounds.setY(knobBounds.getY() - windowPos.y);
+            const auto knobBounds = k.getScreenBounds();
             k.notify(evt::Type::ToastShowUp, &knobBounds);
             const String message(prm->getCurrentValueAsText());
             k.notify(evt::Type::ToastUpdateMessage, &message);
@@ -824,15 +821,187 @@ namespace gui
         }
     }
 
+    void makeKnot(Knob& knob, PID pX, PID pY, PID pScroll, const String& tooltip)
+    {
+        knob.pIDs.clear();
+        knob.pIDs.push_back(pX);
+		knob.pIDs.push_back(pY);
+		knob.pIDs.push_back(pScroll);
+        knob.setTooltip(tooltip);
+
+        std::vector<Param*> prms;
+        prms.reserve(knob.pIDs.size());
+        for (auto i = 0; i < knob.pIDs.size(); ++i)
+            prms.emplace_back(&knob.utils.getParam(knob.pIDs[i]));
+
+        knob.onEnter = [&k = knob, prms]()
+            {
+                const auto cID = CID::Interact;
+                k.notify(evt::Type::ToastColour, &cID);
+                const auto windowPos = k.utils.pluginTop.getScreenPosition();
+                const auto knobBounds = k.getScreenBounds();
+                k.notify(evt::Type::ToastShowUp, &knobBounds);
+                auto& prmX = *prms[0];
+                auto& prmY = *prms[1];
+                const String message(prmX.getCurrentValueAsText() + "\n" + prmY.getCurrentValueAsText());
+                k.notify(evt::Type::ToastUpdateMessage, &message);
+            };
+
+        knob.onExit = [&k = knob]()
+            {
+                k.notify(evt::Type::ToastVanish);
+            };
+
+        knob.onDown = [&k = knob, prms]()
+            {
+                k.active = true;
+                for (const auto prm : prms)
+                    if (prm->isInGesture())
+                    {
+                        k.active = false;
+                        return;
+                    }
+                auto& prmX = *prms[0];
+                auto& prmY = *prms[1];
+                prmX.beginGesture();
+				prmY.beginGesture();
+                const String message(prmX.getCurrentValueAsText() + "\n" + prmY.getCurrentValueAsText());
+                k.notify(evt::Type::ToastUpdateMessage, &message);
+            };
+
+        knob.onDrag = [&k = knob, prms](const PointF& dragOffset, const Mouse&)
+            {
+                if (!k.active)
+                    return;
+                auto dragVal = PointF(dragOffset.x, -dragOffset.y);
+                const auto speed = 1.f / k.utils.getDragSpeed();
+                dragVal *= speed;
+
+                auto& prmX = *prms[0];
+				auto& prmY = *prms[1];
+                const auto valX = juce::jlimit(0.f, 1.f, prmX.getValue() + dragVal.x);
+				const auto valY = juce::jlimit(0.f, 1.f, prmY.getValue() + dragVal.y);
+				prmX.setValueFromEditor(valX);
+				prmY.setValueFromEditor(valY);
+                const auto knobBounds = k.getScreenBounds();
+                k.notify(evt::Type::ToastShowUp, &knobBounds);
+				const String message(prmX.getCurrentValueAsText() + "\n" + prmY.getCurrentValueAsText());
+                k.notify(evt::Type::ToastUpdateMessage, &message);
+            };
+
+        knob.onUp = [&k = knob, prms](const Mouse& mouse)
+            {
+                if (!k.active)
+                    return;
+                auto& prmX = *prms[0];
+                auto& prmY = *prms[1];
+                if (!mouse.mouseWasDraggedSinceMouseDown())
+                    if (mouse.mods.isAltDown())
+                    {
+                        prmX.setValueFromEditor(prmX.getDefaultValue());
+						prmY.setValueFromEditor(prmY.getDefaultValue());
+                    }
+                prmX.endGesture();
+				prmY.endGesture();
+                const String message(prmX.getCurrentValueAsText() + "\n" + prmY.getCurrentValueAsText());
+                k.notify(evt::Type::ToastUpdateMessage, &message);
+            };
+
+        knob.onWheel = [&k = knob, prm = prms[2]](const Mouse&)
+            {
+                if (prm->isInGesture())
+                    return;
+                const auto& range = prm->range;
+                const auto interval = range.interval;
+                if (interval > 0.f)
+                {
+                    const auto nStep = interval / range.getRange().getLength();
+                    k.dragXY.setY(k.dragXY.y > 0.f ? nStep : -nStep);
+                    auto newValue = juce::jlimit(0.f, 1.f, prm->getValue() + k.dragXY.y);
+                    newValue = range.convertTo0to1(range.snapToLegalValue(range.convertFrom0to1(newValue)));
+                    prm->setValueWithGesture(newValue);
+                }
+                else
+                {
+                    k.dragXY.setY(k.dragXY.y);
+                    const auto newValue = juce::jlimit(0.f, 1.f, prm->getValue() + k.dragXY.y);
+                    prm->setValueWithGesture(newValue);
+                }
+
+                const String message(prm->getCurrentValueAsText());
+                k.notify(evt::Type::ToastUpdateMessage, &message);
+            };
+
+        knob.onDoubleClick = [&k = knob, prms]()
+            {
+                for (auto prm : prms)
+                    prm->setValueWithGesture(prm->getDefaultValue());
+                auto& prmX = *prms[0];
+                auto& prmY = *prms[1];
+                const String message(prmX.getCurrentValueAsText() + "\n" + prmY.getCurrentValueAsText());
+                k.notify(evt::Type::ToastUpdateMessage, &message);
+            };
+
+        const auto modulatable = prms[0]->isModulatable();
+        knob.values.resize(modulatable ? Knob::kVals::NumValTypes : Knob::kVals::Value + 1, 0.f);
+
+        if (modulatable)
+            knob.add(Callback([&k = knob, &prm = *prms[0]]()
+                {
+                    if (!k.isShowing())
+                        return;
+                    k.setLocked(prm.isLocked());
+
+                    const auto vn = prm.getValue();
+                    const auto md = prm.getModDepth();
+                    const auto vm = prm.getValMod();
+                    const auto mb = prm.getModBias();
+
+                    auto& vals = k.values;
+
+                    if (vals[Knob::kVals::Value] != vn || vals[Knob::kVals::ModDepth] != md ||
+                        vals[Knob::kVals::ValMod] != vm || vals[Knob::kVals::ModBias] != mb)
+                    {
+                        vals[Knob::kVals::Value] = vn;
+                        vals[Knob::kVals::ModDepth] = md;
+                        vals[Knob::kVals::ValMod] = vm;
+                        vals[Knob::kVals::ModBias] = mb;
+                        k.repaint();
+                    }
+                }, Knob::kCBs::kUpdateParameterCB, cbFPS::k60, true));
+        else
+            knob.add(Callback([&k = knob, &prm = *prms[0]]()
+                {
+                    if (!k.isShowing())
+                        return;
+                    k.setLocked(prm.isLocked());
+                    const auto vn = prm.getValue();
+                    auto& vals = k.values;
+                    if (vals[Knob::kVals::Value] != vn)
+                    {
+                        vals[Knob::kVals::Value] = vn;
+                        k.repaint();
+                    }
+                }, Knob::kCBs::kUpdateParameterCB, cbFPS::k60, true));
+
+        knob.onPaint = [](Graphics& g, Knob& k)
+        {
+			const auto thicc = k.utils.thicc;
+            setCol(g, CID::Interact);
+            const auto bounds = maxQuadIn(k.getLocalBounds().toFloat().reduced(thicc));
+            g.drawEllipse(bounds, thicc);
+		};
+    }
+
     void followKnob(ModDial& modDial, const Knob& knob)
     {
-        const auto w0 = static_cast<float>(knob.getWidth());
-        const auto w = w0 * .25f;
-        const auto x = static_cast<float>(knob.getX()) + (w0 - w) * .5f;
-        const auto h = static_cast<float>(knob.getHeight()) / Pi;
-        const auto y = static_cast<float>(knob.getBottom()) - h;
-        const auto nBounds = maxQuadIn(BoundsF(x, y, w, h)).toNearestInt();
-        modDial.setBounds(nBounds);
+		auto nBounds = maxQuadIn(knob.getLocalBounds().toFloat());
+		const auto w = nBounds.getWidth() * .25f;
+		const auto x = nBounds.getX() + (nBounds.getWidth() - w) * .5f;
+		const auto h = nBounds.getHeight() / Pi;
+		const auto y = nBounds.getBottom() - h - knob.utils.thicc;
+		nBounds = BoundsF(x, y, w, h);
+        modDial.setBounds(nBounds.toNearestInt());
     }
 
     void followSlider(ModDial& modDial, const Knob& sliderHorizontal)

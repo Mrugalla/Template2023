@@ -109,6 +109,9 @@ namespace gui
     // pID, knob
     void makeTextKnob(PID, Knob&);
 
+    // knob, pX, pY, pScroll
+    void makeKnot(Knob&, PID, PID, PID, const String&);
+
 	enum class KnobStyle
     {
 		Knob,

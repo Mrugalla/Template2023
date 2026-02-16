@@ -56,16 +56,15 @@ namespace dsp
 		double sampleRate = 0.;
 		auto stream = new MemoryInputStream(data, size, false);
 		WavAudioFormat wav;
-		const auto reader = wav.createReaderFor(stream, false);
-		if (reader != nullptr)
+		if (const auto reader = wav.createReaderFor(stream, false))
 		{
 			sampleRate = reader->sampleRate;
 			const auto numChannels = static_cast<int>(reader->numChannels);
 			const auto numSamples = static_cast<int>(reader->lengthInSamples);
 			buffer.setSize(numChannels, numSamples, false, false, false);
 			reader->read(&buffer, 0, numSamples, 0, true, true);
+			delete reader;
 		}
-		delete reader;
 		return sampleRate;
 	}
 }

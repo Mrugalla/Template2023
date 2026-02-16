@@ -1,9 +1,10 @@
 #include "Param.h"
-#include "../arch/FormulaParser.h"
-#include "../arch/Range.h"
-#include "../arch/Math.h"
+#include "FormulaParser.h"
+#include "Range.h"
+#include "Math.h"
 
 #include "../audio/dsp/onset/OnsetAxiom.h"
+#include "RumbleAxiom.h"
 
 namespace param
 {
@@ -73,6 +74,18 @@ namespace param
 		case PID::Power: return "Power";
 
 		// LOW LEVEL PARAMS:
+		case PID::NoiseSynth: return "Noise Synth";
+		case PID::LowCutFreq: return "Lowcut Freq";
+		case PID::HighCutFreq: return "Highcut Freq";
+		case PID::Bell1Freq: return "Bell 1 Freq";
+		case PID::Bell1Q: return "Bell 1 Q";
+		case PID::Bell1Gain: return "Bell 1 Gain";
+		case PID::Bell2Freq: return "Bell 2 Freq";
+		case PID::Bell2Q: return "Bell 2 Q";
+		case PID::Bell2Gain: return "Bell 2 Gain";
+		case PID::Bell3Freq: return "Bell 3 Freq";
+		case PID::Bell3Q: return "Bell 3 Q";
+		case PID::Bell3Gain: return "Bell 3 Gain";
 		//
 
 		default: return "Invalid Parameter Name";
@@ -477,7 +490,6 @@ namespace param
 			const auto numSteps = (range.end - range.start) / range.interval;
 			return 1 + static_cast<int>(numSteps);
 		}
-
 		return juce::AudioProcessor::getDefaultNumParameterSteps();
 	}
 
@@ -1374,7 +1386,7 @@ namespace param
 
 namespace param
 {
-	Params::Params(AudioProcessor& audioProcessor, TuneSys&) :
+	Params::Params(AudioProcessor& audioProcessor, TuneSys& tuneSys) :
 		params(),
 		modDepthAbsolute(false),
 		tweaked(false)
@@ -1430,6 +1442,21 @@ namespace param
 		}
 
 		// LOW LEVEL PARAMS:
+		params.push_back(makeParam(PID::NoiseSynth, 1.f, makeRange::toggle(), Unit::Power, false));
+		const auto eqMinPitch = tuneSys.freqToNote(dsp::EQMinFreq);
+		const auto eqMaxPitch = tuneSys.freqToNote(dsp::EQMaxFreq);
+		const auto eqMaxGain = 24;
+		params.push_back(makeParamPitch(PID::LowCutFreq, eqMinPitch, makeRange::lin(eqMinPitch, eqMaxPitch), tuneSys, false));
+		params.push_back(makeParamPitch(PID::HighCutFreq, eqMaxPitch, makeRange::lin(eqMinPitch, eqMaxPitch), tuneSys, false));
+		params.push_back(makeParamPitch(PID::Bell1Freq, math::freqHzToNote2(100.f), makeRange::lin(eqMinPitch, eqMaxPitch), tuneSys, false));
+		params.push_back(makeParam(PID::Bell1Q, 25.f, makeRange::quad(1, 50, 2), Unit::Q));
+		params.push_back(makeParam(PID::Bell1Gain, 6.f, makeRange::lin(-eqMaxGain, eqMaxGain), Unit::Decibel));
+		params.push_back(makeParamPitch(PID::Bell2Freq, math::freqHzToNote2(200.f), makeRange::lin(eqMinPitch, eqMaxPitch), tuneSys, false));
+		params.push_back(makeParam(PID::Bell2Q, 25.f, makeRange::quad(1, 50, 2), Unit::Q));
+		params.push_back(makeParam(PID::Bell2Gain, 6.f, makeRange::lin(-eqMaxGain, eqMaxGain), Unit::Decibel));
+		params.push_back(makeParamPitch(PID::Bell3Freq, math::freqHzToNote2(300.f), makeRange::lin(eqMinPitch, eqMaxPitch), tuneSys, false));
+		params.push_back(makeParam(PID::Bell3Q, 25.f, makeRange::quad(1, 50, 2), Unit::Q));
+		params.push_back(makeParam(PID::Bell3Gain, 6.f, makeRange::lin(-eqMaxGain, eqMaxGain), Unit::Decibel));
 		// LOW LEVEL PARAMS END
 
 		for (auto param : params)

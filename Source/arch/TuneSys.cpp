@@ -1,4 +1,5 @@
 #include "TuneSys.h"
+#include "Math.h"
 
 namespace arch
 {
@@ -34,20 +35,30 @@ namespace arch
 	template<typename Float>
 	Float TuneSys::freqToNote(Float freqHz) noexcept
 	{
+#if PPDHasMTSESP
 		const auto fD = static_cast<double>(freqHz);
 		return static_cast<Float>(MTS_FrequencyToNote(mtsesp, fD, -1)); // would be cool if this was not rounded
+#else
+		return math::freqHzToNote2(freqHz);
+#endif
 	}
 
 	template<typename Float>
 	Float TuneSys::noteToFreq(Float noteNumber) noexcept
 	{
+#if PPDHasMTSESP
 		const auto nnInt = static_cast<int>(std::round(noteNumber));
+		oopsie(nnInt < 0 || nnInt > 127);
 		const auto nnChar = static_cast<char>(nnInt);
 		return static_cast<Float>(MTS_NoteToFrequency(mtsesp, nnChar, -1));
+#else
+		return math::noteToFreqHz2(noteNumber);
+#endif
 	}
 
 	void TuneSys::operator()() noexcept
 	{
+#if PPDHasMTSESP
 		bool anyChange = false;
 		for (auto i = 0; i < 128; ++i)
 		{
@@ -61,6 +72,7 @@ namespace arch
 		}
 		if (anyChange)
 			update(freqBuf);
+#endif
 	}
 
 	template float TuneSys::freqToNote<float>(float) noexcept;

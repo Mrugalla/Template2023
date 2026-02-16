@@ -91,7 +91,7 @@ namespace gui
 		addChildComponent(coloursEditor);
 		addChildComponent(manifest);
         addChildComponent(parameterEditor);
-        addChildComponent(toast); toast.autoMaxHeight = true;
+        addChildComponent(toast);
 		addChildComponent(powerComp);
         addChildComponent(prompt);
 

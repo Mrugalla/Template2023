@@ -1,9 +1,12 @@
 #pragma once
 #include "../arch/TuneSys.h"
+#include "../arch/Param.h"
 #include "dsp/ProcessorBufferView.h"
 #include "dsp/Transport.h"
-#include "../arch/Param.h"
 //
+#include "dsp/RumbleSynth.h"
+#include "dsp/RumbleSampler.h"
+#include "dsp/RumbleEQ.h"
 
 namespace dsp
 {
@@ -16,10 +19,10 @@ namespace dsp
 
 	struct PluginProcessor
 	{
-		PluginProcessor(Params&, TuneSys&, Transport&);
+		PluginProcessor(Params&, TuneSys&, State&, Transport&);
 
 		// sampleRate
-		void prepare(double);
+		void prepare(double) noexcept;
 
 		// bufferView, transport
 		void operator()(ProcessorBufferView&, const Transport::Info&) noexcept;
@@ -31,7 +34,9 @@ namespace dsp
 		
 		void loadPatch(const State&);
 
-		double sampleRate;
 		//
+		RumbleSynth synth;
+		RumbleSampler sampler;
+		RumbleEQ eq;
 	};
 }

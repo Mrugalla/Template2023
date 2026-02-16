@@ -41,6 +41,11 @@ namespace dsp
 			return view[ch];
 		}
 
+		float* const* data() const noexcept 
+		{
+			return view.data();
+		}
+
 		BufferView2 view;
 		int numChannels;
 	};
@@ -51,7 +56,8 @@ namespace dsp
 			main(), sc(),
 			msg(),
 			numSamples(0),
-			scEnabled(false)
+			scEnabled(false),
+			hasMessage(false)
 		{
 		}
 
@@ -98,23 +104,8 @@ namespace dsp
 			sc.numChannels = main.numChannels;
 		}
 
-		void fillBlock(ProcessorBufferView& buffer, int s) noexcept
+		void fillBlock(ProcessorBufferView& buffer, int s, int _numSamples) noexcept
 		{
-			const auto dif = buffer.numSamples - s;
-			numSamples = dif < dsp::BlockSize ? dif : dsp::BlockSize;
-			main.numChannels = buffer.main.numChannels;
-			for (auto ch = 0; ch < main.numChannels; ++ch)
-				main.view[ch] = &buffer.main.view[ch][s];
-			sc.numChannels = buffer.sc.numChannels;
-			for (auto ch = 0; ch < sc.numChannels; ++ch)
-				sc.view[ch] = &buffer.sc.view[ch][s];
-			scEnabled = buffer.scEnabled;
-		}
-
-		void fillBlock(ProcessorBufferView& buffer, const MidiMessage& _msg,
-			int s, int _numSamples) noexcept
-		{
-			msg = _msg;
 			numSamples = _numSamples;
 			main.numChannels = buffer.main.numChannels;
 			sc.numChannels = buffer.sc.numChannels;
@@ -123,6 +114,22 @@ namespace dsp
 			for (auto ch = 0; ch < sc.numChannels; ++ch)
 				sc.view[ch] = &buffer.sc.view[ch][s];
 			scEnabled = buffer.scEnabled;
+			hasMessage = false;
+		}
+
+		void fillBlock(ProcessorBufferView& buffer, int s) noexcept
+		{
+			const auto dif = buffer.numSamples - s;
+			numSamples = dif < dsp::BlockSize ? dif : dsp::BlockSize;
+			fillBlock(buffer, s, numSamples);
+		}
+
+		void fillBlock(ProcessorBufferView& buffer, const MidiMessage& _msg,
+			int s, int _numSamples) noexcept
+		{
+			fillBlock(buffer, s, _numSamples);
+			msg = _msg;
+			hasMessage = true;
 		}
 
 		void clearMain() noexcept
@@ -161,6 +168,16 @@ namespace dsp
 			return sc.view[ch];
 		}
 
+		float* const* getSamplesMain() const noexcept
+		{
+			return main.data();
+		}
+
+		float* const* getSamplesSC() const noexcept
+		{
+			return sc.data();
+		}
+
 		int getNumChannelsMain() const noexcept
 		{
 			return main.numChannels;
@@ -179,6 +196,6 @@ namespace dsp
 		BufferView2X main, sc;
 		MidiMessage msg;
 		int numSamples;
-		bool scEnabled;
+		bool scEnabled, hasMessage;
 	};
 }

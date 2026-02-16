@@ -1,7 +1,7 @@
 #pragma once
 #include "juce_audio_processors/juce_audio_processors.h"
 #include "TuneSys.h"
-#include "../arch/State.h"
+#include "State.h"
 
 namespace param
 {
@@ -54,6 +54,18 @@ namespace param
 		Power,
 
 		// low level parameters
+		NoiseSynth,
+		LowCutFreq,
+		HighCutFreq,
+		Bell1Freq,
+		Bell1Q,
+		Bell1Gain,
+		Bell2Freq,
+		Bell2Q,
+		Bell2Gain,
+		Bell3Freq,
+		Bell3Q,
+		Bell3Gain,
 		//
 		
 		NumParams

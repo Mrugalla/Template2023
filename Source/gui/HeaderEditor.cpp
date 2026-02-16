@@ -4,7 +4,7 @@ namespace gui
 {
 	HeaderEditor::HeaderEditor(ColoursEditor& coloursEditor,
 		ManifestOfWisdom& manifest, patch::Browser& patchBrowser,
-		Prompt& prompt) :
+		Prompt&) :
 		Comp(manifest.utils),
 		title(utils, utils.audioProcessor.pluginRecorder),
 		buttonBrowser(patchBrowser),
@@ -46,7 +46,7 @@ namespace gui
 		addAndMakeVisible(stereoConfig);
 #endif
 
-		makeTextLabel(title, "Plugin Titel", font::headline(), Just::centred, CID::Txt);
+		makeTextLabel(title, "Rumble", font::headline(), Just::centred, CID::Txt);
 		title.autoMaxHeight = true;
 
 		buttonRandomizer.add(utils.getAllParams());

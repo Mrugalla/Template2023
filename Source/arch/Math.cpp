@@ -520,6 +520,7 @@ namespace math
     template bool bufferSilent<float>(float**, int, int) noexcept;
     template bool bufferSilent<double>(double**, int, int) noexcept;
 
+    template int limit<int>(int, int, int) noexcept;
     template float limit<float>(float, float, float) noexcept;
     template double limit<double>(double, double, double) noexcept;
 

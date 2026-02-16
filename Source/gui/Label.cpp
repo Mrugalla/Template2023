@@ -37,9 +37,7 @@ namespace gui
 	{
 		if (txt == text)
 			return;
-
 		text = txt;
-
 		if (autoMaxHeight)
 			setMaxHeight();
 	}
@@ -150,28 +148,35 @@ namespace gui
 					return setVisible(false);
 				}
 			}
-			setAlpha(math::tanhApprox(2.f * phase));
+			const auto alpha = math::tanhApprox(2.f * phase);
+			setAlpha(alpha);
 			setVisible(true);
+			repaint();
+			//oopsie(isVisible());
 		}, kCBFade, fpsToast, false));
 
 		addEvt([&](const evt::Type t, const void* stuff)
 		{
 			if (t == evt::Type::ToastShowUp)
 			{
-				const auto bounds = *static_cast<const Bounds*>(stuff);
-				const Point offset(getWidth(), 0);
-				const auto y = bounds.getTopLeft().y;
-				const auto nX = bounds.getTopLeft().x - offset.x;
-				if (nX > getWidth())
-					setTopLeftPosition(nX, y);
-				else
-					setTopLeftPosition(bounds.getTopLeft().x + getWidth(), y);
+				setSize(static_cast<int>(utils.thicc * 40.f), static_cast<int>(utils.thicc * 15.f));
+				const auto screenBoundsTarget = *static_cast<const Bounds*>(stuff);
+				auto parent = getParentComponent();
+				if (parent)
+				{
+					const auto localBounds = parent->getLocalArea(nullptr, screenBoundsTarget);
+					const auto centerX = localBounds.getCentreX() - getWidth() / 2;
+					auto topY = localBounds.getY() - getHeight();
+					if (topY < 0.f)
+						topY += screenBoundsTarget.getHeight() * 3 / 2;
+					setTopLeftPosition(centerX, topY);
+				}
 				alphaAniWeight = true;
 				callbacks[kCBFade].start(callbacks[kCBFade].phase);
 			}
 			else if (t == evt::Type::ToastUpdateMessage)
 			{
-				const auto nMessage = *static_cast<const String*>(stuff);
+				const auto& nMessage = *static_cast<const String*>(stuff);
 				setText(nMessage);
 				repaint();
 			}
